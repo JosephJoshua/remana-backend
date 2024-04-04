@@ -1,0 +1,9 @@
+type: object
+required:
+  - prompt_url
+properties:
+  prompt_url:
+    type: string
+    format: uri
+    description: "[URL to POST with login code](#/auth/loginCodePrompt)"
+    example: https://api.com/auth/login-code

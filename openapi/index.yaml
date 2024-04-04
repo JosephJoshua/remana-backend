@@ -1,0 +1,26 @@
+openapi: 3.0.2
+info:
+  title: Remana Backend
+  version: 1.0.0
+  description: The backend API for Remana.
+  contact:
+    email: jj.anggita@gmail.com
+  license:
+    name: MIT
+    url: https://www.mit.edu/~amini/LICENSE.md
+servers:
+  - url: http://localhost:8080
+tags:
+  - name: auth
+    description: Authentication into the API
+components:
+  securitySchemes:
+    sessionCookie:
+      $ref: components/securitySchemes/sessionCookie.yaml
+security:
+  - sessionCookie: []
+paths:
+  /auth/login:
+    $ref: paths/auth/login.yaml
+  /auth/login-code:
+    $ref: paths/auth/loginCodePrompt.yaml

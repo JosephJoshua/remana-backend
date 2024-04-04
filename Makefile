@@ -47,3 +47,7 @@ lint:
 .PHONY: lint-fix
 lint-fix:
 	golangci-lint run --fix
+
+.PHONY: generate
+generate:
+	go generate ./...

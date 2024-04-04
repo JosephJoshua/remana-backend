@@ -1,15 +1,21 @@
 package shared
 
 import (
-	"net/http"
+	"context"
+
+	"github.com/JosephJoshua/repair-management-backend/internal/genapi"
 )
 
-func NewServer() http.Handler {
-	mux := http.NewServeMux()
+type Server struct{}
 
-	mux.Handle("GET /healthz", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusNoContent)
-	}))
+func (s Server) Login(ctx context.Context, req *genapi.LoginCredentials) (genapi.LoginRes, error) {
+	return &genapi.LoginNoContent{}, nil
+}
 
-	return mux
+func (s Server) LoginCodePrompt(ctx context.Context, req *genapi.LoginCodePrompt, params genapi.LoginCodePromptParams) (*genapi.LoginCodePromptNoContent, error) {
+	return &genapi.LoginCodePromptNoContent{}, nil
+}
+
+func (s Server) NewError(ctx context.Context, err error) *genapi.ErrorStatusCode {
+	return &genapi.ErrorStatusCode{}
 }

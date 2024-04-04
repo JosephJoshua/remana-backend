@@ -1,0 +1,9 @@
+type: object
+required:
+  - login_code
+properties:
+  login_code:
+    type: string
+    minLength: 8
+    maxLength: 8
+    example: A1B2C3D4
