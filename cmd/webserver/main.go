@@ -4,17 +4,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
-	"log"
-	"net"
+	"io/fs"
 	"net/http"
 	"os"
 	"os/signal"
-	"sync"
+	"syscall"
 	"time"
 
 	"github.com/JosephJoshua/repair-management-backend/internal/genapi"
+	"github.com/JosephJoshua/repair-management-backend/internal/logger"
 	"github.com/JosephJoshua/repair-management-backend/internal/shared"
+	"github.com/rs/zerolog"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -25,17 +26,16 @@ const (
 	ShutdownTimeout   = 10 * time.Second
 )
 
-func run(ctx context.Context, stdout, stderr io.Writer) error {
-	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt)
-	defer cancel()
+func run(ctx context.Context, addr string) error {
+	log := logger.MustGet()
 
 	oasServer, err := genapi.NewServer(shared.Server{}, nil)
 	if err != nil {
-		fmt.Fprintf(stderr, "run() > error creating server: %s\n", err)
+		return fmt.Errorf("error creating server: %w", err)
 	}
 
 	httpServer := &http.Server{
-		Addr:              net.JoinHostPort("localhost", "8080"),
+		Addr:              addr,
 		Handler:           oasServer,
 		ReadHeaderTimeout: ReadHeaderTimeout,
 		IdleTimeout:       IdleTimeout,
@@ -43,39 +43,74 @@ func run(ctx context.Context, stdout, stderr io.Writer) error {
 		WriteTimeout:      WriteTimeout,
 	}
 
+	listenErr := make(chan error)
+
 	go func() {
-		log.Printf("run() > listening on %s\n", httpServer.Addr)
-		if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			fmt.Fprintf(stderr, "run() > error listening and serving: %s\n", err)
+		log.Info().Msgf("server listening on %s", httpServer.Addr)
+
+		if err = httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			listenErr <- fmt.Errorf("error listening and serving: %w", err)
 		}
 	}()
 
-	var wg sync.WaitGroup
-	wg.Add(1)
+	signalCtx, stop := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
 
-	go func() {
-		defer wg.Done()
-		<-ctx.Done()
+	select {
+	case err = <-listenErr:
+		return err
 
-		log.Println("run() > shutting down server")
+	case <-signalCtx.Done():
+		log.Info().Msg("server shutting down")
 
-		shutdownCtx := context.Background()
-		shutdownCtx, cancel = context.WithTimeout(shutdownCtx, ShutdownTimeout)
+		shutdownCtx, cancel := context.WithTimeout(ctx, ShutdownTimeout)
 		defer cancel()
 
-		if err := httpServer.Shutdown(shutdownCtx); err != nil {
-			fmt.Fprintf(stderr, "run() > error shutting down http server: %s\n", err)
+		if err = httpServer.Shutdown(shutdownCtx); err != nil {
+			return fmt.Errorf("error shutting down http server: %w", err)
 		}
-	}()
 
-	wg.Wait()
+		log.Info().Msg("server shut down")
+	}
+
 	return nil
 }
 
+type appConfig struct {
+	ServerAddr string `mapstructure:"remana_server_addr"`
+}
+
+func loadConfig() (appConfig, error) {
+	viper.SetConfigFile(".env")
+
+	viper.SetDefault("remana_server_addr", "localhost:8080")
+
+	viper.AutomaticEnv()
+
+	err := viper.ReadInConfig()
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return appConfig{}, fmt.Errorf("error reading in config: %w", err)
+	}
+
+	var config appConfig
+	if err = viper.Unmarshal(&config); err != nil {
+		return appConfig{}, fmt.Errorf("error unmarshalling config: %w", err)
+	}
+
+	return config, nil
+}
+
 func main() {
+	logger.Init(zerolog.DebugLevel)
+	log := logger.MustGet()
+
+	config, err := loadConfig()
+	if err != nil {
+		log.Fatal().Err(err).Msg("error loading config")
+	}
+
 	ctx := context.Background()
-	if err := run(ctx, os.Stdout, os.Stderr); err != nil {
-		fmt.Fprintf(os.Stderr, "%s\n", err)
-		os.Exit(1)
+	if err = run(ctx, config.ServerAddr); err != nil {
+		log.Fatal().Err(err).Msg("error running app")
 	}
 }
