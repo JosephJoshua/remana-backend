@@ -3,7 +3,6 @@ package auth_test
 import (
 	"context"
 	"errors"
-	"net/url"
 	"testing"
 
 	"github.com/JosephJoshua/repair-management-backend/internal/auth"
@@ -93,7 +92,7 @@ func TestLogin(t *testing.T) {
 		loginCodePromptManager := new(loginCodePromptManagerStub)
 		repo := repository.NewMemoryAuthRepository([]domain.User{*adminUser})
 
-		s := auth.NewService(sessionManager, loginCodePromptManager, repo, &passwordHasherStub{}, url.URL{})
+		s := auth.NewService(sessionManager, loginCodePromptManager, repo, &passwordHasherStub{})
 
 		_, err := s.Login(context.Background(), &genapi.LoginCredentials{
 			Username:  correctUsername,
@@ -113,7 +112,7 @@ func TestLogin(t *testing.T) {
 		loginCodePromptManager := new(loginCodePromptManagerStub)
 		repo := repository.NewMemoryAuthRepository([]domain.User{*adminUser})
 
-		s := auth.NewService(sessionManager, loginCodePromptManager, repo, &passwordHasherStub{}, url.URL{})
+		s := auth.NewService(sessionManager, loginCodePromptManager, repo, &passwordHasherStub{})
 
 		_, err := s.Login(context.Background(), &genapi.LoginCredentials{
 			Username:  correctUsername,
@@ -133,7 +132,7 @@ func TestLogin(t *testing.T) {
 		loginCodePromptManager := new(loginCodePromptManagerStub)
 		repo := repository.NewMemoryAuthRepository([]domain.User{*adminUser})
 
-		s := auth.NewService(sessionManager, loginCodePromptManager, repo, &passwordHasherStub{}, url.URL{})
+		s := auth.NewService(sessionManager, loginCodePromptManager, repo, &passwordHasherStub{})
 
 		_, err := s.Login(context.Background(), &genapi.LoginCredentials{
 			Username:  wrongUsername,
@@ -153,7 +152,7 @@ func TestLogin(t *testing.T) {
 		loginCodePromptManager := new(loginCodePromptManagerStub)
 		repo := repository.NewMemoryAuthRepository([]domain.User{*adminUser})
 
-		s := auth.NewService(sessionManager, loginCodePromptManager, repo, &passwordHasherStub{}, url.URL{})
+		s := auth.NewService(sessionManager, loginCodePromptManager, repo, &passwordHasherStub{})
 
 		got, err := s.Login(context.Background(), &genapi.LoginCredentials{
 			Username:  correctUsername,
@@ -162,7 +161,7 @@ func TestLogin(t *testing.T) {
 		})
 
 		require.NoError(t, err)
-		assert.IsType(t, new(genapi.LoginNoContent), got)
+		assert.Equal(t, genapi.LoginResponseTypeAdmin, got.Type)
 		assert.EqualValues(t, adminUser.ID(), *sessionManager.userID)
 		assert.Nil(t, loginCodePromptManager.userID)
 	})
@@ -174,12 +173,7 @@ func TestLogin(t *testing.T) {
 		loginCodePromptManager := new(loginCodePromptManagerStub)
 		repo := repository.NewMemoryAuthRepository([]domain.User{*employeeUser})
 
-		promptURL := url.URL{
-			Scheme: "https",
-			Host:   "example.com",
-		}
-
-		s := auth.NewService(sessionManager, loginCodePromptManager, repo, &passwordHasherStub{}, promptURL)
+		s := auth.NewService(sessionManager, loginCodePromptManager, repo, &passwordHasherStub{})
 
 		got, err := s.Login(context.Background(), &genapi.LoginCredentials{
 			Username:  correctUsername,
@@ -188,13 +182,7 @@ func TestLogin(t *testing.T) {
 		})
 
 		require.NoError(t, err)
-
-		if got2, ok := got.(*genapi.LoginCodePromptRedirection); ok {
-			assert.Equal(t, promptURL.String(), got2.PromptURL.String())
-		} else {
-			t.Errorf("expected *genapi.LoginCodePromptRedirection as response, got %T", got)
-		}
-
+		assert.Equal(t, genapi.LoginResponseTypeEmployee, got.Type)
 		assert.Equal(t, employeeUser.ID(), *loginCodePromptManager.userID)
 		assert.Nil(t, sessionManager.userID)
 	})

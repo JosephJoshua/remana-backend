@@ -4,7 +4,8 @@ package genapi
 
 import (
 	"fmt"
-	"net/url"
+
+	"github.com/go-faster/errors"
 )
 
 func (s *ErrorStatusCode) Error() string {
@@ -71,24 +72,6 @@ func (s *LoginCodePrompt) SetLoginCode(val string) {
 type LoginCodePromptNoContent struct{}
 
 // Ref: #
-type LoginCodePromptRedirection struct {
-	// [URL to POST with login code](#/auth/loginCodePrompt).
-	PromptURL url.URL `json:"prompt_url"`
-}
-
-// GetPromptURL returns the value of PromptURL.
-func (s *LoginCodePromptRedirection) GetPromptURL() url.URL {
-	return s.PromptURL
-}
-
-// SetPromptURL sets the value of PromptURL.
-func (s *LoginCodePromptRedirection) SetPromptURL(val url.URL) {
-	s.PromptURL = val
-}
-
-func (*LoginCodePromptRedirection) loginRes() {}
-
-// Ref: #
 type LoginCredentials struct {
 	Username  string `json:"username"`
 	Password  string `json:"password"`
@@ -125,7 +108,72 @@ func (s *LoginCredentials) SetStoreCode(val string) {
 	s.StoreCode = val
 }
 
-// LoginNoContent is response for Login operation.
-type LoginNoContent struct{}
+// Ref: #
+type LoginResponse struct {
+	// The type of user that logged in:
+	// * `admin` - Store admin. The session ID is returned in a cookie named
+	// `session_id`. You need to include this cookie in subsequent requests.
+	// * `employee` - Store employee. The user needs to log in with a login
+	// code given by the store admin. The login code prompt ID is returned in
+	// a cookie named `login_code_prompt_id`. You need to visit [/auth/login-code](#/auth/loginCodePrompt)
+	// with the login code to log in.
+	Type LoginResponseType `json:"type"`
+}
 
-func (*LoginNoContent) loginRes() {}
+// GetType returns the value of Type.
+func (s *LoginResponse) GetType() LoginResponseType {
+	return s.Type
+}
+
+// SetType sets the value of Type.
+func (s *LoginResponse) SetType(val LoginResponseType) {
+	s.Type = val
+}
+
+// The type of user that logged in:
+// * `admin` - Store admin. The session ID is returned in a cookie named
+// `session_id`. You need to include this cookie in subsequent requests.
+// * `employee` - Store employee. The user needs to log in with a login
+// code given by the store admin. The login code prompt ID is returned in
+// a cookie named `login_code_prompt_id`. You need to visit [/auth/login-code](#/auth/loginCodePrompt)
+// with the login code to log in.
+type LoginResponseType string
+
+const (
+	LoginResponseTypeAdmin    LoginResponseType = "admin"
+	LoginResponseTypeEmployee LoginResponseType = "employee"
+)
+
+// AllValues returns all LoginResponseType values.
+func (LoginResponseType) AllValues() []LoginResponseType {
+	return []LoginResponseType{
+		LoginResponseTypeAdmin,
+		LoginResponseTypeEmployee,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s LoginResponseType) MarshalText() ([]byte, error) {
+	switch s {
+	case LoginResponseTypeAdmin:
+		return []byte(s), nil
+	case LoginResponseTypeEmployee:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *LoginResponseType) UnmarshalText(data []byte) error {
+	switch LoginResponseType(data) {
+	case LoginResponseTypeAdmin:
+		*s = LoginResponseTypeAdmin
+		return nil
+	case LoginResponseTypeEmployee:
+		*s = LoginResponseTypeEmployee
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}

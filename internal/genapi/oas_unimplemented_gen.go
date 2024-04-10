@@ -18,7 +18,7 @@ var _ Handler = UnimplementedHandler{}
 // Logs in with credentials.
 //
 // POST /auth/login
-func (UnimplementedHandler) Login(ctx context.Context, req *LoginCredentials) (r LoginRes, _ error) {
+func (UnimplementedHandler) Login(ctx context.Context, req *LoginCredentials) (r *LoginResponse, _ error) {
 	return r, ht.ErrNotImplemented
 }
 

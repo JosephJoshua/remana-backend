@@ -2,10 +2,6 @@
 
 package genapi
 
-import (
-	"net/url"
-)
-
 // SetFake set fake values.
 func (s *Error) SetFake() {
 	{
@@ -20,15 +16,6 @@ func (s *LoginCodePrompt) SetFake() {
 	{
 		{
 			s.LoginCode = "string"
-		}
-	}
-}
-
-// SetFake set fake values.
-func (s *LoginCodePromptRedirection) SetFake() {
-	{
-		{
-			s.PromptURL = url.URL{Scheme: "https", Host: "github.com", Path: "/ogen-go/ogen"}
 		}
 	}
 }
@@ -50,4 +37,18 @@ func (s *LoginCredentials) SetFake() {
 			s.StoreCode = "string"
 		}
 	}
+}
+
+// SetFake set fake values.
+func (s *LoginResponse) SetFake() {
+	{
+		{
+			s.Type.SetFake()
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *LoginResponseType) SetFake() {
+	*s = LoginResponseTypeAdmin
 }

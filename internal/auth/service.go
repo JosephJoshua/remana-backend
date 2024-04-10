@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"net/url"
 
 	"github.com/JosephJoshua/repair-management-backend/internal/genapi"
 	"github.com/JosephJoshua/repair-management-backend/internal/shared/apierror"
@@ -37,7 +36,6 @@ type Service struct {
 	loginCodePromptManager LoginCodePromptManager
 	repo                   Repository
 	hasher                 PasswordHasher
-	loginCodePromptURL     url.URL
 }
 
 func NewService(
@@ -45,18 +43,16 @@ func NewService(
 	loginCodePromptManager LoginCodePromptManager,
 	repo Repository,
 	hasher PasswordHasher,
-	loginCodePromptURL url.URL,
 ) *Service {
 	return &Service{
 		sessionManager:         sessionManager,
 		loginCodePromptManager: loginCodePromptManager,
 		repo:                   repo,
 		hasher:                 hasher,
-		loginCodePromptURL:     loginCodePromptURL,
 	}
 }
 
-func (s *Service) Login(ctx context.Context, req *genapi.LoginCredentials) (genapi.LoginRes, error) {
+func (s *Service) Login(ctx context.Context, req *genapi.LoginCredentials) (*genapi.LoginResponse, error) {
 	l := zerolog.Ctx(ctx)
 
 	user, err := s.repo.GetUserByUsernameAndStoreCode(ctx, req.Username, req.StoreCode)
@@ -92,7 +88,9 @@ func (s *Service) Login(ctx context.Context, req *genapi.LoginCredentials) (gena
 			return nil, apierror.ToAPIError(http.StatusInternalServerError, "failed to create session")
 		}
 
-		return &genapi.LoginNoContent{}, nil
+		return &genapi.LoginResponse{
+			Type: genapi.LoginResponseTypeAdmin,
+		}, nil
 	}
 
 	l.Info().Str("user_id", user.ID().String()).Msg("store employee login code prompt initiated")
@@ -102,8 +100,8 @@ func (s *Service) Login(ctx context.Context, req *genapi.LoginCredentials) (gena
 		return nil, apierror.ToAPIError(http.StatusInternalServerError, "failed to create login code prompt")
 	}
 
-	return &genapi.LoginCodePromptRedirection{
-		PromptURL: s.loginCodePromptURL,
+	return &genapi.LoginResponse{
+		Type: genapi.LoginResponseTypeEmployee,
 	}, nil
 }
 

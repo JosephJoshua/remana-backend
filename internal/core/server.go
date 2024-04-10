@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
 
 	"github.com/JosephJoshua/repair-management-backend/internal/auth"
 	"github.com/JosephJoshua/repair-management-backend/internal/genapi"
@@ -68,7 +67,6 @@ func NewAPIServer() (*genapi.Server, []Middleware, error) {
 		pm,
 		repository.NewMemoryAuthRepository([]domain.User{*adminUser, *employeeUser}),
 		&PasswordHasher{},
-		url.URL{Scheme: "https", Host: "google.com"},
 	)
 
 	srv := server{

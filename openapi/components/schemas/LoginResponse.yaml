@@ -1,0 +1,16 @@
+type: object
+required:
+  - type
+properties:
+  type:
+    type: string
+    enum: ["admin", "employee"]
+    description: >
+      The type of user that logged in:
+        * `admin` - Store admin. The session ID is returned in a cookie named
+          `session_id`. You need to include this cookie in subsequent requests.
+        * `employee` - Store employee. The user needs to log in with a login
+          code given by the store admin. The login code prompt ID is returned in
+          a cookie named `login_code_prompt_id`. You need to visit [/auth/login-code](#/auth/loginCodePrompt)
+          with the login code to log in.
+    example: admin

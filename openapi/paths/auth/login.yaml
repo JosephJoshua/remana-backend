@@ -14,18 +14,10 @@ post:
           $ref: ../../components/schemas/LoginCredentials.yaml
   responses:
     "200":
-      description:
-        "[Store employees only] User needs to log in with login code given
-        by the store admin"
       content:
         application/json:
           schema:
-            $ref: ../../components/schemas/LoginCodePromptRedirection.yaml
-    "204":
-      description: >
-        [Store admin only] Successful login. The session ID is returned in a
-        cookie named `session_id`. You need to include this cookie in subsequent
-        requests.
+            $ref: ../../components/schemas/LoginResponse.yaml
     default:
       content:
         application/json:

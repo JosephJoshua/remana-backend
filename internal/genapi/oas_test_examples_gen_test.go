@@ -3,7 +3,12 @@
 package genapi
 
 import (
+	"fmt"
+
+	"github.com/go-faster/errors"
 	"github.com/go-faster/jx"
+
+	"github.com/ogen-go/ogen/validate"
 
 	std "encoding/json"
 	"testing"
@@ -35,18 +40,6 @@ func TestLoginCodePrompt_EncodeDecode(t *testing.T) {
 	var typ2 LoginCodePrompt
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
-func TestLoginCodePromptRedirection_EncodeDecode(t *testing.T) {
-	var typ LoginCodePromptRedirection
-	typ.SetFake()
-
-	e := jx.Encoder{}
-	typ.Encode(&e)
-	data := e.Bytes()
-	require.True(t, std.Valid(data), "Encoded: %s", data)
-
-	var typ2 LoginCodePromptRedirection
-	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
-}
 func TestLoginCredentials_EncodeDecode(t *testing.T) {
 	var typ LoginCredentials
 	typ.SetFake()
@@ -58,4 +51,57 @@ func TestLoginCredentials_EncodeDecode(t *testing.T) {
 
 	var typ2 LoginCredentials
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestLoginResponse_EncodeDecode(t *testing.T) {
+	var typ LoginResponse
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 LoginResponse
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestLoginResponseType_EncodeDecode(t *testing.T) {
+	var typ LoginResponseType
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 LoginResponseType
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+
+func TestLoginResponseType_Examples(t *testing.T) {
+
+	for i, tc := range []struct {
+		Input string
+	}{
+		{Input: "\"admin\""},
+	} {
+		tc := tc
+		t.Run(fmt.Sprintf("Test%d", i+1), func(t *testing.T) {
+			var typ LoginResponseType
+
+			if err := typ.Decode(jx.DecodeStr(tc.Input)); err != nil {
+				if validateErr, ok := errors.Into[*validate.Error](err); ok {
+					t.Skipf("Validation error: %v", validateErr)
+					return
+				}
+				require.NoErrorf(t, err, "Input: %s", tc.Input)
+			}
+
+			e := jx.Encoder{}
+			typ.Encode(&e)
+			require.True(t, std.Valid(e.Bytes()), "Encoded: %s", e.Bytes())
+
+			var typ2 LoginResponseType
+			require.NoError(t, typ2.Decode(jx.DecodeBytes(e.Bytes())))
+		})
+	}
 }

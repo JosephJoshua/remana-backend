@@ -13,7 +13,7 @@ type Handler interface {
 	// Logs in with credentials.
 	//
 	// POST /auth/login
-	Login(ctx context.Context, req *LoginCredentials) (LoginRes, error)
+	Login(ctx context.Context, req *LoginCredentials) (*LoginResponse, error)
 	// LoginCodePrompt implements loginCodePrompt operation.
 	//
 	// Logs store employees in with the login code given by the store admin. Should only be called after

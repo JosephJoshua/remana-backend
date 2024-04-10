@@ -46,7 +46,7 @@ func (s *Server) handleLoginRequest(args [0]string, argsEscaped bool, w http.Res
 		}
 	}()
 
-	var response LoginRes
+	var response *LoginResponse
 	if m := s.cfg.Middleware; m != nil {
 		mreq := middleware.Request{
 			Context:          ctx,
@@ -61,7 +61,7 @@ func (s *Server) handleLoginRequest(args [0]string, argsEscaped bool, w http.Res
 		type (
 			Request  = *LoginCredentials
 			Params   = struct{}
-			Response = LoginRes
+			Response = *LoginResponse
 		)
 		response, err = middleware.HookMiddleware[
 			Request,
