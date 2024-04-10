@@ -61,12 +61,22 @@ func (s *Service) Login(ctx context.Context, req *genapi.LoginCredentials) (gena
 
 	user, err := s.repo.GetUserByUsernameAndStoreCode(ctx, req.Username, req.StoreCode)
 	if err != nil {
+		// Security measure to prevent timing attacks.
+		_ = s.hasher.Check("$2a$14$7IotmYZSWWVoGd.D5xaMLOi2W0bBbHZfNZ0NxX.BpphGmNd9IbC/u", req.Password)
+
+		l.
+			Info().
+			Str("username", req.GetUsername()).
+			Str("store_code", req.GetStoreCode()).
+			Msg("wrong username or store code")
+
 		return nil, apierror.ToAPIError(http.StatusUnauthorized, "invalid credentials")
 	}
 
 	err = s.hasher.Check(user.Password(), req.Password)
 	if err != nil {
 		if errors.Is(err, apperror.ErrPasswordMismatch) {
+			l.Info().Str("user_id", user.ID().String()).Msg("wrong password")
 			return nil, apierror.ToAPIError(http.StatusUnauthorized, "invalid credentials")
 		}
 
@@ -75,6 +85,8 @@ func (s *Service) Login(ctx context.Context, req *genapi.LoginCredentials) (gena
 	}
 
 	if user.Role().IsStoreAdmin() {
+		l.Info().Str("user_id", user.ID().String()).Msg("store admin logged in")
+
 		if err = s.sessionManager.NewSession(ctx, user.ID()); err != nil {
 			l.Error().Err(err).Msg("SessionManager.NewSession(); failed to create session")
 			return nil, apierror.ToAPIError(http.StatusInternalServerError, "failed to create session")
@@ -82,6 +94,8 @@ func (s *Service) Login(ctx context.Context, req *genapi.LoginCredentials) (gena
 
 		return &genapi.LoginNoContent{}, nil
 	}
+
+	l.Info().Str("user_id", user.ID().String()).Msg("store employee login code prompt initiated")
 
 	if err = s.loginCodePromptManager.NewPrompt(ctx, user.ID()); err != nil {
 		l.Error().Err(err).Msg("LoginCodePromptManager.NewPrompt(); failed to create login code prompt")

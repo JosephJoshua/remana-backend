@@ -59,7 +59,7 @@ func requestLoggerMiddleware(next http.Handler) http.Handler {
 				Str("user_agent", r.UserAgent()).
 				Dur("elapsed_ms", time.Since(start)).
 				Int("status_code", lrw.statusCode).
-				Msg("incoming request")
+				Msg("request handled")
 
 			if err != nil {
 				panic(err)
