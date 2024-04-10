@@ -5,13 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	stdlog "log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/JosephJoshua/repair-management-backend/internal/genapi"
+	"github.com/JosephJoshua/repair-management-backend/internal/core"
 	"github.com/JosephJoshua/repair-management-backend/internal/logger"
 	"github.com/JosephJoshua/repair-management-backend/internal/shared"
 	"github.com/rs/zerolog"
@@ -29,14 +30,20 @@ const (
 func run(ctx context.Context, addr string) error {
 	log := logger.MustGet()
 
-	oasServer, err := genapi.NewServer(shared.Server{}, nil)
+	srv, middlewares, err := core.NewAPIServer()
 	if err != nil {
 		return fmt.Errorf("error creating server: %w", err)
 	}
 
+	handler := http.Handler(srv)
+
+	for i := len(middlewares) - 1; i >= 0; i-- {
+		handler = middlewares[i](handler)
+	}
+
 	httpServer := &http.Server{
 		Addr:              addr,
-		Handler:           oasServer,
+		Handler:           handler,
 		ReadHeaderTimeout: ReadHeaderTimeout,
 		IdleTimeout:       IdleTimeout,
 		ReadTimeout:       ReadTimeout,
@@ -77,13 +84,15 @@ func run(ctx context.Context, addr string) error {
 }
 
 type appConfig struct {
-	ServerAddr string `mapstructure:"remana_server_addr"`
+	ServerAddr string        `mapstructure:"remana_server_addr"`
+	AppEnv     shared.AppEnv `mapstructure:"remana_app_env"`
 }
 
 func loadConfig() (appConfig, error) {
 	viper.SetConfigFile(".env")
 
 	viper.SetDefault("remana_server_addr", "localhost:8080")
+	viper.SetDefault("remana_app_env", "production")
 
 	viper.AutomaticEnv()
 
@@ -101,13 +110,15 @@ func loadConfig() (appConfig, error) {
 }
 
 func main() {
-	logger.Init(zerolog.DebugLevel)
-	log := logger.MustGet()
-
 	config, err := loadConfig()
 	if err != nil {
-		log.Fatal().Err(err).Msg("error loading config")
+		stdlog.Fatalf("error loading config: %v", err)
 	}
+
+	logger.Init(zerolog.DebugLevel, config.AppEnv)
+	log := logger.MustGet()
+
+	log.Info().Str("mode", string(config.AppEnv)).Msgf("app running in %s mode", config.AppEnv)
 
 	ctx := context.Background()
 	if err = run(ctx, config.ServerAddr); err != nil {

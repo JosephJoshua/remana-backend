@@ -6,8 +6,9 @@ post:
     Logs store employees in with the login code given by the store admin.
     Should only be called after [/auth/login](#/auth/login) has been called.
   operationId: loginCodePrompt
+  security: []
   parameters:
-    - name: prompt_id
+    - name: login_code_prompt_id
       in: cookie
       description: The prompt ID set by [/auth/login](#/auth/login)
       required: true
@@ -28,12 +29,6 @@ post:
       description: >
         Successful login. The session ID is returned in a cookie named
         `session_id`. You need to include this cookie in subsequent requests.
-      headers:
-        Set-Cookie:
-          required: true
-          schema:
-            type: string
-            example: session_id=abcde12345; Path=/; Secure; HttpOnly
     default:
       content:
         application/json:

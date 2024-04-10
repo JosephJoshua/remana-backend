@@ -1,19 +1,13 @@
 BINARY_PATH = build/webserver
-MAIN_FILE = cmd/webserver/main.go
+MAIN_FILE = ./cmd/webserver
 
 .PHONY: run/dev
 run/dev: build
-	CGO_ENABLED=1 APP_ENV=development ./${BINARY_PATH}
+	CGO_ENABLED=1 REMANA_APP_ENV=development ./${BINARY_PATH}
 
 .PHONY: build
 build:
 	go build -o ${BINARY_PATH} ${MAIN_FILE}
-
-.PHONY: build/prod
-build/prod:
-	CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o ${BINARY_PATH}-linux ${MAIN_FILE}
-	CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 go build -o ${BINARY_PATH}-darwin ${MAIN_FILE}
-	CGO_ENABLED=1 GOOS=windows GOARCH=amd64 go build -o ${BINARY_PATH}-windows ${MAIN_FILE}
 
 .PHONY: clean
 clean:
@@ -51,3 +45,7 @@ lint-fix:
 .PHONY: generate
 generate:
 	go generate ./...
+
+.PHONY: test
+test:
+	go test -count=1 ./...

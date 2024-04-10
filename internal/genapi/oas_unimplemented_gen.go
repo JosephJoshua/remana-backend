@@ -28,8 +28,8 @@ func (UnimplementedHandler) Login(ctx context.Context, req *LoginCredentials) (r
 // [/auth/login](#/auth/login) has been called.
 //
 // POST /auth/login-code
-func (UnimplementedHandler) LoginCodePrompt(ctx context.Context, req *LoginCodePrompt, params LoginCodePromptParams) (r *LoginCodePromptNoContent, _ error) {
-	return r, ht.ErrNotImplemented
+func (UnimplementedHandler) LoginCodePrompt(ctx context.Context, req *LoginCodePrompt, params LoginCodePromptParams) error {
+	return ht.ErrNotImplemented
 }
 
 // NewError creates *ErrorStatusCode from error returned by handler.

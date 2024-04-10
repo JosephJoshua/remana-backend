@@ -1,0 +1,14 @@
+package domain
+
+type domainError string
+
+func (e domainError) Error() string {
+	return string(e)
+}
+
+const (
+	ErrInputTooLong     domainError = domainError("input too long")
+	ErrInputTooShort    domainError = domainError("input too short")
+	ErrInvalidID        domainError = domainError("invalid ID")
+	ErrInvalidStoreCode domainError = domainError("store code must only contain lowercase letters separated by hyphens")
+)

@@ -13,23 +13,12 @@ func (s *ErrorStatusCode) Error() string {
 
 // Ref: #
 type Error struct {
-	Code    int32  `json:"code"`
 	Message string `json:"message"`
-}
-
-// GetCode returns the value of Code.
-func (s *Error) GetCode() int32 {
-	return s.Code
 }
 
 // GetMessage returns the value of Message.
 func (s *Error) GetMessage() string {
 	return s.Message
-}
-
-// SetCode sets the value of Code.
-func (s *Error) SetCode(val int32) {
-	s.Code = val
 }
 
 // SetMessage sets the value of Message.
@@ -79,19 +68,7 @@ func (s *LoginCodePrompt) SetLoginCode(val string) {
 }
 
 // LoginCodePromptNoContent is response for LoginCodePrompt operation.
-type LoginCodePromptNoContent struct {
-	SetCookie string
-}
-
-// GetSetCookie returns the value of SetCookie.
-func (s *LoginCodePromptNoContent) GetSetCookie() string {
-	return s.SetCookie
-}
-
-// SetSetCookie sets the value of SetCookie.
-func (s *LoginCodePromptNoContent) SetSetCookie(val string) {
-	s.SetCookie = val
-}
+type LoginCodePromptNoContent struct{}
 
 // Ref: #
 type LoginCodePromptRedirection struct {
@@ -109,33 +86,7 @@ func (s *LoginCodePromptRedirection) SetPromptURL(val url.URL) {
 	s.PromptURL = val
 }
 
-// LoginCodePromptRedirectionHeaders wraps LoginCodePromptRedirection with response headers.
-type LoginCodePromptRedirectionHeaders struct {
-	SetCookie OptString
-	Response  LoginCodePromptRedirection
-}
-
-// GetSetCookie returns the value of SetCookie.
-func (s *LoginCodePromptRedirectionHeaders) GetSetCookie() OptString {
-	return s.SetCookie
-}
-
-// GetResponse returns the value of Response.
-func (s *LoginCodePromptRedirectionHeaders) GetResponse() LoginCodePromptRedirection {
-	return s.Response
-}
-
-// SetSetCookie sets the value of SetCookie.
-func (s *LoginCodePromptRedirectionHeaders) SetSetCookie(val OptString) {
-	s.SetCookie = val
-}
-
-// SetResponse sets the value of Response.
-func (s *LoginCodePromptRedirectionHeaders) SetResponse(val LoginCodePromptRedirection) {
-	s.Response = val
-}
-
-func (*LoginCodePromptRedirectionHeaders) loginRes() {}
+func (*LoginCodePromptRedirection) loginRes() {}
 
 // Ref: #
 type LoginCredentials struct {
@@ -175,78 +126,6 @@ func (s *LoginCredentials) SetStoreCode(val string) {
 }
 
 // LoginNoContent is response for Login operation.
-type LoginNoContent struct {
-	SetCookie OptString
-}
-
-// GetSetCookie returns the value of SetCookie.
-func (s *LoginNoContent) GetSetCookie() OptString {
-	return s.SetCookie
-}
-
-// SetSetCookie sets the value of SetCookie.
-func (s *LoginNoContent) SetSetCookie(val OptString) {
-	s.SetCookie = val
-}
+type LoginNoContent struct{}
 
 func (*LoginNoContent) loginRes() {}
-
-// NewOptString returns new OptString with value set to v.
-func NewOptString(v string) OptString {
-	return OptString{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptString is optional string.
-type OptString struct {
-	Value string
-	Set   bool
-}
-
-// IsSet returns true if OptString was set.
-func (o OptString) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptString) Reset() {
-	var v string
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptString) SetTo(v string) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptString) Get() (v string, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptString) Or(d string) string {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-type SessionCookie struct {
-	APIKey string
-}
-
-// GetAPIKey returns the value of APIKey.
-func (s *SessionCookie) GetAPIKey() string {
-	return s.APIKey
-}
-
-// SetAPIKey sets the value of APIKey.
-func (s *SessionCookie) SetAPIKey(val string) {
-	s.APIKey = val
-}

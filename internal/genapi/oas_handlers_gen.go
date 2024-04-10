@@ -30,52 +30,6 @@ func (s *Server) handleLoginRequest(args [0]string, argsEscaped bool, w http.Res
 			ID:   "login",
 		}
 	)
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			sctx, ok, err := s.securitySessionCookie(ctx, "Login", r)
-			if err != nil {
-				err = &ogenerrors.SecurityError{
-					OperationContext: opErrContext,
-					Security:         "SessionCookie",
-					Err:              err,
-				}
-				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w); encodeErr != nil {
-					recordError("Security:SessionCookie", err)
-				}
-				return
-			}
-			if ok {
-				satisfied[0] |= 1 << 0
-				ctx = sctx
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			err = &ogenerrors.SecurityError{
-				OperationContext: opErrContext,
-				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
-			}
-			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w); encodeErr != nil {
-				recordError("Security", err)
-			}
-			return
-		}
-	}
 	request, close, err := s.decodeLoginRequest(r)
 	if err != nil {
 		err = &ogenerrors.DecodeRequestError{
@@ -167,52 +121,6 @@ func (s *Server) handleLoginCodePromptRequest(args [0]string, argsEscaped bool, 
 			ID:   "loginCodePrompt",
 		}
 	)
-	{
-		type bitset = [1]uint8
-		var satisfied bitset
-		{
-			sctx, ok, err := s.securitySessionCookie(ctx, "LoginCodePrompt", r)
-			if err != nil {
-				err = &ogenerrors.SecurityError{
-					OperationContext: opErrContext,
-					Security:         "SessionCookie",
-					Err:              err,
-				}
-				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w); encodeErr != nil {
-					recordError("Security:SessionCookie", err)
-				}
-				return
-			}
-			if ok {
-				satisfied[0] |= 1 << 0
-				ctx = sctx
-			}
-		}
-
-		if ok := func() bool {
-		nextRequirement:
-			for _, requirement := range []bitset{
-				{0b00000001},
-			} {
-				for i, mask := range requirement {
-					if satisfied[i]&mask != mask {
-						continue nextRequirement
-					}
-				}
-				return true
-			}
-			return false
-		}(); !ok {
-			err = &ogenerrors.SecurityError{
-				OperationContext: opErrContext,
-				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
-			}
-			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w); encodeErr != nil {
-				recordError("Security", err)
-			}
-			return
-		}
-	}
 	params, err := decodeLoginCodePromptParams(args, argsEscaped, r)
 	if err != nil {
 		err = &ogenerrors.DecodeParamsError{
@@ -249,9 +157,9 @@ func (s *Server) handleLoginCodePromptRequest(args [0]string, argsEscaped bool, 
 			Body:             request,
 			Params: middleware.Parameters{
 				{
-					Name: "prompt_id",
+					Name: "login_code_prompt_id",
 					In:   "cookie",
-				}: params.PromptID,
+				}: params.LoginCodePromptID,
 			},
 			Raw: r,
 		}
@@ -270,12 +178,12 @@ func (s *Server) handleLoginCodePromptRequest(args [0]string, argsEscaped bool, 
 			mreq,
 			unpackLoginCodePromptParams,
 			func(ctx context.Context, request Request, params Params) (response Response, err error) {
-				response, err = s.h.LoginCodePrompt(ctx, request, params)
+				err = s.h.LoginCodePrompt(ctx, request, params)
 				return response, err
 			},
 		)
 	} else {
-		response, err = s.h.LoginCodePrompt(ctx, request, params)
+		err = s.h.LoginCodePrompt(ctx, request, params)
 	}
 	if err != nil {
 		if errRes, ok := errors.Into[*ErrorStatusCode](err); ok {

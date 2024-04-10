@@ -17,26 +17,26 @@ import (
 // LoginCodePromptParams is parameters of loginCodePrompt operation.
 type LoginCodePromptParams struct {
 	// The prompt ID set by [/auth/login](#/auth/login).
-	PromptID uuid.UUID
+	LoginCodePromptID uuid.UUID
 }
 
 func unpackLoginCodePromptParams(packed middleware.Parameters) (params LoginCodePromptParams) {
 	{
 		key := middleware.ParameterKey{
-			Name: "prompt_id",
+			Name: "login_code_prompt_id",
 			In:   "cookie",
 		}
-		params.PromptID = packed[key].(uuid.UUID)
+		params.LoginCodePromptID = packed[key].(uuid.UUID)
 	}
 	return params
 }
 
 func decodeLoginCodePromptParams(args [0]string, argsEscaped bool, r *http.Request) (params LoginCodePromptParams, _ error) {
 	c := uri.NewCookieDecoder(r)
-	// Decode cookie: prompt_id.
+	// Decode cookie: login_code_prompt_id.
 	if err := func() error {
 		cfg := uri.CookieParameterDecodingConfig{
-			Name:    "prompt_id",
+			Name:    "login_code_prompt_id",
 			Explode: true,
 		}
 		if err := c.HasParam(cfg); err == nil {
@@ -51,7 +51,7 @@ func decodeLoginCodePromptParams(args [0]string, argsEscaped bool, r *http.Reque
 					return err
 				}
 
-				params.PromptID = c
+				params.LoginCodePromptID = c
 				return nil
 			}); err != nil {
 				return err
@@ -62,7 +62,7 @@ func decodeLoginCodePromptParams(args [0]string, argsEscaped bool, r *http.Reque
 		return nil
 	}(); err != nil {
 		return params, &ogenerrors.DecodeParamError{
-			Name: "prompt_id",
+			Name: "login_code_prompt_id",
 			In:   "cookie",
 			Err:  err,
 		}

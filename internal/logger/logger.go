@@ -1,9 +1,13 @@
 package logger
 
 import (
+	"io"
 	stdlog "log"
+	"os"
 	"runtime/debug"
+	"time"
 
+	"github.com/JosephJoshua/repair-management-backend/internal/shared"
 	"github.com/rs/zerolog"
 )
 
@@ -19,15 +23,30 @@ const (
 
 var log *zerolog.Logger
 
-func Init(logLevel zerolog.Level) {
+func Init(logLevel zerolog.Level, appEnv shared.AppEnv) {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 
-	output := zerolog.NewConsoleWriter()
+	var output io.Writer
+
+	if appEnv == shared.AppEnvProduction {
+		output = os.Stderr
+	} else {
+		output = zerolog.NewConsoleWriter(func(w *zerolog.ConsoleWriter) {
+			w.FieldsExclude = []string{
+				"user_agent",
+				"git_revision",
+				"git_revision_time",
+				"dirty_build",
+				"go_version",
+			}
+		})
+	}
 
 	var (
-		goVersion   string
-		gitRevision string
-		vcsModified bool
+		goVersion       string
+		gitRevision     string
+		gitRevisionTime time.Time
+		dirtyBuild      bool
 	)
 
 	buildInfo, ok := debug.ReadBuildInfo()
@@ -35,10 +54,20 @@ func Init(logLevel zerolog.Level) {
 		goVersion = buildInfo.GoVersion
 
 		for _, v := range buildInfo.Settings {
-			if v.Key == "vcs.version" {
+			switch v.Key {
+			case "vcs.revision":
 				gitRevision = v.Value
-			} else if v.Key == "vcs.modified" {
-				vcsModified = v.Value == "true"
+
+			case "vcs.time":
+				t, err := time.Parse(time.RFC3339, v.Value)
+				if err != nil {
+					continue
+				}
+
+				gitRevisionTime = t
+
+			case "vcs.modified":
+				dirtyBuild = v.Value == "true"
 			}
 		}
 	}
@@ -48,7 +77,8 @@ func Init(logLevel zerolog.Level) {
 		With().
 		Timestamp().
 		Str("git_revision", gitRevision).
-		Bool("vcs_modified", vcsModified).
+		Time("git_revision_time", gitRevisionTime).
+		Bool("dirty_build", dirtyBuild).
 		Str("go_version", goVersion).
 		Logger()
 
@@ -66,7 +96,7 @@ func Get() (zerolog.Logger, error) {
 func MustGet() zerolog.Logger {
 	l, err := Get()
 	if err != nil {
-		stdlog.Fatalf("logger.MustGet() > error getting logger: %s", err)
+		stdlog.Fatalf("logger.MustGet(); error getting logger: %s", err)
 	}
 
 	return l
