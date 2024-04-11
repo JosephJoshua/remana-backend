@@ -1,7 +1,7 @@
 //go:build tools
 // +build tools
 
-package repairmanagementbackend
+package remanabackend
 
 import (
 	_ "golang.org/x/tools/imports"
