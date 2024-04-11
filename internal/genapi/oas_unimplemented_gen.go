@@ -28,7 +28,7 @@ func (UnimplementedHandler) Login(ctx context.Context, req *LoginCredentials) (r
 // [/auth/login](#/auth/login) has been called.
 //
 // POST /auth/login-code
-func (UnimplementedHandler) LoginCodePrompt(ctx context.Context, req *LoginCodePrompt, params LoginCodePromptParams) error {
+func (UnimplementedHandler) LoginCodePrompt(ctx context.Context, req *LoginCodePrompt) error {
 	return ht.ErrNotImplemented
 }
 

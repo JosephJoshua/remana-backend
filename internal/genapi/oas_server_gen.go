@@ -20,7 +20,7 @@ type Handler interface {
 	// [/auth/login](#/auth/login) has been called.
 	//
 	// POST /auth/login-code
-	LoginCodePrompt(ctx context.Context, req *LoginCodePrompt, params LoginCodePromptParams) error
+	LoginCodePrompt(ctx context.Context, req *LoginCodePrompt) error
 	// NewError creates *ErrorStatusCode from error returned by handler.
 	//
 	// Used for common default response.

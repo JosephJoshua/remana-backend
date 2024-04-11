@@ -11,7 +11,18 @@ const (
 	UsernameMaxLength = 100
 )
 
-type User struct {
+type User interface {
+	SetUsername(username string) error
+	SetPassword(password string)
+	SetRole(role Role)
+	ID() uuid.UUID
+	Username() string
+	Password() string
+	StoreCode() string
+	Role() Role
+}
+
+type user struct {
 	id        uuid.UUID
 	username  string
 	password  string
@@ -19,12 +30,12 @@ type User struct {
 	role      Role
 }
 
-func NewUser(id uuid.UUID, username string, password string, store Store, role Role) (*User, error) {
-	user := new(User)
+func NewUser(id uuid.UUID, username string, password string, store Store, role Role) (User, error) {
+	user := new(user)
 
 	user.id = id
+	user.storeCode = store.Code()
 
-	user.SetStore(store)
 	user.SetRole(role)
 	user.SetPassword(password)
 
@@ -35,7 +46,7 @@ func NewUser(id uuid.UUID, username string, password string, store Store, role R
 	return user, nil
 }
 
-func (u *User) SetUsername(username string) error {
+func (u *user) SetUsername(username string) error {
 	if len(username) > UsernameMaxLength {
 		return fmt.Errorf("error setting username of user: %w", ErrInputTooLong)
 	}
@@ -48,34 +59,30 @@ func (u *User) SetUsername(username string) error {
 	return nil
 }
 
-func (u *User) SetPassword(password string) {
+func (u *user) SetPassword(password string) {
 	u.password = password
 }
 
-func (u *User) SetStore(store Store) {
-	u.storeCode = store.Code()
-}
-
-func (u *User) SetRole(role Role) {
+func (u *user) SetRole(role Role) {
 	u.role = role
 }
 
-func (u *User) ID() uuid.UUID {
+func (u *user) ID() uuid.UUID {
 	return u.id
 }
 
-func (u *User) Username() string {
+func (u *user) Username() string {
 	return u.username
 }
 
-func (u *User) Password() string {
+func (u *user) Password() string {
 	return u.password
 }
 
-func (u *User) StoreCode() string {
+func (u *user) StoreCode() string {
 	return u.storeCode
 }
 
-func (u *User) Role() *Role {
-	return &u.role
+func (u *user) Role() Role {
+	return u.role
 }

@@ -15,14 +15,21 @@ func TestUser(t *testing.T) {
 	var id = uuid.New()
 
 	const (
-		username = "username"
-		password = "password"
+		username  = "username"
+		password  = "password"
+		storeCode = "storecode"
 	)
+
+	store, initErr := domain.NewStore(1, "store", storeCode)
+	require.NoError(t, initErr)
+
+	role, initErr := domain.NewRole(1, "role", store, false)
+	require.NoError(t, initErr)
 
 	t.Run("new user with username too short", func(t *testing.T) {
 		t.Parallel()
 
-		got, err := domain.NewUser(id, "123", password, domain.Store{}, domain.Role{})
+		got, err := domain.NewUser(id, "123", password, store, role)
 
 		require.ErrorIs(t, err, domain.ErrInputTooShort)
 		assert.Nil(t, got)
@@ -35,8 +42,8 @@ func TestUser(t *testing.T) {
 			id,
 			"12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901",
 			password,
-			domain.Store{},
-			domain.Role{},
+			store,
+			role,
 		)
 
 		require.ErrorIs(t, err, domain.ErrInputTooLong)
@@ -48,13 +55,7 @@ func TestUser(t *testing.T) {
 
 		const storeCode = "storecode"
 
-		store, err := domain.NewStore(1, "store", storeCode)
-		require.NoError(t, err)
-
-		role, err := domain.NewRole(1, "role", *store, false)
-		require.NoError(t, err)
-
-		got, err := domain.NewUser(id, username, password, *store, *role)
+		got, err := domain.NewUser(id, username, password, store, role)
 
 		require.NoError(t, err)
 		require.NotNil(t, got)
@@ -69,7 +70,7 @@ func TestUser(t *testing.T) {
 	t.Run("set username with too short input", func(t *testing.T) {
 		t.Parallel()
 
-		user, err := domain.NewUser(id, username, password, domain.Store{}, domain.Role{})
+		user, err := domain.NewUser(id, username, password, store, role)
 		require.NoError(t, err)
 
 		err = user.SetUsername("123")
@@ -81,7 +82,7 @@ func TestUser(t *testing.T) {
 	t.Run("set username with too long input", func(t *testing.T) {
 		t.Parallel()
 
-		user, err := domain.NewUser(id, username, password, domain.Store{}, domain.Role{})
+		user, err := domain.NewUser(id, username, password, store, role)
 		require.NoError(t, err)
 
 		err = user.SetUsername(
@@ -97,7 +98,7 @@ func TestUser(t *testing.T) {
 
 		const newUsername = "newusername"
 
-		user, err := domain.NewUser(id, username, password, domain.Store{}, domain.Role{})
+		user, err := domain.NewUser(id, username, password, store, role)
 		require.NoError(t, err)
 
 		err = user.SetUsername(newUsername)

@@ -121,16 +121,6 @@ func (s *Server) handleLoginCodePromptRequest(args [0]string, argsEscaped bool, 
 			ID:   "loginCodePrompt",
 		}
 	)
-	params, err := decodeLoginCodePromptParams(args, argsEscaped, r)
-	if err != nil {
-		err = &ogenerrors.DecodeParamsError{
-			OperationContext: opErrContext,
-			Err:              err,
-		}
-		recordError("DecodeParams", err)
-		s.cfg.ErrorHandler(ctx, w, r, err)
-		return
-	}
 	request, close, err := s.decodeLoginCodePromptRequest(r)
 	if err != nil {
 		err = &ogenerrors.DecodeRequestError{
@@ -155,18 +145,13 @@ func (s *Server) handleLoginCodePromptRequest(args [0]string, argsEscaped bool, 
 			OperationSummary: "Logs store employees in with login code",
 			OperationID:      "loginCodePrompt",
 			Body:             request,
-			Params: middleware.Parameters{
-				{
-					Name: "login_code_prompt_id",
-					In:   "cookie",
-				}: params.LoginCodePromptID,
-			},
-			Raw: r,
+			Params:           middleware.Parameters{},
+			Raw:              r,
 		}
 
 		type (
 			Request  = *LoginCodePrompt
-			Params   = LoginCodePromptParams
+			Params   = struct{}
 			Response = *LoginCodePromptNoContent
 		)
 		response, err = middleware.HookMiddleware[
@@ -176,14 +161,14 @@ func (s *Server) handleLoginCodePromptRequest(args [0]string, argsEscaped bool, 
 		](
 			m,
 			mreq,
-			unpackLoginCodePromptParams,
+			nil,
 			func(ctx context.Context, request Request, params Params) (response Response, err error) {
-				err = s.h.LoginCodePrompt(ctx, request, params)
+				err = s.h.LoginCodePrompt(ctx, request)
 				return response, err
 			},
 		)
 	} else {
-		err = s.h.LoginCodePrompt(ctx, request, params)
+		err = s.h.LoginCodePrompt(ctx, request)
 	}
 	if err != nil {
 		if errRes, ok := errors.Into[*ErrorStatusCode](err); ok {

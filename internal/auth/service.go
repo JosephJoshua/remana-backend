@@ -20,10 +20,12 @@ type SessionManager interface {
 type LoginCodePromptManager interface {
 	NewPrompt(ctx context.Context, userID uuid.UUID) error
 	GetUserID(ctx context.Context) (uuid.UUID, error)
+	DeletePrompt(ctx context.Context) error
 }
 
 type Repository interface {
 	GetUserByUsernameAndStoreCode(ctx context.Context, username string, storeCode string) (domain.User, error)
+	CheckUserLoginCode(ctx context.Context, userID uuid.UUID, loginCode string) error
 }
 
 type PasswordHasher interface {
@@ -105,6 +107,41 @@ func (s *Service) Login(ctx context.Context, req *genapi.LoginCredentials) (*gen
 	}, nil
 }
 
-func (s *Service) LoginCodePrompt(ctx context.Context, req *genapi.LoginCodePrompt, params genapi.LoginCodePromptParams) error {
+func (s *Service) LoginCodePrompt(ctx context.Context, req *genapi.LoginCodePrompt) error {
+	l := zerolog.Ctx(ctx)
+
+	userID, err := s.loginCodePromptManager.GetUserID(ctx)
+	if err != nil {
+		if errors.Is(err, apperror.ErrMisingLoginCodePrompt) {
+			return apierror.ToAPIError(http.StatusBadRequest, "missing login code prompt ID. please call /login first")
+		}
+
+		l.Error().Err(err).Msg("LoginCodePromptManager.GetUserID(); failed to get user ID")
+		return apierror.ToAPIError(http.StatusInternalServerError, "failed to get user ID")
+	}
+
+	err = s.repo.CheckUserLoginCode(ctx, userID, req.GetLoginCode())
+	if err != nil {
+		if errors.Is(err, apperror.ErrLoginCodeMismatch) {
+			l.Info().Str("user_id", userID.String()).Msg("wrong login code")
+			return apierror.ToAPIError(http.StatusBadRequest, "wrong login code")
+		}
+
+		l.Error().Err(err).Msg("Repository.CheckUserLoginCode(); failed to check login code")
+		return apierror.ToAPIError(http.StatusInternalServerError, "failed to check login code")
+	}
+
+	l.Info().Str("user_id", userID.String()).Msg("store employee logged in")
+
+	if err = s.sessionManager.NewSession(ctx, userID); err != nil {
+		l.Error().Err(err).Msg("SessionManager.NewSession(); failed to create session")
+		return apierror.ToAPIError(http.StatusInternalServerError, "failed to create session")
+	}
+
+	if err = s.loginCodePromptManager.DeletePrompt(ctx); err != nil {
+		l.Error().Err(err).Msg("LoginCodePromptManager.DeletePrompt(); failed to delete login code prompt")
+		return apierror.ToAPIError(http.StatusInternalServerError, "failed to delete login code prompt")
+	}
+
 	return nil
 }

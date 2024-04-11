@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/JosephJoshua/remana-backend/internal/shared/apperror"
 	"github.com/alexedwards/scs/v2"
 	"github.com/google/uuid"
 )
@@ -76,7 +77,10 @@ func (l *loginCodePromptManager) NewPrompt(ctx context.Context, userID uuid.UUID
 func (l *loginCodePromptManager) GetUserID(ctx context.Context) (uuid.UUID, error) {
 	userID := l.sm.GetString(ctx, userIDKey)
 	if userID == "" {
-		return uuid.UUID{}, fmt.Errorf("user ID not found in login code prompt session")
+		return uuid.UUID{}, fmt.Errorf(
+			"failed to get user ID from login code prompt session: %w",
+			apperror.ErrMisingLoginCodePrompt,
+		)
 	}
 
 	parsedUserID, err := uuid.Parse(userID)
@@ -85,6 +89,10 @@ func (l *loginCodePromptManager) GetUserID(ctx context.Context) (uuid.UUID, erro
 	}
 
 	return parsedUserID, nil
+}
+
+func (l *loginCodePromptManager) DeletePrompt(ctx context.Context) error {
+	return l.sm.Destroy(ctx)
 }
 
 func (l *loginCodePromptManager) middleware(next http.Handler) http.Handler {

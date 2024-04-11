@@ -30,12 +30,12 @@ func NewAPIServer() (*genapi.Server, []Middleware, error) {
 		return nil, []Middleware{}, err
 	}
 
-	adminRole, err := domain.NewRole(1, "admin", *dummyStore, true)
+	adminRole, err := domain.NewRole(1, "admin", dummyStore, true)
 	if err != nil {
 		return nil, []Middleware{}, err
 	}
 
-	userRole, err := domain.NewRole(2, "user", *dummyStore, false)
+	userRole, err := domain.NewRole(2, "user", dummyStore, false)
 	if err != nil {
 		return nil, []Middleware{}, err
 	}
@@ -45,12 +45,17 @@ func NewAPIServer() (*genapi.Server, []Middleware, error) {
 		return nil, []Middleware{}, err
 	}
 
-	adminUser, err := domain.NewUser(uuid.New(), "username", password, *dummyStore, *adminRole)
+	adminUser, err := domain.NewUser(uuid.New(), "username", password, dummyStore, adminRole)
 	if err != nil {
 		return nil, []Middleware{}, err
 	}
 
-	employeeUser, err := domain.NewUser(uuid.New(), "username2", password, *dummyStore, *userRole)
+	employeeUser, err := domain.NewUser(uuid.New(), "username2", password, dummyStore, userRole)
+	if err != nil {
+		return nil, []Middleware{}, err
+	}
+
+	loginCode, err := domain.NewLoginCode(employeeUser, "A1B2C3D4")
 	if err != nil {
 		return nil, []Middleware{}, err
 	}
@@ -63,7 +68,7 @@ func NewAPIServer() (*genapi.Server, []Middleware, error) {
 	authService := auth.NewService(
 		sm,
 		pm,
-		repository.NewMemoryAuthRepository([]domain.User{*adminUser, *employeeUser}),
+		repository.NewMemoryAuthRepository([]domain.User{adminUser, employeeUser}, []domain.LoginCode{loginCode}),
 		&PasswordHasher{},
 	)
 

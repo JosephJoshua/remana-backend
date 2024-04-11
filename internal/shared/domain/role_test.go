@@ -17,10 +17,13 @@ func TestRole(t *testing.T) {
 		storeCode = "storecode"
 	)
 
+	store, initErr := domain.NewStore(1, "store", storeCode)
+	require.NoError(t, initErr)
+
 	t.Run("new role with negative ID", func(t *testing.T) {
 		t.Parallel()
 
-		got, err := domain.NewRole(-1, name, domain.Store{}, false)
+		got, err := domain.NewRole(-1, name, store, false)
 
 		require.ErrorIs(t, err, domain.ErrInvalidID)
 		assert.Nil(t, got)
@@ -29,7 +32,7 @@ func TestRole(t *testing.T) {
 	t.Run("new role with empty name", func(t *testing.T) {
 		t.Parallel()
 
-		got, err := domain.NewRole(1, "", domain.Store{}, false)
+		got, err := domain.NewRole(1, "", store, false)
 
 		require.ErrorIs(t, err, domain.ErrInputTooShort)
 		assert.Nil(t, got)
@@ -38,10 +41,7 @@ func TestRole(t *testing.T) {
 	t.Run("new role with valid input", func(t *testing.T) {
 		t.Parallel()
 
-		store, err := domain.NewStore(1, "store", storeCode)
-		require.NoError(t, err)
-
-		got, err := domain.NewRole(id, name, *store, false)
+		got, err := domain.NewRole(id, name, store, false)
 
 		require.NoError(t, err)
 		require.NotNil(t, got)
@@ -54,7 +54,7 @@ func TestRole(t *testing.T) {
 	t.Run("set name with empty name", func(t *testing.T) {
 		t.Parallel()
 
-		role, err := domain.NewRole(id, name, domain.Store{}, false)
+		role, err := domain.NewRole(id, name, store, false)
 		require.NoError(t, err)
 
 		err = role.SetName("")
@@ -68,7 +68,7 @@ func TestRole(t *testing.T) {
 
 		const newName = "newname"
 
-		role, err := domain.NewRole(id, name, domain.Store{}, false)
+		role, err := domain.NewRole(id, name, store, false)
 		require.NoError(t, err)
 
 		err = role.SetName(newName)

@@ -7,14 +7,6 @@ post:
     Should only be called after [/auth/login](#/auth/login) has been called.
   operationId: loginCodePrompt
   security: []
-  parameters:
-    - name: login_code_prompt_id
-      in: cookie
-      description: The prompt ID set by [/auth/login](#/auth/login)
-      required: true
-      schema:
-        type: string
-        format: uuid
   requestBody:
     required: true
     description:

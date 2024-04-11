@@ -7,7 +7,9 @@ func (e appError) Error() string {
 }
 
 const (
-	ErrPasswordTooLong  appError = appError("password too long")
-	ErrPasswordMismatch appError = appError("password mismatch")
-	ErrUserNotFound     appError = appError("user not found")
+	ErrPasswordTooLong       appError = appError("password too long")
+	ErrPasswordMismatch      appError = appError("password mismatch")
+	ErrMisingLoginCodePrompt appError = appError("missing login code prompt")
+	ErrUserNotFound          appError = appError("user not found")
+	ErrLoginCodeMismatch     appError = appError("login code mismatch")
 )
