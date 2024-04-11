@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	UsernameMinLength = 3
-	UsernameMaxLength = 255
+	UsernameMinLength = 5
+	UsernameMaxLength = 100
 )
 
 type User struct {

@@ -5,13 +5,6 @@ import (
 	"unicode"
 )
 
-const (
-	StoreNameMinLength = 3
-	StoreNameMaxLength = 255
-	StoreCodeMinLength = 3
-	StoreCodeMaxLength = 255
-)
-
 type Store struct {
 	id   int
 	name string
@@ -37,12 +30,8 @@ func NewStore(id int, name string, code string) (*Store, error) {
 }
 
 func (s *Store) SetName(name string) error {
-	if len(name) < StoreNameMinLength {
+	if name == "" {
 		return fmt.Errorf("error setting name of store: %w", ErrInputTooShort)
-	}
-
-	if len(name) > StoreNameMaxLength {
-		return fmt.Errorf("error setting name of store: %w", ErrInputTooLong)
 	}
 
 	s.name = name
@@ -50,12 +39,8 @@ func (s *Store) SetName(name string) error {
 }
 
 func (s *Store) SetCode(code string) error {
-	if len(code) < StoreCodeMinLength {
+	if code == "" {
 		return fmt.Errorf("error setting code of store: %w", ErrInputTooShort)
-	}
-
-	if len(code) > StoreCodeMaxLength {
-		return fmt.Errorf("error setting code of store: %w", ErrInputTooLong)
 	}
 
 	for _, c := range code {
@@ -82,11 +67,11 @@ func (s *Store) Code() string {
 	return s.code
 }
 
-func (r *Store) setID(id int) error {
+func (s *Store) setID(id int) error {
 	if id < 0 {
 		return fmt.Errorf("error setting id of store: %w", ErrInvalidID)
 	}
 
-	r.id = id
+	s.id = id
 	return nil
 }

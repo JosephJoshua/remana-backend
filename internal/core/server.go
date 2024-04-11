@@ -18,11 +18,6 @@ import (
 	"github.com/rs/zerolog"
 )
 
-var (
-	sm = newAuthSessionManager()
-	pm = newLoginCodePromptManager()
-)
-
 type server struct {
 	*auth.Service
 }
@@ -59,6 +54,9 @@ func NewAPIServer() (*genapi.Server, []Middleware, error) {
 	if err != nil {
 		return nil, []Middleware{}, err
 	}
+
+	sm := newAuthSessionManager()
+	pm := newLoginCodePromptManager()
 
 	middlewares := []Middleware{requestLoggerMiddleware, sm.middleware, pm.middleware}
 

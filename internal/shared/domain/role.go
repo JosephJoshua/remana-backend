@@ -2,11 +2,6 @@ package domain
 
 import "fmt"
 
-const (
-	RoleNameMinLength = 3
-	RoleNameMaxLength = 255
-)
-
 type Role struct {
 	id           int
 	name         string
@@ -32,12 +27,8 @@ func NewRole(id int, name string, store Store, isStoreAdmin bool) (*Role, error)
 }
 
 func (r *Role) SetName(name string) error {
-	if len(name) < RoleNameMinLength {
+	if name == "" {
 		return fmt.Errorf("error setting name of role: %w", ErrInputTooShort)
-	}
-
-	if len(name) > RoleNameMaxLength {
-		return fmt.Errorf("error setting name of role: %w", ErrInputTooLong)
 	}
 
 	r.name = name
