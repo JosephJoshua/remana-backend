@@ -2,8 +2,8 @@ BINARY_PATH = build/webserver
 MAIN_FILE = ./cmd/webserver
 
 .PHONY: run/dev
-run/dev: build
-	CGO_ENABLED=1 REMANA_APP_ENV=development ./${BINARY_PATH}
+run/dev:
+	air
 
 .PHONY: build
 build:
