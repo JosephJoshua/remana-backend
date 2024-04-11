@@ -1,4 +1,4 @@
-module github.com/JosephJoshua/repair-management-backend
+module github.com/JosephJoshua/remana-backend
 
 go 1.22.1
 

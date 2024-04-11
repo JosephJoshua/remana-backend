@@ -1,7 +1,7 @@
 package apierror
 
 import (
-	"github.com/JosephJoshua/repair-management-backend/internal/genapi"
+	"github.com/JosephJoshua/remana-backend/internal/genapi"
 )
 
 func ToAPIError(statusCode int, message string) *genapi.ErrorStatusCode {

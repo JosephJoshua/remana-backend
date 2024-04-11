@@ -5,10 +5,10 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/JosephJoshua/repair-management-backend/internal/genapi"
-	"github.com/JosephJoshua/repair-management-backend/internal/shared/apierror"
-	"github.com/JosephJoshua/repair-management-backend/internal/shared/apperror"
-	"github.com/JosephJoshua/repair-management-backend/internal/shared/domain"
+	"github.com/JosephJoshua/remana-backend/internal/genapi"
+	"github.com/JosephJoshua/remana-backend/internal/shared/apierror"
+	"github.com/JosephJoshua/remana-backend/internal/shared/apperror"
+	"github.com/JosephJoshua/remana-backend/internal/shared/domain"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 )

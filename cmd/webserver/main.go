@@ -12,9 +12,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/JosephJoshua/repair-management-backend/internal/core"
-	"github.com/JosephJoshua/repair-management-backend/internal/logger"
-	"github.com/JosephJoshua/repair-management-backend/internal/shared"
+	"github.com/JosephJoshua/remana-backend/internal/core"
+	"github.com/JosephJoshua/remana-backend/internal/logger"
+	"github.com/JosephJoshua/remana-backend/internal/shared"
 	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
 )

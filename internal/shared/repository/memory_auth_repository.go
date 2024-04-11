@@ -4,8 +4,8 @@ import (
 	"context"
 	"slices"
 
-	"github.com/JosephJoshua/repair-management-backend/internal/shared/apperror"
-	"github.com/JosephJoshua/repair-management-backend/internal/shared/domain"
+	"github.com/JosephJoshua/remana-backend/internal/shared/apperror"
+	"github.com/JosephJoshua/remana-backend/internal/shared/domain"
 )
 
 type MemoryAuthRepository struct {

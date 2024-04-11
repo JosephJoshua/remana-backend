@@ -7,7 +7,7 @@ import (
 	"runtime/debug"
 	"time"
 
-	"github.com/JosephJoshua/repair-management-backend/internal/shared"
+	"github.com/JosephJoshua/remana-backend/internal/shared"
 	"github.com/rs/zerolog"
 )
 

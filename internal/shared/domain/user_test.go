@@ -3,7 +3,7 @@ package domain_test
 import (
 	"testing"
 
-	"github.com/JosephJoshua/repair-management-backend/internal/shared/domain"
+	"github.com/JosephJoshua/remana-backend/internal/shared/domain"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
