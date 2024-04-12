@@ -1,6 +1,10 @@
 BINARY_PATH = build/webserver
 MAIN_FILE = ./cmd/webserver
 
+.PHONY: migrate
+migrate:
+	REMANA_APP_ENV=development go run ./cmd/migrate
+
 .PHONY: run/dev
 run/dev:
 	air
@@ -45,6 +49,7 @@ lint-fix:
 .PHONY: generate
 generate:
 	go generate ./...
+	sqlc generate
 
 .PHONY: test
 test:

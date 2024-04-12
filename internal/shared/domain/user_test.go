@@ -50,6 +50,18 @@ func TestUser(t *testing.T) {
 		assert.Nil(t, got)
 	})
 
+	t.Run("new user with store code mismatch", func(t *testing.T) {
+		t.Parallel()
+
+		differentStore, err := domain.NewStore(uuid.New(), "store", "differentstorecode")
+		require.NoError(t, err)
+
+		got, err := domain.NewUser(id, username, password, differentStore, role)
+
+		require.ErrorIs(t, err, domain.ErrInvalidStoreCode)
+		assert.Nil(t, got)
+	})
+
 	t.Run("new user with valid input", func(t *testing.T) {
 		t.Parallel()
 
@@ -105,5 +117,23 @@ func TestUser(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.Equal(t, newUsername, user.Username())
+	})
+
+	t.Run("set role with store code mismatch", func(t *testing.T) {
+		t.Parallel()
+
+		user, err := domain.NewUser(id, username, password, store, role)
+		require.NoError(t, err)
+
+		differentStore, err := domain.NewStore(uuid.New(), "store", "differentstorecode")
+		require.NoError(t, err)
+
+		differentRole, err := domain.NewRole(uuid.New(), "role", differentStore, false)
+		require.NoError(t, err)
+
+		err = user.SetRole(differentRole)
+
+		require.ErrorIs(t, err, domain.ErrInvalidStoreCode)
+		assert.EqualValues(t, role, user.Role())
 	})
 }

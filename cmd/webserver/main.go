@@ -151,9 +151,14 @@ func main() {
 	defer pool.Close()
 
 	db := stdlib.OpenDBFromPool(pool)
-	err = core.Migrate(db, "postgres")
+	n, err := core.GetPendingMigrationCount(db, "postgres")
+
 	if err != nil {
-		log.Panic().Err(err).Msg("error running migrations")
+		log.Panic().Err(err).Msg("error checking if migration is needed")
+	}
+
+	if n > 0 {
+		log.Warn().Int("count", n).Msg("there are pending migrations")
 	}
 
 	if err = run(ctx, config.ServerAddr); err != nil {

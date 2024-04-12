@@ -14,7 +14,7 @@ const (
 type User interface {
 	SetUsername(username string) error
 	SetPassword(password string)
-	SetRole(role Role)
+	SetRole(role Role) error
 	ID() uuid.UUID
 	Username() string
 	Password() string
@@ -36,8 +36,11 @@ func NewUser(id uuid.UUID, username string, password string, store Store, role R
 	user.id = id
 	user.storeCode = store.Code()
 
-	user.SetRole(role)
 	user.SetPassword(password)
+
+	if err := user.SetRole(role); err != nil {
+		return nil, fmt.Errorf("failed to create new user: %w", err)
+	}
 
 	if err := user.SetUsername(username); err != nil {
 		return nil, fmt.Errorf("failed to create new user: %w", err)
@@ -63,8 +66,13 @@ func (u *user) SetPassword(password string) {
 	u.password = password
 }
 
-func (u *user) SetRole(role Role) {
+func (u *user) SetRole(role Role) error {
+	if role.StoreCode() != u.StoreCode() {
+		return fmt.Errorf("error setting role of user: %w", ErrInvalidStoreCode)
+	}
+
 	u.role = role
+	return nil
 }
 
 func (u *user) ID() uuid.UUID {

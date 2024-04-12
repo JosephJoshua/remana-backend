@@ -10,3 +10,5 @@ Backend API service for Remana.
 	OpenAPI v3 code generator.
 - [air](https://github.com/cosmtrek/air)
 	Provides live reload for Go apps.
+- [sqlc](https://github.com/sqlc-dev/sqlc/)
+	SQL type-safe code generator for Go.
