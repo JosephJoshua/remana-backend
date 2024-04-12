@@ -7,13 +7,13 @@ tmp_dir = "tmp"
   full_bin = "CGO_ENABLED=1 REMANA_APP_ENV=development REMANA_SERVER_ADDR=:1234 ./build/webserver"
   cmd = "make build"
   delay = 1000
-  exclude_dir = ["openapi", "build"]
+  exclude_dir = ["openapi", "build", "tmp", ".vscode"]
   exclude_file = []
   exclude_regex = ["_test.go"]
   exclude_unchanged = false
   follow_symlink = false
   include_dir = []
-  include_ext = ["go"]
+  include_ext = ["go", "sql"]
   include_file = []
   kill_delay = 100
   log = "build-errors.log"

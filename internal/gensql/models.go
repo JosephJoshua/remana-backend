@@ -8,10 +8,31 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type LoginCode struct {
+	LoginCodeID pgtype.UUID
+	UserID      pgtype.UUID
+	LoginCode   string
+}
+
+type Role struct {
+	RoleID       pgtype.UUID
+	RoleName     string
+	StoreID      pgtype.UUID
+	IsStoreAdmin bool
+}
+
 type Store struct {
 	StoreID      pgtype.UUID
 	StoreName    string
 	StoreCode    string
 	StoreAddress string
 	PhoneNumber  string
+}
+
+type User struct {
+	UserID       pgtype.UUID
+	Username     string
+	UserPassword string
+	RoleID       pgtype.UUID
+	StoreID      pgtype.UUID
 }

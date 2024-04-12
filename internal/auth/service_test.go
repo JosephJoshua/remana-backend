@@ -8,8 +8,7 @@ import (
 	"github.com/JosephJoshua/remana-backend/internal/auth"
 	"github.com/JosephJoshua/remana-backend/internal/genapi"
 	"github.com/JosephJoshua/remana-backend/internal/shared/apperror"
-	"github.com/JosephJoshua/remana-backend/internal/shared/domain"
-	"github.com/JosephJoshua/remana-backend/internal/shared/repository"
+	"github.com/JosephJoshua/remana-backend/internal/shared/readmodel"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -60,6 +59,36 @@ func (p *passwordHasherStub) Check(hashedPassword, password string) error {
 	return nil
 }
 
+type authRepositoryStub struct {
+	user             readmodel.AuthnUser
+	username         string
+	storeCode        string
+	loginCode        string
+	loginCodeDeleted bool
+}
+
+func (a *authRepositoryStub) GetUserByUsernameAndStoreCode(
+	_ context.Context,
+	username string,
+	storeCode string,
+) (readmodel.AuthnUser, error) {
+	if a.username != username || a.storeCode != storeCode {
+		var user readmodel.AuthnUser
+		return user, apperror.ErrUserNotFound
+	}
+
+	return a.user, nil
+}
+
+func (a *authRepositoryStub) CheckAndDeleteUserLoginCode(_ context.Context, userID uuid.UUID, loginCode string) error {
+	if a.user.ID.String() != userID.String() || a.loginCode != loginCode {
+		return apperror.ErrLoginCodeMismatch
+	}
+
+	a.loginCodeDeleted = true
+	return nil
+}
+
 func TestLogin(t *testing.T) {
 	t.Parallel()
 
@@ -73,31 +102,32 @@ func TestLogin(t *testing.T) {
 		wrongStoreCode = "wrongstore"
 	)
 
-	id, initError := uuid.NewUUID()
-	require.NoError(t, initError)
+	var userID = uuid.New()
 
-	store, initError := domain.NewStore(uuid.New(), correctStoreCode, correctStoreCode)
-	require.NoError(t, initError)
+	adminUser := readmodel.AuthnUser{
+		ID:           userID,
+		Password:     correctPassword,
+		IsStoreAdmin: true,
+	}
 
-	adminRole, initError := domain.NewRole(uuid.New(), "admin", store, true)
-	require.NoError(t, initError)
-
-	employeeRole, initError := domain.NewRole(uuid.New(), "employee", store, false)
-	require.NoError(t, initError)
-
-	adminUser, initError := domain.NewUser(id, correctUsername, correctPassword, store, adminRole)
-	require.NoError(t, initError)
-
-	employeeUser, initError := domain.NewUser(id, correctUsername, correctPassword, store, employeeRole)
-	require.NoError(t, initError)
+	employeeUser := readmodel.AuthnUser{
+		ID:           userID,
+		Password:     correctPassword,
+		IsStoreAdmin: false,
+	}
 
 	t.Run("failed login with wrong password", func(t *testing.T) {
 		t.Parallel()
 
 		sessionManager := new(sessionManagerStub)
 		loginCodePromptManager := new(loginCodePromptManagerStub)
-		repo := repository.NewMemoryAuthRepository([]domain.User{adminUser}, []domain.LoginCode{})
-
+		repo := &authRepositoryStub{
+			user:             adminUser,
+			username:         correctUsername,
+			storeCode:        correctStoreCode,
+			loginCode:        "",
+			loginCodeDeleted: false,
+		}
 		s := auth.NewService(sessionManager, loginCodePromptManager, repo, &passwordHasherStub{})
 
 		_, err := s.Login(context.Background(), &genapi.LoginCredentials{
@@ -120,7 +150,13 @@ func TestLogin(t *testing.T) {
 
 		sessionManager := new(sessionManagerStub)
 		loginCodePromptManager := new(loginCodePromptManagerStub)
-		repo := repository.NewMemoryAuthRepository([]domain.User{adminUser}, []domain.LoginCode{})
+		repo := &authRepositoryStub{
+			user:             adminUser,
+			username:         correctUsername,
+			storeCode:        correctStoreCode,
+			loginCode:        "",
+			loginCodeDeleted: false,
+		}
 
 		s := auth.NewService(sessionManager, loginCodePromptManager, repo, &passwordHasherStub{})
 
@@ -144,7 +180,13 @@ func TestLogin(t *testing.T) {
 
 		sessionManager := new(sessionManagerStub)
 		loginCodePromptManager := new(loginCodePromptManagerStub)
-		repo := repository.NewMemoryAuthRepository([]domain.User{adminUser}, []domain.LoginCode{})
+		repo := &authRepositoryStub{
+			user:             adminUser,
+			username:         correctUsername,
+			storeCode:        correctStoreCode,
+			loginCode:        "",
+			loginCodeDeleted: false,
+		}
 
 		s := auth.NewService(sessionManager, loginCodePromptManager, repo, &passwordHasherStub{})
 
@@ -168,7 +210,13 @@ func TestLogin(t *testing.T) {
 
 		sessionManager := new(sessionManagerStub)
 		loginCodePromptManager := new(loginCodePromptManagerStub)
-		repo := repository.NewMemoryAuthRepository([]domain.User{adminUser}, []domain.LoginCode{})
+		repo := &authRepositoryStub{
+			user:             adminUser,
+			username:         correctUsername,
+			storeCode:        correctStoreCode,
+			loginCode:        "",
+			loginCodeDeleted: false,
+		}
 
 		s := auth.NewService(sessionManager, loginCodePromptManager, repo, &passwordHasherStub{})
 
@@ -181,7 +229,7 @@ func TestLogin(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, genapi.LoginResponseTypeAdmin, got.Type)
 		assert.NotNil(t, sessionManager.userID)
-		assert.Equal(t, adminUser.ID().String(), sessionManager.userID.String())
+		assert.Equal(t, adminUser.ID.String(), sessionManager.userID.String())
 		assert.Nil(t, loginCodePromptManager.userID)
 	})
 
@@ -190,7 +238,13 @@ func TestLogin(t *testing.T) {
 
 		sessionManager := new(sessionManagerStub)
 		loginCodePromptManager := new(loginCodePromptManagerStub)
-		repo := repository.NewMemoryAuthRepository([]domain.User{employeeUser}, []domain.LoginCode{})
+		repo := &authRepositoryStub{
+			user:             employeeUser,
+			username:         correctUsername,
+			storeCode:        correctStoreCode,
+			loginCode:        "",
+			loginCodeDeleted: false,
+		}
 
 		s := auth.NewService(sessionManager, loginCodePromptManager, repo, &passwordHasherStub{})
 
@@ -203,7 +257,7 @@ func TestLogin(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, genapi.LoginResponseTypeEmployee, got.Type)
 		assert.NotNil(t, loginCodePromptManager.userID)
-		assert.Equal(t, employeeUser.ID().String(), loginCodePromptManager.userID.String())
+		assert.Equal(t, employeeUser.ID.String(), loginCodePromptManager.userID.String())
 		assert.Nil(t, sessionManager.userID)
 	})
 }
@@ -212,26 +266,26 @@ func TestLoginCodePrompt(t *testing.T) {
 	t.Parallel()
 
 	var userID = uuid.New()
-	const code = "A1B2C3D4"
+	const loginCode = "A1B2C3D4"
 
-	store, initErr := domain.NewStore(uuid.New(), "store", "store")
-	require.NoError(t, initErr)
-
-	role, initErr := domain.NewRole(uuid.New(), "store", store, false)
-	require.NoError(t, initErr)
-
-	user, initErr := domain.NewUser(userID, "username", "password", store, role)
-	require.NoError(t, initErr)
-
-	loginCode, initErr := domain.NewLoginCode(user, code)
-	require.NoError(t, initErr)
+	user := readmodel.AuthnUser{
+		ID:           userID,
+		Password:     "password",
+		IsStoreAdmin: false,
+	}
 
 	t.Run("empty prompt", func(t *testing.T) {
 		t.Parallel()
 
 		sessionManager := new(sessionManagerStub)
 		loginCodePromptManager := new(loginCodePromptManagerStub)
-		repo := repository.NewMemoryAuthRepository([]domain.User{user}, []domain.LoginCode{loginCode})
+		repo := &authRepositoryStub{
+			user:             user,
+			loginCode:        loginCode,
+			username:         "testuser",
+			storeCode:        "teststore",
+			loginCodeDeleted: false,
+		}
 
 		s := auth.NewService(sessionManager, loginCodePromptManager, repo, &passwordHasherStub{})
 
@@ -244,6 +298,7 @@ func TestLoginCodePrompt(t *testing.T) {
 		require.ErrorAs(t, err, &apiError)
 		assert.Equal(t, http.StatusBadRequest, apiError.GetStatusCode())
 		assert.Nil(t, sessionManager.userID)
+		assert.False(t, repo.loginCodeDeleted)
 	})
 
 	t.Run("wrong login code", func(t *testing.T) {
@@ -251,7 +306,13 @@ func TestLoginCodePrompt(t *testing.T) {
 
 		sessionManager := new(sessionManagerStub)
 		loginCodePromptManager := &loginCodePromptManagerStub{userID: &userID}
-		repo := repository.NewMemoryAuthRepository([]domain.User{user}, []domain.LoginCode{loginCode})
+		repo := &authRepositoryStub{
+			user:             user,
+			loginCode:        loginCode,
+			username:         "testuser",
+			storeCode:        "teststore",
+			loginCodeDeleted: false,
+		}
 
 		s := auth.NewService(sessionManager, loginCodePromptManager, repo, &passwordHasherStub{})
 
@@ -266,6 +327,7 @@ func TestLoginCodePrompt(t *testing.T) {
 		assert.Nil(t, sessionManager.userID)
 		assert.NotNil(t, loginCodePromptManager.userID)
 		assert.Equal(t, userID.String(), loginCodePromptManager.userID.String())
+		assert.False(t, repo.loginCodeDeleted)
 	})
 
 	t.Run("correct login code", func(t *testing.T) {
@@ -273,18 +335,24 @@ func TestLoginCodePrompt(t *testing.T) {
 
 		sessionManager := new(sessionManagerStub)
 		loginCodePromptManager := &loginCodePromptManagerStub{userID: &userID}
-		repo := repository.NewMemoryAuthRepository([]domain.User{user}, []domain.LoginCode{loginCode})
+		repo := &authRepositoryStub{
+			user:             user,
+			loginCode:        loginCode,
+			username:         "testuser",
+			storeCode:        "teststore",
+			loginCodeDeleted: false,
+		}
 
 		s := auth.NewService(sessionManager, loginCodePromptManager, repo, &passwordHasherStub{})
 
 		err := s.LoginCodePrompt(context.Background(), &genapi.LoginCodePrompt{
-			LoginCode: code,
+			LoginCode: loginCode,
 		})
 
 		require.NoError(t, err)
 		require.NotNil(t, sessionManager.userID)
 		assert.Equal(t, userID.String(), sessionManager.userID.String())
 		assert.Nil(t, loginCodePromptManager.userID)
-		assert.Empty(t, repo.LoginCodes)
+		assert.True(t, repo.loginCodeDeleted)
 	})
 }

@@ -30,10 +30,10 @@ const (
 	ShutdownTimeout   = 10 * time.Second
 )
 
-func run(ctx context.Context, addr string) error {
+func run(ctx context.Context, db *pgxpool.Pool, addr string) error {
 	log := logger.MustGet()
 
-	srv, middlewares, err := core.NewAPIServer()
+	srv, middlewares, err := core.NewAPIServer(db)
 	if err != nil {
 		return fmt.Errorf("error creating server: %w", err)
 	}
@@ -161,7 +161,7 @@ func main() {
 		log.Warn().Int("count", n).Msg("there are pending migrations")
 	}
 
-	if err = run(ctx, config.ServerAddr); err != nil {
+	if err = run(ctx, pool, config.ServerAddr); err != nil {
 		log.Panic().Err(err).Msg("error running app")
 	}
 }

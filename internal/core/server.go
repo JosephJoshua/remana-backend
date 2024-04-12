@@ -8,10 +8,9 @@ import (
 
 	"github.com/JosephJoshua/remana-backend/internal/auth"
 	"github.com/JosephJoshua/remana-backend/internal/genapi"
-	"github.com/JosephJoshua/remana-backend/internal/shared/domain"
 	"github.com/JosephJoshua/remana-backend/internal/shared/repository"
 	"github.com/go-faster/jx"
-	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 	ht "github.com/ogen-go/ogen/http"
 	"github.com/ogen-go/ogen/ogenerrors"
 	"github.com/ogen-go/ogen/validate"
@@ -24,42 +23,7 @@ type server struct {
 
 type Middleware func(next http.Handler) http.Handler
 
-func NewAPIServer() (*genapi.Server, []Middleware, error) {
-	dummyStore, err := domain.NewStore(uuid.New(), "store", "store")
-	if err != nil {
-		return nil, []Middleware{}, err
-	}
-
-	adminRole, err := domain.NewRole(uuid.New(), "admin", dummyStore, true)
-	if err != nil {
-		return nil, []Middleware{}, err
-	}
-
-	userRole, err := domain.NewRole(uuid.New(), "user", dummyStore, false)
-	if err != nil {
-		return nil, []Middleware{}, err
-	}
-
-	password, err := (&PasswordHasher{}).Hash("password")
-	if err != nil {
-		return nil, []Middleware{}, err
-	}
-
-	adminUser, err := domain.NewUser(uuid.New(), "username", password, dummyStore, adminRole)
-	if err != nil {
-		return nil, []Middleware{}, err
-	}
-
-	employeeUser, err := domain.NewUser(uuid.New(), "username2", password, dummyStore, userRole)
-	if err != nil {
-		return nil, []Middleware{}, err
-	}
-
-	loginCode, err := domain.NewLoginCode(employeeUser, "A1B2C3D4")
-	if err != nil {
-		return nil, []Middleware{}, err
-	}
-
+func NewAPIServer(db *pgxpool.Pool) (*genapi.Server, []Middleware, error) {
 	sm := newAuthSessionManager()
 	pm := newLoginCodePromptManager()
 
@@ -68,7 +32,7 @@ func NewAPIServer() (*genapi.Server, []Middleware, error) {
 	authService := auth.NewService(
 		sm,
 		pm,
-		repository.NewMemoryAuthRepository([]domain.User{adminUser, employeeUser}, []domain.LoginCode{loginCode}),
+		repository.NewSQLAuthRepository(db),
 		&PasswordHasher{},
 	)
 

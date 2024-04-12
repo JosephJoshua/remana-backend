@@ -8,7 +8,7 @@ import (
 	"github.com/JosephJoshua/remana-backend/internal/genapi"
 	"github.com/JosephJoshua/remana-backend/internal/shared/apierror"
 	"github.com/JosephJoshua/remana-backend/internal/shared/apperror"
-	"github.com/JosephJoshua/remana-backend/internal/shared/domain"
+	"github.com/JosephJoshua/remana-backend/internal/shared/readmodel"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 )
@@ -24,7 +24,7 @@ type LoginCodePromptManager interface {
 }
 
 type Repository interface {
-	GetUserByUsernameAndStoreCode(ctx context.Context, username string, storeCode string) (domain.User, error)
+	GetUserByUsernameAndStoreCode(ctx context.Context, username string, storeCode string) (readmodel.AuthnUser, error)
 	CheckAndDeleteUserLoginCode(ctx context.Context, userID uuid.UUID, loginCode string) error
 }
 
@@ -71,10 +71,10 @@ func (s *Service) Login(ctx context.Context, req *genapi.LoginCredentials) (*gen
 		return nil, apierror.ToAPIError(http.StatusUnauthorized, "invalid credentials")
 	}
 
-	err = s.hasher.Check(user.Password(), req.Password)
+	err = s.hasher.Check(user.Password, req.Password)
 	if err != nil {
 		if errors.Is(err, apperror.ErrPasswordMismatch) {
-			l.Info().Str("user_id", user.ID().String()).Msg("wrong password")
+			l.Info().Str("user_id", user.ID.String()).Msg("wrong password")
 			return nil, apierror.ToAPIError(http.StatusUnauthorized, "invalid credentials")
 		}
 
@@ -82,10 +82,10 @@ func (s *Service) Login(ctx context.Context, req *genapi.LoginCredentials) (*gen
 		return nil, apierror.ToAPIError(http.StatusInternalServerError, "failed to check password")
 	}
 
-	if user.Role().IsStoreAdmin() {
-		l.Info().Str("user_id", user.ID().String()).Msg("store admin logged in")
+	if user.IsStoreAdmin {
+		l.Info().Str("user_id", user.ID.String()).Msg("store admin logged in")
 
-		if err = s.sessionManager.NewSession(ctx, user.ID()); err != nil {
+		if err = s.sessionManager.NewSession(ctx, user.ID); err != nil {
 			l.Error().Err(err).Msg("SessionManager.NewSession(); failed to create session")
 			return nil, apierror.ToAPIError(http.StatusInternalServerError, "failed to create session")
 		}
@@ -95,9 +95,9 @@ func (s *Service) Login(ctx context.Context, req *genapi.LoginCredentials) (*gen
 		}, nil
 	}
 
-	l.Info().Str("user_id", user.ID().String()).Msg("store employee login code prompt initiated")
+	l.Info().Str("user_id", user.ID.String()).Msg("store employee login code prompt initiated")
 
-	if err = s.loginCodePromptManager.NewPrompt(ctx, user.ID()); err != nil {
+	if err = s.loginCodePromptManager.NewPrompt(ctx, user.ID); err != nil {
 		l.Error().Err(err).Msg("LoginCodePromptManager.NewPrompt(); failed to create login code prompt")
 		return nil, apierror.ToAPIError(http.StatusInternalServerError, "failed to create login code prompt")
 	}
