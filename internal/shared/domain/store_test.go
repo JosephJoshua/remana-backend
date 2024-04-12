@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/JosephJoshua/remana-backend/internal/shared/domain"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -11,20 +12,12 @@ import (
 func TestStore(t *testing.T) {
 	t.Parallel()
 
+	var id = uuid.New()
+
 	const (
-		id   = 1
 		name = "store"
 		code = "store-code"
 	)
-
-	t.Run("new store with negative ID", func(t *testing.T) {
-		t.Parallel()
-
-		got, err := domain.NewStore(-1, name, code)
-
-		require.ErrorIs(t, err, domain.ErrInvalidID)
-		assert.Nil(t, got)
-	})
 
 	t.Run("new store with empty name", func(t *testing.T) {
 		t.Parallel()
@@ -79,7 +72,7 @@ func TestStore(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, got)
 
-		assert.Equal(t, id, got.ID())
+		assert.Equal(t, id.String(), got.ID().String())
 		assert.Equal(t, name, got.Name())
 		assert.Equal(t, code, got.Code())
 	})

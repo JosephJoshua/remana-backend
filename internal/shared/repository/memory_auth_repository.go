@@ -10,12 +10,12 @@ import (
 )
 
 type MemoryAuthRepository struct {
-	users      []domain.User
-	loginCodes []domain.LoginCode
+	Users      []domain.User
+	LoginCodes []domain.LoginCode
 }
 
 func NewMemoryAuthRepository(users []domain.User, loginCodes []domain.LoginCode) *MemoryAuthRepository {
-	return &MemoryAuthRepository{users: users, loginCodes: loginCodes}
+	return &MemoryAuthRepository{Users: users, LoginCodes: loginCodes}
 }
 
 func (r *MemoryAuthRepository) GetUserByUsernameAndStoreCode(
@@ -23,7 +23,7 @@ func (r *MemoryAuthRepository) GetUserByUsernameAndStoreCode(
 	username string,
 	storeCode string,
 ) (domain.User, error) {
-	i := slices.IndexFunc(r.users, func(u domain.User) bool {
+	i := slices.IndexFunc(r.Users, func(u domain.User) bool {
 		return u.Username() == username && u.StoreCode() == storeCode
 	})
 
@@ -31,21 +31,24 @@ func (r *MemoryAuthRepository) GetUserByUsernameAndStoreCode(
 		return nil, apperror.ErrUserNotFound
 	}
 
-	return r.users[i], nil
+	return r.Users[i], nil
 }
 
-func (r *MemoryAuthRepository) CheckUserLoginCode(
+func (r *MemoryAuthRepository) CheckAndDeleteUserLoginCode(
 	_ context.Context,
 	userID uuid.UUID,
 	loginCode string,
 ) error {
-	i := slices.IndexFunc(r.loginCodes, func(c domain.LoginCode) bool {
+	i := slices.IndexFunc(r.LoginCodes, func(c domain.LoginCode) bool {
 		return c.UserID() == userID && c.Code() == loginCode
 	})
 
 	if i == -1 {
 		return apperror.ErrLoginCodeMismatch
 	}
+
+	r.LoginCodes[i] = r.LoginCodes[len(r.LoginCodes)-1]
+	r.LoginCodes = r.LoginCodes[:len(r.LoginCodes)-1]
 
 	return nil
 }

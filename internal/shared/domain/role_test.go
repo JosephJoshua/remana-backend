@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/JosephJoshua/remana-backend/internal/shared/domain"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -11,28 +12,20 @@ import (
 func TestRole(t *testing.T) {
 	t.Parallel()
 
+	var id = uuid.New()
+
 	const (
-		id        = 1
 		name      = "role"
 		storeCode = "storecode"
 	)
 
-	store, initErr := domain.NewStore(1, "store", storeCode)
+	store, initErr := domain.NewStore(uuid.New(), "store", storeCode)
 	require.NoError(t, initErr)
-
-	t.Run("new role with negative ID", func(t *testing.T) {
-		t.Parallel()
-
-		got, err := domain.NewRole(-1, name, store, false)
-
-		require.ErrorIs(t, err, domain.ErrInvalidID)
-		assert.Nil(t, got)
-	})
 
 	t.Run("new role with empty name", func(t *testing.T) {
 		t.Parallel()
 
-		got, err := domain.NewRole(1, "", store, false)
+		got, err := domain.NewRole(id, "", store, false)
 
 		require.ErrorIs(t, err, domain.ErrInputTooShort)
 		assert.Nil(t, got)
@@ -46,7 +39,7 @@ func TestRole(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, got)
 
-		assert.Equal(t, id, got.ID())
+		assert.Equal(t, id.String(), got.ID().String())
 		assert.Equal(t, name, got.Name())
 		assert.Equal(t, storeCode, got.StoreCode())
 	})

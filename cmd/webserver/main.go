@@ -13,8 +13,11 @@ import (
 	"time"
 
 	"github.com/JosephJoshua/remana-backend/internal/core"
-	"github.com/JosephJoshua/remana-backend/internal/logger"
 	"github.com/JosephJoshua/remana-backend/internal/shared"
+	"github.com/JosephJoshua/remana-backend/internal/shared/logger"
+	"github.com/go-playground/validator/v10"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/rs/zerolog"
 	"github.com/spf13/viper"
 )
@@ -83,9 +86,23 @@ func run(ctx context.Context, addr string) error {
 	return nil
 }
 
+func connectDB(ctx context.Context, connString string) (*pgxpool.Pool, error) {
+	log := logger.MustGet()
+
+	log.Info().Msg("connecting to database...")
+
+	conn, err := pgxpool.New(ctx, connString)
+	if err != nil {
+		return nil, fmt.Errorf("error connecting to database: %w", err)
+	}
+
+	return conn, nil
+}
+
 type appConfig struct {
-	ServerAddr string        `mapstructure:"remana_server_addr"`
-	AppEnv     shared.AppEnv `mapstructure:"remana_app_env"`
+	ServerAddr string        `mapstructure:"remana_server_addr" validate:"required"`
+	AppEnv     shared.AppEnv `mapstructure:"remana_app_env"     validate:"required"`
+	ConnString string        `mapstructure:"remana_conn_string" validate:"required"`
 }
 
 func loadConfig() (appConfig, error) {
@@ -106,6 +123,11 @@ func loadConfig() (appConfig, error) {
 		return appConfig{}, fmt.Errorf("error unmarshalling config: %w", err)
 	}
 
+	validate := validator.New()
+	if err = validate.Struct(&config); err != nil {
+		return appConfig{}, fmt.Errorf("invalid config: %w", err)
+	}
+
 	return config, nil
 }
 
@@ -121,7 +143,20 @@ func main() {
 	log.Info().Str("mode", string(config.AppEnv)).Msgf("app running in %s mode", config.AppEnv)
 
 	ctx := context.Background()
+
+	pool, err := connectDB(ctx, config.ConnString)
+	if err != nil {
+		log.Fatal().Err(err).Msg("error connecting to database")
+	}
+	defer pool.Close()
+
+	db := stdlib.OpenDBFromPool(pool)
+	err = core.Migrate(db, "postgres")
+	if err != nil {
+		log.Panic().Err(err).Msg("error running migrations")
+	}
+
 	if err = run(ctx, config.ServerAddr); err != nil {
-		log.Fatal().Err(err).Msg("error running app")
+		log.Panic().Err(err).Msg("error running app")
 	}
 }

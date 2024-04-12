@@ -1,33 +1,34 @@
 package domain
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/google/uuid"
+)
 
 type Role interface {
 	SetName(name string) error
 	SetIsStoreAdmin(isStoreAdmin bool)
-	ID() int
+	ID() uuid.UUID
 	Name() string
 	StoreCode() string
 	IsStoreAdmin() bool
 }
 
 type role struct {
-	id           int
+	id           uuid.UUID
 	name         string
 	storeCode    string
 	isStoreAdmin bool
 }
 
-func NewRole(id int, name string, store Store, isStoreAdmin bool) (Role, error) {
+func NewRole(id uuid.UUID, name string, store Store, isStoreAdmin bool) (Role, error) {
 	role := new(role)
 
+	role.id = id
 	role.storeCode = store.Code()
 
 	role.SetIsStoreAdmin(isStoreAdmin)
-
-	if err := role.setID(id); err != nil {
-		return nil, fmt.Errorf("failed to create new role: %w", err)
-	}
 
 	if err := role.SetName(name); err != nil {
 		return nil, fmt.Errorf("failed to create new role: %w", err)
@@ -49,7 +50,7 @@ func (r *role) SetIsStoreAdmin(isStoreAdmin bool) {
 	r.isStoreAdmin = isStoreAdmin
 }
 
-func (r *role) ID() int {
+func (r *role) ID() uuid.UUID {
 	return r.id
 }
 
@@ -63,13 +64,4 @@ func (r *role) StoreCode() string {
 
 func (r *role) IsStoreAdmin() bool {
 	return r.isStoreAdmin
-}
-
-func (r *role) setID(id int) error {
-	if id < 0 {
-		return fmt.Errorf("error setting id of role: %w", ErrInvalidID)
-	}
-
-	r.id = id
-	return nil
 }

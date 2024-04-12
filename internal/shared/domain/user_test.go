@@ -20,10 +20,10 @@ func TestUser(t *testing.T) {
 		storeCode = "storecode"
 	)
 
-	store, initErr := domain.NewStore(1, "store", storeCode)
+	store, initErr := domain.NewStore(uuid.New(), "store", storeCode)
 	require.NoError(t, initErr)
 
-	role, initErr := domain.NewRole(1, "role", store, false)
+	role, initErr := domain.NewRole(uuid.New(), "role", store, false)
 	require.NoError(t, initErr)
 
 	t.Run("new user with username too short", func(t *testing.T) {

@@ -3,28 +3,28 @@ package domain
 import (
 	"fmt"
 	"unicode"
+
+	"github.com/google/uuid"
 )
 
 type Store interface {
 	SetName(name string) error
 	SetCode(code string) error
-	ID() int
+	ID() uuid.UUID
 	Name() string
 	Code() string
 }
 
 type store struct {
-	id   int
+	id   uuid.UUID
 	name string
 	code string
 }
 
-func NewStore(id int, name string, code string) (Store, error) {
+func NewStore(id uuid.UUID, name string, code string) (Store, error) {
 	store := new(store)
 
-	if err := store.setID(id); err != nil {
-		return nil, fmt.Errorf("failed to create new store: %w", err)
-	}
+	store.id = id
 
 	if err := store.SetName(name); err != nil {
 		return nil, fmt.Errorf("failed to create new store: %w", err)
@@ -63,7 +63,7 @@ func (s *store) SetCode(code string) error {
 	return nil
 }
 
-func (s *store) ID() int {
+func (s *store) ID() uuid.UUID {
 	return s.id
 }
 
@@ -73,13 +73,4 @@ func (s *store) Name() string {
 
 func (s *store) Code() string {
 	return s.code
-}
-
-func (s *store) setID(id int) error {
-	if id < 0 {
-		return fmt.Errorf("error setting id of store: %w", ErrInvalidID)
-	}
-
-	s.id = id
-	return nil
 }

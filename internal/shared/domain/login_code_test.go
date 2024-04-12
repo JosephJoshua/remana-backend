@@ -14,10 +14,10 @@ func TestLoginCode(t *testing.T) {
 
 	var userID = uuid.New()
 
-	store, initErr := domain.NewStore(1, "store", "storecode")
+	store, initErr := domain.NewStore(uuid.New(), "store", "storecode")
 	require.NoError(t, initErr)
 
-	role, initErr := domain.NewRole(1, "role", store, false)
+	role, initErr := domain.NewRole(uuid.New(), "role", store, false)
 	require.NoError(t, initErr)
 
 	user, initErr := domain.NewUser(userID, "username", "password", store, role)

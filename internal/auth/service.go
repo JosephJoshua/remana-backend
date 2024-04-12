@@ -25,7 +25,7 @@ type LoginCodePromptManager interface {
 
 type Repository interface {
 	GetUserByUsernameAndStoreCode(ctx context.Context, username string, storeCode string) (domain.User, error)
-	CheckUserLoginCode(ctx context.Context, userID uuid.UUID, loginCode string) error
+	CheckAndDeleteUserLoginCode(ctx context.Context, userID uuid.UUID, loginCode string) error
 }
 
 type PasswordHasher interface {
@@ -120,15 +120,15 @@ func (s *Service) LoginCodePrompt(ctx context.Context, req *genapi.LoginCodeProm
 		return apierror.ToAPIError(http.StatusInternalServerError, "failed to get user ID")
 	}
 
-	err = s.repo.CheckUserLoginCode(ctx, userID, req.GetLoginCode())
+	err = s.repo.CheckAndDeleteUserLoginCode(ctx, userID, req.GetLoginCode())
 	if err != nil {
 		if errors.Is(err, apperror.ErrLoginCodeMismatch) {
 			l.Info().Str("user_id", userID.String()).Msg("wrong login code")
 			return apierror.ToAPIError(http.StatusBadRequest, "wrong login code")
 		}
 
-		l.Error().Err(err).Msg("Repository.CheckUserLoginCode(); failed to check login code")
-		return apierror.ToAPIError(http.StatusInternalServerError, "failed to check login code")
+		l.Error().Err(err).Msg("Repository.CheckUserLoginCode(); failed to check and delete login code")
+		return apierror.ToAPIError(http.StatusInternalServerError, "failed to check and delete login code")
 	}
 
 	l.Info().Str("user_id", userID.String()).Msg("store employee logged in")

@@ -76,13 +76,13 @@ func TestLogin(t *testing.T) {
 	id, initError := uuid.NewUUID()
 	require.NoError(t, initError)
 
-	store, initError := domain.NewStore(1, correctStoreCode, correctStoreCode)
+	store, initError := domain.NewStore(uuid.New(), correctStoreCode, correctStoreCode)
 	require.NoError(t, initError)
 
-	adminRole, initError := domain.NewRole(1, "admin", store, true)
+	adminRole, initError := domain.NewRole(uuid.New(), "admin", store, true)
 	require.NoError(t, initError)
 
-	employeeRole, initError := domain.NewRole(2, "employee", store, false)
+	employeeRole, initError := domain.NewRole(uuid.New(), "employee", store, false)
 	require.NoError(t, initError)
 
 	adminUser, initError := domain.NewUser(id, correctUsername, correctPassword, store, adminRole)
@@ -214,10 +214,10 @@ func TestLoginCodePrompt(t *testing.T) {
 	var userID = uuid.New()
 	const code = "A1B2C3D4"
 
-	store, initErr := domain.NewStore(1, "store", "store")
+	store, initErr := domain.NewStore(uuid.New(), "store", "store")
 	require.NoError(t, initErr)
 
-	role, initErr := domain.NewRole(1, "store", store, false)
+	role, initErr := domain.NewRole(uuid.New(), "store", store, false)
 	require.NoError(t, initErr)
 
 	user, initErr := domain.NewUser(userID, "username", "password", store, role)
@@ -226,13 +226,12 @@ func TestLoginCodePrompt(t *testing.T) {
 	loginCode, initErr := domain.NewLoginCode(user, code)
 	require.NoError(t, initErr)
 
-	repo := repository.NewMemoryAuthRepository([]domain.User{user}, []domain.LoginCode{loginCode})
-
 	t.Run("empty prompt", func(t *testing.T) {
 		t.Parallel()
 
 		sessionManager := new(sessionManagerStub)
 		loginCodePromptManager := new(loginCodePromptManagerStub)
+		repo := repository.NewMemoryAuthRepository([]domain.User{user}, []domain.LoginCode{loginCode})
 
 		s := auth.NewService(sessionManager, loginCodePromptManager, repo, &passwordHasherStub{})
 
@@ -252,6 +251,7 @@ func TestLoginCodePrompt(t *testing.T) {
 
 		sessionManager := new(sessionManagerStub)
 		loginCodePromptManager := &loginCodePromptManagerStub{userID: &userID}
+		repo := repository.NewMemoryAuthRepository([]domain.User{user}, []domain.LoginCode{loginCode})
 
 		s := auth.NewService(sessionManager, loginCodePromptManager, repo, &passwordHasherStub{})
 
@@ -273,6 +273,7 @@ func TestLoginCodePrompt(t *testing.T) {
 
 		sessionManager := new(sessionManagerStub)
 		loginCodePromptManager := &loginCodePromptManagerStub{userID: &userID}
+		repo := repository.NewMemoryAuthRepository([]domain.User{user}, []domain.LoginCode{loginCode})
 
 		s := auth.NewService(sessionManager, loginCodePromptManager, repo, &passwordHasherStub{})
 
@@ -284,5 +285,6 @@ func TestLoginCodePrompt(t *testing.T) {
 		require.NotNil(t, sessionManager.userID)
 		assert.Equal(t, userID.String(), sessionManager.userID.String())
 		assert.Nil(t, loginCodePromptManager.userID)
+		assert.Empty(t, repo.LoginCodes)
 	})
 }

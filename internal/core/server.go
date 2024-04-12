@@ -25,17 +25,17 @@ type server struct {
 type Middleware func(next http.Handler) http.Handler
 
 func NewAPIServer() (*genapi.Server, []Middleware, error) {
-	dummyStore, err := domain.NewStore(1, "store", "store")
+	dummyStore, err := domain.NewStore(uuid.New(), "store", "store")
 	if err != nil {
 		return nil, []Middleware{}, err
 	}
 
-	adminRole, err := domain.NewRole(1, "admin", dummyStore, true)
+	adminRole, err := domain.NewRole(uuid.New(), "admin", dummyStore, true)
 	if err != nil {
 		return nil, []Middleware{}, err
 	}
 
-	userRole, err := domain.NewRole(2, "user", dummyStore, false)
+	userRole, err := domain.NewRole(uuid.New(), "user", dummyStore, false)
 	if err != nil {
 		return nil, []Middleware{}, err
 	}

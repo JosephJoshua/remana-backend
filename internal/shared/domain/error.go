@@ -9,7 +9,6 @@ func (e domainError) Error() string {
 const (
 	ErrInputTooLong     domainError = domainError("input too long")
 	ErrInputTooShort    domainError = domainError("input too short")
-	ErrInvalidID        domainError = domainError("invalid ID")
 	ErrInvalidStoreCode domainError = domainError("store code must only contain lowercase letters separated by hyphens")
 	ErrInvalidLoginCode domainError = domainError("login code must only contain alphanumeric characters")
 )

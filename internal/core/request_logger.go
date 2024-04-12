@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/JosephJoshua/remana-backend/internal/logger"
+	"github.com/JosephJoshua/remana-backend/internal/shared/logger"
 	"github.com/rs/xid"
 	"github.com/rs/zerolog"
 )
