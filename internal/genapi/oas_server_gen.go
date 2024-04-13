@@ -27,6 +27,12 @@ type Handler interface {
 	//
 	// POST /auth/login-code
 	LoginCodePrompt(ctx context.Context, req *LoginCodePrompt) error
+	// Logout implements logout operation.
+	//
+	// Logs out current session.
+	//
+	// POST /auth/logout
+	Logout(ctx context.Context) error
 	// NewError creates *ErrorStatusCode from error returned by handler.
 	//
 	// Used for common default response.

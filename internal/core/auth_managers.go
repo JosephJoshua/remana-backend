@@ -39,6 +39,10 @@ func (a *authSessionManager) NewSession(ctx context.Context, userID uuid.UUID) e
 	return nil
 }
 
+func (a *authSessionManager) DeleteSession(ctx context.Context) error {
+	return a.sm.Destroy(ctx)
+}
+
 func (a *authSessionManager) middleware(next http.Handler) http.Handler {
 	return a.sm.LoadAndSave(next)
 }

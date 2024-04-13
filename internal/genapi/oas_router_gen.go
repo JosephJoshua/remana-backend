@@ -60,28 +60,64 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				break
 			}
 			switch elem[0] {
-			case 'a': // Prefix: "auth/login"
+			case 'a': // Prefix: "auth/log"
 				origElem := elem
-				if l := len("auth/login"); len(elem) >= l && elem[0:l] == "auth/login" {
+				if l := len("auth/log"); len(elem) >= l && elem[0:l] == "auth/log" {
 					elem = elem[l:]
 				} else {
 					break
 				}
 
 				if len(elem) == 0 {
-					switch r.Method {
-					case "POST":
-						s.handleLoginRequest([0]string{}, elemIsEscaped, w, r)
-					default:
-						s.notAllowed(w, r, "POST")
-					}
-
-					return
+					break
 				}
 				switch elem[0] {
-				case '-': // Prefix: "-code"
+				case 'i': // Prefix: "in"
 					origElem := elem
-					if l := len("-code"); len(elem) >= l && elem[0:l] == "-code" {
+					if l := len("in"); len(elem) >= l && elem[0:l] == "in" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						switch r.Method {
+						case "POST":
+							s.handleLoginRequest([0]string{}, elemIsEscaped, w, r)
+						default:
+							s.notAllowed(w, r, "POST")
+						}
+
+						return
+					}
+					switch elem[0] {
+					case '-': // Prefix: "-code"
+						origElem := elem
+						if l := len("-code"); len(elem) >= l && elem[0:l] == "-code" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							// Leaf node.
+							switch r.Method {
+							case "POST":
+								s.handleLoginCodePromptRequest([0]string{}, elemIsEscaped, w, r)
+							default:
+								s.notAllowed(w, r, "POST")
+							}
+
+							return
+						}
+
+						elem = origElem
+					}
+
+					elem = origElem
+				case 'o': // Prefix: "out"
+					origElem := elem
+					if l := len("out"); len(elem) >= l && elem[0:l] == "out" {
 						elem = elem[l:]
 					} else {
 						break
@@ -91,7 +127,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						// Leaf node.
 						switch r.Method {
 						case "POST":
-							s.handleLoginCodePromptRequest([0]string{}, elemIsEscaped, w, r)
+							s.handleLogoutRequest([0]string{}, elemIsEscaped, w, r)
 						default:
 							s.notAllowed(w, r, "POST")
 						}
@@ -219,32 +255,21 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 				break
 			}
 			switch elem[0] {
-			case 'a': // Prefix: "auth/login"
+			case 'a': // Prefix: "auth/log"
 				origElem := elem
-				if l := len("auth/login"); len(elem) >= l && elem[0:l] == "auth/login" {
+				if l := len("auth/log"); len(elem) >= l && elem[0:l] == "auth/log" {
 					elem = elem[l:]
 				} else {
 					break
 				}
 
 				if len(elem) == 0 {
-					switch method {
-					case "POST":
-						r.name = "Login"
-						r.summary = "Logs in with credentials"
-						r.operationID = "login"
-						r.pathPattern = "/auth/login"
-						r.args = args
-						r.count = 0
-						return r, true
-					default:
-						return
-					}
+					break
 				}
 				switch elem[0] {
-				case '-': // Prefix: "-code"
+				case 'i': // Prefix: "in"
 					origElem := elem
-					if l := len("-code"); len(elem) >= l && elem[0:l] == "-code" {
+					if l := len("in"); len(elem) >= l && elem[0:l] == "in" {
 						elem = elem[l:]
 					} else {
 						break
@@ -253,11 +278,62 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 					if len(elem) == 0 {
 						switch method {
 						case "POST":
-							// Leaf: LoginCodePrompt
-							r.name = "LoginCodePrompt"
-							r.summary = "Logs store employees in with login code"
-							r.operationID = "loginCodePrompt"
-							r.pathPattern = "/auth/login-code"
+							r.name = "Login"
+							r.summary = "Logs in with credentials"
+							r.operationID = "login"
+							r.pathPattern = "/auth/login"
+							r.args = args
+							r.count = 0
+							return r, true
+						default:
+							return
+						}
+					}
+					switch elem[0] {
+					case '-': // Prefix: "-code"
+						origElem := elem
+						if l := len("-code"); len(elem) >= l && elem[0:l] == "-code" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						if len(elem) == 0 {
+							switch method {
+							case "POST":
+								// Leaf: LoginCodePrompt
+								r.name = "LoginCodePrompt"
+								r.summary = "Logs store employees in with login code"
+								r.operationID = "loginCodePrompt"
+								r.pathPattern = "/auth/login-code"
+								r.args = args
+								r.count = 0
+								return r, true
+							default:
+								return
+							}
+						}
+
+						elem = origElem
+					}
+
+					elem = origElem
+				case 'o': // Prefix: "out"
+					origElem := elem
+					if l := len("out"); len(elem) >= l && elem[0:l] == "out" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						switch method {
+						case "POST":
+							// Leaf: Logout
+							r.name = "Logout"
+							r.summary = "Logs out current session"
+							r.operationID = "logout"
+							r.pathPattern = "/auth/logout"
 							r.args = args
 							r.count = 0
 							return r, true

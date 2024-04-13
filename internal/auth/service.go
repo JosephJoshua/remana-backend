@@ -15,6 +15,7 @@ import (
 
 type SessionManager interface {
 	NewSession(ctx context.Context, userID uuid.UUID) error
+	DeleteSession(ctx context.Context) error
 }
 
 type LoginCodePromptManager interface {
@@ -141,6 +142,18 @@ func (s *Service) LoginCodePrompt(ctx context.Context, req *genapi.LoginCodeProm
 	if err = s.loginCodePromptManager.DeletePrompt(ctx); err != nil {
 		l.Error().Err(err).Msg("LoginCodePromptManager.DeletePrompt(); failed to delete login code prompt")
 		return apierror.ToAPIError(http.StatusInternalServerError, "failed to delete login code prompt")
+	}
+
+	return nil
+}
+
+func (s *Service) Logout(ctx context.Context) error {
+	l := zerolog.Ctx(ctx)
+
+	err := s.sessionManager.DeleteSession(ctx)
+	if err != nil {
+		l.Error().Err(err).Msg("failed to delete session")
+		return apierror.ToAPIError(http.StatusInternalServerError, "failed to delete session")
 	}
 
 	return nil

@@ -26,5 +26,7 @@ paths:
     $ref: paths/auth/login.yaml
   /auth/login-code:
     $ref: paths/auth/loginCodePrompt.yaml
+  /auth/logout:
+    $ref: paths/auth/logout.yaml
   /users/me:
     $ref: paths/user/getMyUserDetails.yaml

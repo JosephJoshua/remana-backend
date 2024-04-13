@@ -43,6 +43,12 @@ func encodeLoginCodePromptResponse(response *LoginCodePromptNoContent, w http.Re
 	return nil
 }
 
+func encodeLogoutResponse(response *LogoutResetContent, w http.ResponseWriter) error {
+	w.WriteHeader(205)
+
+	return nil
+}
+
 func encodeErrorResponse(response *ErrorStatusCode, w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	code := response.StatusCode

@@ -179,6 +179,9 @@ func (s *LoginResponseType) UnmarshalText(data []byte) error {
 	}
 }
 
+// LogoutResetContent is response for Logout operation.
+type LogoutResetContent struct{}
+
 type SessionCookie struct {
 	APIKey string
 }

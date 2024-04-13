@@ -41,6 +41,15 @@ func (UnimplementedHandler) LoginCodePrompt(ctx context.Context, req *LoginCodeP
 	return ht.ErrNotImplemented
 }
 
+// Logout implements logout operation.
+//
+// Logs out current session.
+//
+// POST /auth/logout
+func (UnimplementedHandler) Logout(ctx context.Context) error {
+	return ht.ErrNotImplemented
+}
+
 // NewError creates *ErrorStatusCode from error returned by handler.
 //
 // Used for common default response.

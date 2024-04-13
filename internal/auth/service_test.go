@@ -23,6 +23,11 @@ func (s *sessionManagerStub) NewSession(_ context.Context, userID uuid.UUID) err
 	return nil
 }
 
+func (s *sessionManagerStub) DeleteSession(_ context.Context) error {
+	s.userID = nil
+	return nil
+}
+
 type loginCodePromptManagerStub struct {
 	userID *uuid.UUID
 }
@@ -354,5 +359,29 @@ func TestLoginCodePrompt(t *testing.T) {
 		assert.Equal(t, userID.String(), sessionManager.userID.String())
 		assert.Nil(t, loginCodePromptManager.userID)
 		assert.True(t, repo.loginCodeDeleted)
+	})
+}
+
+func TestLogout(t *testing.T) {
+	t.Parallel()
+
+	t.Run("deletes session", func(t *testing.T) {
+		t.Parallel()
+
+		var userID = uuid.New()
+
+		sessionManager := &sessionManagerStub{userID: &userID}
+
+		s := auth.NewService(
+			sessionManager,
+			new(loginCodePromptManagerStub),
+			new(authRepositoryStub),
+			new(passwordHasherStub),
+		)
+
+		err := s.Logout(context.Background())
+
+		require.NoError(t, err)
+		assert.Nil(t, sessionManager.userID)
 	})
 }

@@ -2,8 +2,10 @@ package user_test
 
 import (
 	"context"
+	"net/http"
 	"testing"
 
+	"github.com/JosephJoshua/remana-backend/internal/genapi"
 	"github.com/JosephJoshua/remana-backend/internal/shared"
 	"github.com/JosephJoshua/remana-backend/internal/shared/readmodel"
 	"github.com/JosephJoshua/remana-backend/internal/user"
@@ -14,6 +16,19 @@ import (
 
 func TestGetMyUserDetails(t *testing.T) {
 	t.Parallel()
+
+	t.Run("returns internal server error if user is missing from context", func(t *testing.T) {
+		t.Parallel()
+
+		s := user.NewService()
+		got, err := s.GetMyUserDetails(context.Background())
+
+		var apiErr *genapi.ErrorStatusCode
+		require.ErrorAs(t, err, &apiErr)
+
+		assert.Equal(t, http.StatusInternalServerError, apiErr.StatusCode)
+		assert.Nil(t, got)
+	})
 
 	t.Run("returns user details", func(t *testing.T) {
 		t.Parallel()
