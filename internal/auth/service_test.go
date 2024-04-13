@@ -116,7 +116,7 @@ func TestLogin(t *testing.T) {
 		IsStoreAdmin: false,
 	}
 
-	t.Run("failed login with wrong password", func(t *testing.T) {
+	t.Run("returns unauthorized when password is wrong", func(t *testing.T) {
 		t.Parallel()
 
 		sessionManager := new(sessionManagerStub)
@@ -145,7 +145,7 @@ func TestLogin(t *testing.T) {
 		assert.Nil(t, loginCodePromptManager.userID)
 	})
 
-	t.Run("failed login with wrong store code", func(t *testing.T) {
+	t.Run("returns unauthorized when store code is wrong", func(t *testing.T) {
 		t.Parallel()
 
 		sessionManager := new(sessionManagerStub)
@@ -175,7 +175,7 @@ func TestLogin(t *testing.T) {
 		assert.Nil(t, loginCodePromptManager.userID)
 	})
 
-	t.Run("failed login with wrong username", func(t *testing.T) {
+	t.Run("returns unauthorized when username is wrong", func(t *testing.T) {
 		t.Parallel()
 
 		sessionManager := new(sessionManagerStub)
@@ -205,7 +205,7 @@ func TestLogin(t *testing.T) {
 		assert.Nil(t, loginCodePromptManager.userID)
 	})
 
-	t.Run("admin successful login", func(t *testing.T) {
+	t.Run("creates new session when user is store admin and credentials are correct", func(t *testing.T) {
 		t.Parallel()
 
 		sessionManager := new(sessionManagerStub)
@@ -233,7 +233,7 @@ func TestLogin(t *testing.T) {
 		assert.Nil(t, loginCodePromptManager.userID)
 	})
 
-	t.Run("employee login code prompt", func(t *testing.T) {
+	t.Run("creates new login code prompt when user is store employee and credentials are correct", func(t *testing.T) {
 		t.Parallel()
 
 		sessionManager := new(sessionManagerStub)
@@ -274,7 +274,7 @@ func TestLoginCodePrompt(t *testing.T) {
 		IsStoreAdmin: false,
 	}
 
-	t.Run("empty prompt", func(t *testing.T) {
+	t.Run("returns bad request when prompt hasn't been initiated yet", func(t *testing.T) {
 		t.Parallel()
 
 		sessionManager := new(sessionManagerStub)
@@ -301,7 +301,7 @@ func TestLoginCodePrompt(t *testing.T) {
 		assert.False(t, repo.loginCodeDeleted)
 	})
 
-	t.Run("wrong login code", func(t *testing.T) {
+	t.Run("returns bad request when login code is wrong", func(t *testing.T) {
 		t.Parallel()
 
 		sessionManager := new(sessionManagerStub)
@@ -330,7 +330,7 @@ func TestLoginCodePrompt(t *testing.T) {
 		assert.False(t, repo.loginCodeDeleted)
 	})
 
-	t.Run("correct login code", func(t *testing.T) {
+	t.Run("creates new session when login code is correct", func(t *testing.T) {
 		t.Parallel()
 
 		sessionManager := new(sessionManagerStub)

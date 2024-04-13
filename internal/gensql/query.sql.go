@@ -65,3 +65,47 @@ func (q *Queries) GetUserByUsernameAndStoreCode(ctx context.Context, arg GetUser
 	err := row.Scan(&i.UserID, &i.UserPassword, &i.IsStoreAdmin)
 	return i, err
 }
+
+const getUserDetailsByID = `-- name: GetUserDetailsByID :one
+SELECT
+  users.user_id,
+  users.username,
+  roles.role_id,
+  roles.role_name,
+  roles.is_store_admin,
+  stores.store_id,
+  stores.store_name,
+  stores.store_code
+FROM users
+LEFT JOIN stores ON stores.store_id = users.store_id
+LEFT JOIN roles ON roles.role_id = users.role_id
+WHERE users.user_id = $1
+LIMIT 1
+`
+
+type GetUserDetailsByIDRow struct {
+	UserID       pgtype.UUID
+	Username     string
+	RoleID       pgtype.UUID
+	RoleName     pgtype.Text
+	IsStoreAdmin pgtype.Bool
+	StoreID      pgtype.UUID
+	StoreName    pgtype.Text
+	StoreCode    pgtype.Text
+}
+
+func (q *Queries) GetUserDetailsByID(ctx context.Context, userID pgtype.UUID) (GetUserDetailsByIDRow, error) {
+	row := q.db.QueryRow(ctx, getUserDetailsByID, userID)
+	var i GetUserDetailsByIDRow
+	err := row.Scan(
+		&i.UserID,
+		&i.Username,
+		&i.RoleID,
+		&i.RoleName,
+		&i.IsStoreAdmin,
+		&i.StoreID,
+		&i.StoreName,
+		&i.StoreCode,
+	)
+	return i, err
+}

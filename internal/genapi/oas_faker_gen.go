@@ -2,6 +2,10 @@
 
 package genapi
 
+import (
+	"github.com/google/uuid"
+)
+
 // SetFake set fake values.
 func (s *Error) SetFake() {
 	{
@@ -51,4 +55,66 @@ func (s *LoginResponse) SetFake() {
 // SetFake set fake values.
 func (s *LoginResponseType) SetFake() {
 	*s = LoginResponseTypeAdmin
+}
+
+// SetFake set fake values.
+func (s *UserDetails) SetFake() {
+	{
+		{
+			s.ID = uuid.New()
+		}
+	}
+	{
+		{
+			s.Username = "string"
+		}
+	}
+	{
+		{
+			s.Role.SetFake()
+		}
+	}
+	{
+		{
+			s.Store.SetFake()
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *UserDetailsRole) SetFake() {
+	{
+		{
+			s.ID = uuid.New()
+		}
+	}
+	{
+		{
+			s.Name = "string"
+		}
+	}
+	{
+		{
+			s.IsStoreAdmin = true
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *UserDetailsStore) SetFake() {
+	{
+		{
+			s.ID = uuid.New()
+		}
+	}
+	{
+		{
+			s.Name = "string"
+		}
+	}
+	{
+		{
+			s.Code = "string"
+		}
+	}
 }

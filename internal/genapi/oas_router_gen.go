@@ -48,28 +48,64 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 		switch elem[0] {
-		case '/': // Prefix: "/auth/login"
+		case '/': // Prefix: "/"
 			origElem := elem
-			if l := len("/auth/login"); len(elem) >= l && elem[0:l] == "/auth/login" {
+			if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
 				elem = elem[l:]
 			} else {
 				break
 			}
 
 			if len(elem) == 0 {
-				switch r.Method {
-				case "POST":
-					s.handleLoginRequest([0]string{}, elemIsEscaped, w, r)
-				default:
-					s.notAllowed(w, r, "POST")
-				}
-
-				return
+				break
 			}
 			switch elem[0] {
-			case '-': // Prefix: "-code"
+			case 'a': // Prefix: "auth/login"
 				origElem := elem
-				if l := len("-code"); len(elem) >= l && elem[0:l] == "-code" {
+				if l := len("auth/login"); len(elem) >= l && elem[0:l] == "auth/login" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					switch r.Method {
+					case "POST":
+						s.handleLoginRequest([0]string{}, elemIsEscaped, w, r)
+					default:
+						s.notAllowed(w, r, "POST")
+					}
+
+					return
+				}
+				switch elem[0] {
+				case '-': // Prefix: "-code"
+					origElem := elem
+					if l := len("-code"); len(elem) >= l && elem[0:l] == "-code" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch r.Method {
+						case "POST":
+							s.handleLoginCodePromptRequest([0]string{}, elemIsEscaped, w, r)
+						default:
+							s.notAllowed(w, r, "POST")
+						}
+
+						return
+					}
+
+					elem = origElem
+				}
+
+				elem = origElem
+			case 'u': // Prefix: "users/me"
+				origElem := elem
+				if l := len("users/me"); len(elem) >= l && elem[0:l] == "users/me" {
 					elem = elem[l:]
 				} else {
 					break
@@ -78,10 +114,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				if len(elem) == 0 {
 					// Leaf node.
 					switch r.Method {
-					case "POST":
-						s.handleLoginCodePromptRequest([0]string{}, elemIsEscaped, w, r)
+					case "GET":
+						s.handleGetMyUserDetailsRequest([0]string{}, elemIsEscaped, w, r)
 					default:
-						s.notAllowed(w, r, "POST")
+						s.notAllowed(w, r, "GET")
 					}
 
 					return
@@ -171,32 +207,21 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 			break
 		}
 		switch elem[0] {
-		case '/': // Prefix: "/auth/login"
+		case '/': // Prefix: "/"
 			origElem := elem
-			if l := len("/auth/login"); len(elem) >= l && elem[0:l] == "/auth/login" {
+			if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
 				elem = elem[l:]
 			} else {
 				break
 			}
 
 			if len(elem) == 0 {
-				switch method {
-				case "POST":
-					r.name = "Login"
-					r.summary = "Logs in with credentials"
-					r.operationID = "login"
-					r.pathPattern = "/auth/login"
-					r.args = args
-					r.count = 0
-					return r, true
-				default:
-					return
-				}
+				break
 			}
 			switch elem[0] {
-			case '-': // Prefix: "-code"
+			case 'a': // Prefix: "auth/login"
 				origElem := elem
-				if l := len("-code"); len(elem) >= l && elem[0:l] == "-code" {
+				if l := len("auth/login"); len(elem) >= l && elem[0:l] == "auth/login" {
 					elem = elem[l:]
 				} else {
 					break
@@ -205,11 +230,62 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 				if len(elem) == 0 {
 					switch method {
 					case "POST":
-						// Leaf: LoginCodePrompt
-						r.name = "LoginCodePrompt"
-						r.summary = "Logs store employees in with login code"
-						r.operationID = "loginCodePrompt"
-						r.pathPattern = "/auth/login-code"
+						r.name = "Login"
+						r.summary = "Logs in with credentials"
+						r.operationID = "login"
+						r.pathPattern = "/auth/login"
+						r.args = args
+						r.count = 0
+						return r, true
+					default:
+						return
+					}
+				}
+				switch elem[0] {
+				case '-': // Prefix: "-code"
+					origElem := elem
+					if l := len("-code"); len(elem) >= l && elem[0:l] == "-code" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						switch method {
+						case "POST":
+							// Leaf: LoginCodePrompt
+							r.name = "LoginCodePrompt"
+							r.summary = "Logs store employees in with login code"
+							r.operationID = "loginCodePrompt"
+							r.pathPattern = "/auth/login-code"
+							r.args = args
+							r.count = 0
+							return r, true
+						default:
+							return
+						}
+					}
+
+					elem = origElem
+				}
+
+				elem = origElem
+			case 'u': // Prefix: "users/me"
+				origElem := elem
+				if l := len("users/me"); len(elem) >= l && elem[0:l] == "users/me" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					switch method {
+					case "GET":
+						// Leaf: GetMyUserDetails
+						r.name = "GetMyUserDetails"
+						r.summary = "Returns details of the currently logged in user"
+						r.operationID = "getMyUserDetails"
+						r.pathPattern = "/users/me"
 						r.args = args
 						r.count = 0
 						return r, true

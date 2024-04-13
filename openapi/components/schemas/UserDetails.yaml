@@ -1,0 +1,48 @@
+type: object
+required:
+  - id
+  - username
+  - role
+  - store
+properties:
+  id:
+    type: string
+    format: uuid
+    example: 123e4567-e89b-12d3-a456-426614174000
+  username:
+    type: string
+    example: user1
+  role:
+    type: object
+    required:
+      - id
+      - name
+      - is_store_admin
+    properties:
+      id:
+        type: string
+        format: uuid
+        example: 123e4567-e89b-12d3-a456-426614174000
+      name:
+        type: string
+        example: Store Admin
+      is_store_admin:
+        type: boolean
+        example: false
+  store:
+    type: object
+    required:
+      - id
+      - name
+      - code
+    properties:
+      id:
+        type: string
+        format: uuid
+        example: 123e4567-e89b-12d3-a456-426614174000
+      name:
+        type: string
+        example: Store 1
+      code:
+        type: string
+        example: store-one

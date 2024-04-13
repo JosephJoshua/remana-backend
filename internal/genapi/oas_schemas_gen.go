@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/go-faster/errors"
+	"github.com/google/uuid"
 )
 
 func (s *ErrorStatusCode) Error() string {
@@ -176,4 +177,138 @@ func (s *LoginResponseType) UnmarshalText(data []byte) error {
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
+}
+
+type SessionCookie struct {
+	APIKey string
+}
+
+// GetAPIKey returns the value of APIKey.
+func (s *SessionCookie) GetAPIKey() string {
+	return s.APIKey
+}
+
+// SetAPIKey sets the value of APIKey.
+func (s *SessionCookie) SetAPIKey(val string) {
+	s.APIKey = val
+}
+
+// Ref: #
+type UserDetails struct {
+	ID       uuid.UUID        `json:"id"`
+	Username string           `json:"username"`
+	Role     UserDetailsRole  `json:"role"`
+	Store    UserDetailsStore `json:"store"`
+}
+
+// GetID returns the value of ID.
+func (s *UserDetails) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetUsername returns the value of Username.
+func (s *UserDetails) GetUsername() string {
+	return s.Username
+}
+
+// GetRole returns the value of Role.
+func (s *UserDetails) GetRole() UserDetailsRole {
+	return s.Role
+}
+
+// GetStore returns the value of Store.
+func (s *UserDetails) GetStore() UserDetailsStore {
+	return s.Store
+}
+
+// SetID sets the value of ID.
+func (s *UserDetails) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetUsername sets the value of Username.
+func (s *UserDetails) SetUsername(val string) {
+	s.Username = val
+}
+
+// SetRole sets the value of Role.
+func (s *UserDetails) SetRole(val UserDetailsRole) {
+	s.Role = val
+}
+
+// SetStore sets the value of Store.
+func (s *UserDetails) SetStore(val UserDetailsStore) {
+	s.Store = val
+}
+
+type UserDetailsRole struct {
+	ID           uuid.UUID `json:"id"`
+	Name         string    `json:"name"`
+	IsStoreAdmin bool      `json:"is_store_admin"`
+}
+
+// GetID returns the value of ID.
+func (s *UserDetailsRole) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *UserDetailsRole) GetName() string {
+	return s.Name
+}
+
+// GetIsStoreAdmin returns the value of IsStoreAdmin.
+func (s *UserDetailsRole) GetIsStoreAdmin() bool {
+	return s.IsStoreAdmin
+}
+
+// SetID sets the value of ID.
+func (s *UserDetailsRole) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *UserDetailsRole) SetName(val string) {
+	s.Name = val
+}
+
+// SetIsStoreAdmin sets the value of IsStoreAdmin.
+func (s *UserDetailsRole) SetIsStoreAdmin(val bool) {
+	s.IsStoreAdmin = val
+}
+
+type UserDetailsStore struct {
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
+	Code string    `json:"code"`
+}
+
+// GetID returns the value of ID.
+func (s *UserDetailsStore) GetID() uuid.UUID {
+	return s.ID
+}
+
+// GetName returns the value of Name.
+func (s *UserDetailsStore) GetName() string {
+	return s.Name
+}
+
+// GetCode returns the value of Code.
+func (s *UserDetailsStore) GetCode() string {
+	return s.Code
+}
+
+// SetID sets the value of ID.
+func (s *UserDetailsStore) SetID(val uuid.UUID) {
+	s.ID = val
+}
+
+// SetName sets the value of Name.
+func (s *UserDetailsStore) SetName(val string) {
+	s.Name = val
+}
+
+// SetCode sets the value of Code.
+func (s *UserDetailsStore) SetCode(val string) {
+	s.Code = val
 }

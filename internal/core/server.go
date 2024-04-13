@@ -8,7 +8,9 @@ import (
 
 	"github.com/JosephJoshua/remana-backend/internal/auth"
 	"github.com/JosephJoshua/remana-backend/internal/genapi"
+	"github.com/JosephJoshua/remana-backend/internal/shared/apierror"
 	"github.com/JosephJoshua/remana-backend/internal/shared/repository"
+	"github.com/JosephJoshua/remana-backend/internal/user"
 	"github.com/go-faster/jx"
 	"github.com/jackc/pgx/v5/pgxpool"
 	ht "github.com/ogen-go/ogen/http"
@@ -17,8 +19,12 @@ import (
 	"github.com/rs/zerolog"
 )
 
+type authService = auth.Service
+type userService = user.Service
+
 type server struct {
-	*auth.Service
+	*authService
+	*userService
 }
 
 type Middleware func(next http.Handler) http.Handler
@@ -36,11 +42,16 @@ func NewAPIServer(db *pgxpool.Pool) (*genapi.Server, []Middleware, error) {
 		&PasswordHasher{},
 	)
 
+	userService := user.NewService()
+
 	srv := server{
-		Service: authService,
+		authService: authService,
+		userService: userService,
 	}
 
-	oasSrv, err := genapi.NewServer(srv, genapi.WithErrorHandler(handleServerError))
+	securityHandler := newSecurityHandler(sm.sm, repository.NewSQLUserRepository(db))
+
+	oasSrv, err := genapi.NewServer(srv, securityHandler, genapi.WithErrorHandler(handleServerError))
 	if err != nil {
 		return nil, []Middleware{}, fmt.Errorf("error creating oas server: %w", err)
 	}
@@ -48,8 +59,17 @@ func NewAPIServer(db *pgxpool.Pool) (*genapi.Server, []Middleware, error) {
 	return oasSrv, middlewares, nil
 }
 
-func (s server) NewError(_ context.Context, _ error) *genapi.ErrorStatusCode {
-	return nil
+func (s server) NewError(_ context.Context, err error) *genapi.ErrorStatusCode {
+	var apiErr *genapi.ErrorStatusCode
+	if errors.As(err, &apiErr) {
+		return apiErr
+	}
+
+	if errors.Is(err, ogenerrors.ErrSecurityRequirementIsNotSatisfied) {
+		return apierror.ToAPIError(http.StatusUnauthorized, "unauthorized")
+	}
+
+	return apierror.ToAPIError(http.StatusInternalServerError, "unexpected internal error")
 }
 
 func handleServerError(_ context.Context, w http.ResponseWriter, r *http.Request, err error) {

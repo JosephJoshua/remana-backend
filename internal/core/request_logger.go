@@ -52,18 +52,21 @@ func requestLoggerMiddleware(next http.Handler) http.Handler {
 				lrw.statusCode = http.StatusInternalServerError
 			}
 
-			l.
-				Info().
+			requestLogger := l.
+				With().
 				Str("method", r.Method).
 				Str("url", r.URL.RequestURI()).
 				Str("user_agent", r.UserAgent()).
 				Dur("elapsed_ms", time.Since(start)).
 				Int("status_code", lrw.statusCode).
-				Msg("request handled")
+				Logger()
 
 			if err != nil {
+				requestLogger.Error().Interface("error", err).Msg("request handler panicked")
 				panic(err)
 			}
+
+			requestLogger.Info().Msg("request handled")
 		}()
 
 		next.ServeHTTP(lrw, r)

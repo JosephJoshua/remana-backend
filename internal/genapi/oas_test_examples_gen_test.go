@@ -105,3 +105,39 @@ func TestLoginResponseType_Examples(t *testing.T) {
 		})
 	}
 }
+func TestUserDetails_EncodeDecode(t *testing.T) {
+	var typ UserDetails
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 UserDetails
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestUserDetailsRole_EncodeDecode(t *testing.T) {
+	var typ UserDetailsRole
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 UserDetailsRole
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestUserDetailsStore_EncodeDecode(t *testing.T) {
+	var typ UserDetailsStore
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 UserDetailsStore
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}

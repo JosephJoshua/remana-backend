@@ -13,6 +13,8 @@ servers:
 tags:
   - name: auth
     description: Authentication into the API
+  - name: user
+    description: User details
 components:
   securitySchemes:
     sessionCookie:
@@ -24,3 +26,5 @@ paths:
     $ref: paths/auth/login.yaml
   /auth/login-code:
     $ref: paths/auth/loginCodePrompt.yaml
+  /users/me:
+    $ref: paths/user/getMyUserDetails.yaml

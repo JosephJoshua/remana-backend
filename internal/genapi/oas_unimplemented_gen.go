@@ -13,6 +13,15 @@ type UnimplementedHandler struct{}
 
 var _ Handler = UnimplementedHandler{}
 
+// GetMyUserDetails implements getMyUserDetails operation.
+//
+// Returns details of the currently logged in user.
+//
+// GET /users/me
+func (UnimplementedHandler) GetMyUserDetails(ctx context.Context) (r *UserDetails, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // Login implements login operation.
 //
 // Logs in with credentials.
