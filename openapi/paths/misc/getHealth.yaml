@@ -1,0 +1,15 @@
+get:
+  tags:
+    - misc
+  summary: Returns the health status of the service
+  description: Returns the health status of the service
+  operationId: getHealth
+  security: []
+  responses:
+    "204":
+      description: Health status is OK
+    default:
+      content:
+        application/json:
+          schema:
+            $ref: ../../components/schemas/Error.yaml

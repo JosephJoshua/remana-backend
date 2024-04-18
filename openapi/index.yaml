@@ -22,6 +22,8 @@ components:
 security:
   - sessionCookie: []
 paths:
+  /healthz:
+    $ref: paths/misc/getHealth.yaml
   /auth/login:
     $ref: paths/auth/login.yaml
   /auth/login-code:

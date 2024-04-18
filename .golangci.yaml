@@ -42,6 +42,7 @@ linters-settings:
     # Default: []
     exclude:
       # std libs
+      - "^crypto/tls.Config$"
       - "^net/http.Client$"
       - "^net/http.Cookie$"
       - "^net/http.Request$"
@@ -64,6 +65,8 @@ linters-settings:
       - "^golang.org/x/tools/go/analysis.Analyzer$"
       - "^google.golang.org/protobuf/.+Options$"
       - "^gopkg.in/yaml.v3.Node$"
+      - "^github.com/ory/dockertest/v3.RunOptions$"
+      - "^github.com/gavv/httpexpect/v2.Config$"
 
   funlen:
     # Checks the number of lines in a function.

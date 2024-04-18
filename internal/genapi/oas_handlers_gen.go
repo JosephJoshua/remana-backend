@@ -15,6 +15,77 @@ import (
 
 func recordError(string, error) {}
 
+// handleGetHealthRequest handles getHealth operation.
+//
+// Returns the health status of the service.
+//
+// GET /healthz
+func (s *Server) handleGetHealthRequest(args [0]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var (
+		err error
+	)
+
+	var response *GetHealthNoContent
+	if m := s.cfg.Middleware; m != nil {
+		mreq := middleware.Request{
+			Context:          ctx,
+			OperationName:    "GetHealth",
+			OperationSummary: "Returns the health status of the service",
+			OperationID:      "getHealth",
+			Body:             nil,
+			Params:           middleware.Parameters{},
+			Raw:              r,
+		}
+
+		type (
+			Request  = struct{}
+			Params   = struct{}
+			Response = *GetHealthNoContent
+		)
+		response, err = middleware.HookMiddleware[
+			Request,
+			Params,
+			Response,
+		](
+			m,
+			mreq,
+			nil,
+			func(ctx context.Context, request Request, params Params) (response Response, err error) {
+				err = s.h.GetHealth(ctx)
+				return response, err
+			},
+		)
+	} else {
+		err = s.h.GetHealth(ctx)
+	}
+	if err != nil {
+		if errRes, ok := errors.Into[*ErrorStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w); err != nil {
+				recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w); err != nil {
+			recordError("Internal", err)
+		}
+		return
+	}
+
+	if err := encodeGetHealthResponse(response, w); err != nil {
+		recordError("EncodeResponse", err)
+		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+		}
+		return
+	}
+}
+
 // handleGetMyUserDetailsRequest handles getMyUserDetails operation.
 //
 // Returns details of the currently logged in user.

@@ -11,6 +11,12 @@ import (
 	ht "github.com/ogen-go/ogen/http"
 )
 
+func encodeGetHealthResponse(response *GetHealthNoContent, w http.ResponseWriter) error {
+	w.WriteHeader(204)
+
+	return nil
+}
+
 func encodeGetMyUserDetailsResponse(response *UserDetails, w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(200)

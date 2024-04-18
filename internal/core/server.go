@@ -8,6 +8,7 @@ import (
 
 	"github.com/JosephJoshua/remana-backend/internal/auth"
 	"github.com/JosephJoshua/remana-backend/internal/genapi"
+	"github.com/JosephJoshua/remana-backend/internal/misc"
 	"github.com/JosephJoshua/remana-backend/internal/shared/apierror"
 	"github.com/JosephJoshua/remana-backend/internal/shared/repository"
 	"github.com/JosephJoshua/remana-backend/internal/user"
@@ -21,10 +22,12 @@ import (
 
 type authService = auth.Service
 type userService = user.Service
+type miscService = misc.Service
 
 type server struct {
 	*authService
 	*userService
+	*miscService
 }
 
 type Middleware func(next http.Handler) http.Handler
@@ -43,10 +46,12 @@ func NewAPIServer(db *pgxpool.Pool) (*genapi.Server, []Middleware, error) {
 	)
 
 	userService := user.NewService()
+	miscService := misc.NewService()
 
 	srv := server{
 		authService: authService,
 		userService: userService,
+		miscService: miscService,
 	}
 
 	securityHandler := newSecurityHandler(sm.sm, repository.NewSQLUserRepository(db))

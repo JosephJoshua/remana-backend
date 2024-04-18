@@ -13,6 +13,15 @@ type UnimplementedHandler struct{}
 
 var _ Handler = UnimplementedHandler{}
 
+// GetHealth implements getHealth operation.
+//
+// Returns the health status of the service.
+//
+// GET /healthz
+func (UnimplementedHandler) GetHealth(ctx context.Context) error {
+	return ht.ErrNotImplemented
+}
+
 // GetMyUserDetails implements getMyUserDetails operation.
 //
 // Returns details of the currently logged in user.

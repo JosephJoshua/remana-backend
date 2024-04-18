@@ -2,11 +2,14 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/JosephJoshua/remana-backend/internal/gensql"
+	"github.com/JosephJoshua/remana-backend/internal/shared/apperror"
 	"github.com/JosephJoshua/remana-backend/internal/shared/readmodel"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -62,6 +65,10 @@ func (r *SQLAuthRepository) CheckAndDeleteUserLoginCode(
 	})
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return apperror.ErrLoginCodeMismatch
+		}
+
 		return fmt.Errorf("failed to get login code by user ID and code: %w", err)
 	}
 

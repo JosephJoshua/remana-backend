@@ -54,6 +54,9 @@ func (s *ErrorStatusCode) SetResponse(val Error) {
 	s.Response = val
 }
 
+// GetHealthNoContent is response for GetHealth operation.
+type GetHealthNoContent struct{}
+
 // Ref: #
 type LoginCodePrompt struct {
 	LoginCode string `json:"login_code"`

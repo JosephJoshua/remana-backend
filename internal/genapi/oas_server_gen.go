@@ -8,6 +8,12 @@ import (
 
 // Handler handles operations described by OpenAPI v3 specification.
 type Handler interface {
+	// GetHealth implements getHealth operation.
+	//
+	// Returns the health status of the service.
+	//
+	// GET /healthz
+	GetHealth(ctx context.Context) error
 	// GetMyUserDetails implements getMyUserDetails operation.
 	//
 	// Returns details of the currently logged in user.

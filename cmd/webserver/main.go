@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"io/fs"
 	stdlog "log"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"syscall"
@@ -15,6 +17,7 @@ import (
 	"github.com/JosephJoshua/remana-backend/internal/core"
 	"github.com/JosephJoshua/remana-backend/internal/shared"
 	"github.com/JosephJoshua/remana-backend/internal/shared/logger"
+	"github.com/JosephJoshua/remana-backend/internal/shared/projectpath"
 	"github.com/go-playground/validator/v10"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
@@ -30,7 +33,7 @@ const (
 	ShutdownTimeout   = 10 * time.Second
 )
 
-func run(ctx context.Context, db *pgxpool.Pool, addr string) error {
+func Run(ctx context.Context, db *pgxpool.Pool, addr string, certPEM string, keyPEM string) error {
 	log := logger.MustGet()
 
 	srv, middlewares, err := core.NewAPIServer(db)
@@ -44,6 +47,11 @@ func run(ctx context.Context, db *pgxpool.Pool, addr string) error {
 		handler = middlewares[i](handler)
 	}
 
+	cert, err := tls.X509KeyPair([]byte(certPEM), []byte(keyPEM))
+	if err != nil {
+		return fmt.Errorf("error loading cert and key: %w", err)
+	}
+
 	httpServer := &http.Server{
 		Addr:              addr,
 		Handler:           handler,
@@ -51,6 +59,17 @@ func run(ctx context.Context, db *pgxpool.Pool, addr string) error {
 		IdleTimeout:       IdleTimeout,
 		ReadTimeout:       ReadTimeout,
 		WriteTimeout:      WriteTimeout,
+		TLSConfig: &tls.Config{
+			Certificates:             []tls.Certificate{cert},
+			MinVersion:               tls.VersionTLS12,
+			CurvePreferences:         []tls.CurveID{tls.CurveP521, tls.CurveP384, tls.CurveP256},
+			PreferServerCipherSuites: true,
+			CipherSuites: []uint16{
+				tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+				tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+				tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+			},
+		},
 	}
 
 	listenErr := make(chan error)
@@ -58,7 +77,8 @@ func run(ctx context.Context, db *pgxpool.Pool, addr string) error {
 	go func() {
 		log.Info().Msgf("server listening on %s", httpServer.Addr)
 
-		if err = httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		if err = httpServer.ListenAndServeTLS("", ""); err != nil &&
+			!errors.Is(err, http.ErrServerClosed) {
 			listenErr <- fmt.Errorf("error listening and serving: %w", err)
 		}
 	}()
@@ -100,9 +120,11 @@ func connectDB(ctx context.Context, connString string) (*pgxpool.Pool, error) {
 }
 
 type appConfig struct {
-	ServerAddr string        `mapstructure:"remana_server_addr" validate:"required"`
-	AppEnv     shared.AppEnv `mapstructure:"remana_app_env"     validate:"required"`
-	ConnString string        `mapstructure:"remana_conn_string" validate:"required"`
+	ServerAddr   string        `mapstructure:"remana_server_addr"    validate:"required"`
+	AppEnv       shared.AppEnv `mapstructure:"remana_app_env"        validate:"required"`
+	ConnString   string        `mapstructure:"remana_conn_string"    validate:"required"`
+	CertFilePath string        `mapstructure:"remana_cert_file_path" validate:"required"`
+	KeyFilePath  string        `mapstructure:"remana_key_file_path"  validate:"required"`
 }
 
 func loadConfig() (appConfig, error) {
@@ -110,6 +132,8 @@ func loadConfig() (appConfig, error) {
 
 	viper.SetDefault("remana_server_addr", "localhost:8080")
 	viper.SetDefault("remana_app_env", "production")
+	viper.SetDefault("remana_cert_file_path", "server.crt")
+	viper.SetDefault("remana_key_file_path", "server.key")
 
 	viper.AutomaticEnv()
 
@@ -138,15 +162,15 @@ func main() {
 	}
 
 	logger.Init(zerolog.DebugLevel, config.AppEnv)
-	log := logger.MustGet()
+	l := logger.MustGet()
 
-	log.Info().Str("mode", string(config.AppEnv)).Msgf("app running in %s mode", config.AppEnv)
+	l.Info().Str("mode", string(config.AppEnv)).Msgf("app running in %s mode", config.AppEnv)
 
 	ctx := context.Background()
 
 	pool, err := connectDB(ctx, config.ConnString)
 	if err != nil {
-		log.Fatal().Err(err).Msg("error connecting to database")
+		l.Fatal().Err(err).Msg("error connecting to database")
 	}
 	defer pool.Close()
 
@@ -154,14 +178,34 @@ func main() {
 	n, err := core.GetPendingMigrationCount(db, "postgres")
 
 	if err != nil {
-		log.Panic().Err(err).Msg("error checking if migration is needed")
+		l.Panic().Err(err).Msg("error checking if migration is needed")
 	}
 
 	if n > 0 {
-		log.Warn().Int("count", n).Msg("there are pending migrations")
+		l.Warn().Int("count", n).Msg("there are pending migrations")
 	}
 
-	if err = run(ctx, pool, config.ServerAddr); err != nil {
-		log.Panic().Err(err).Msg("error running app")
+	certFilePath, err := url.JoinPath(projectpath.Root(), config.CertFilePath)
+	if err != nil {
+		l.Panic().Err(err).Msg("error joining cert file path")
+	}
+
+	keyFilePath, err := url.JoinPath(projectpath.Root(), config.KeyFilePath)
+	if err != nil {
+		l.Panic().Err(err).Msg("error joining key file path")
+	}
+
+	certPEM, err := os.ReadFile(certFilePath)
+	if err != nil {
+		l.Panic().Err(err).Msg("error reading cert file")
+	}
+
+	keyPEM, err := os.ReadFile(keyFilePath)
+	if err != nil {
+		l.Panic().Err(err).Msg("error reading key file")
+	}
+
+	if err = Run(ctx, pool, config.ServerAddr, string(certPEM), string(keyPEM)); err != nil {
+		l.Panic().Err(err).Msg("error running app")
 	}
 }

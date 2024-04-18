@@ -12,3 +12,10 @@ Backend API service for Remana.
 	Provides live reload for Go apps.
 - [sqlc](https://github.com/sqlc-dev/sqlc/)
 	SQL type-safe code generator for Go.
+
+## Setup
+1. Generate self-signed public and private keys.
+	 ```
+	 openssl genrsa -out server.key 2048
+	 openssl req -new -x509 -sha256 -key server.key -out server.crt -days 3650
+	 ```
