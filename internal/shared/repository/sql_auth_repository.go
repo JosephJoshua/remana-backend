@@ -39,7 +39,7 @@ func (r *SQLAuthRepository) GetUserByUsernameAndStoreCode(
 		return emptyUser, fmt.Errorf("failed to get user by username and store code: %w", err)
 	}
 
-	userID, err := uuid.FromBytes(user.UserID.Bytes[:])
+	userID, err := pgtypeUUIDToGoogleUUID(user.UserID)
 	if err != nil {
 		return emptyUser, fmt.Errorf("failed to parse user ID from bytes: %w", err)
 	}
