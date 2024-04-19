@@ -43,6 +43,23 @@ func (a *authSessionManager) DeleteSession(ctx context.Context) error {
 	return a.sm.Destroy(ctx)
 }
 
+func (a *authSessionManager) GetUserID(ctx context.Context) (uuid.UUID, error) {
+	userID := a.sm.GetString(ctx, userIDKey)
+	if userID == "" {
+		return uuid.UUID{}, fmt.Errorf(
+			"failed to get user ID from session: %w",
+			apperror.ErrMissingSession,
+		)
+	}
+
+	parsedUserID, err := uuid.Parse(userID)
+	if err != nil {
+		return uuid.UUID{}, fmt.Errorf("failed to parse user ID from session: %w", err)
+	}
+
+	return parsedUserID, nil
+}
+
 func (a *authSessionManager) middleware(next http.Handler) http.Handler {
 	return a.sm.LoadAndSave(next)
 }

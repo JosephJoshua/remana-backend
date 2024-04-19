@@ -1,5 +1,10 @@
 {
   "go.lintTool": "golangci-lint",
   "go.lintFlags": ["--fast"],
+  "gopls": {
+    "build.env": {
+      "GOFLAGS": "-tags=unit,integration,e2e"
+    }
+  },
   "editor.defaultFormatter": "golang.go"
 }

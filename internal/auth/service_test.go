@@ -1,3 +1,6 @@
+//go:build unit
+// +build unit
+
 package auth_test
 
 import (
@@ -14,16 +17,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type sessionManagerStub struct {
+type serviceSessionManagerStub struct {
 	userID *uuid.UUID
 }
 
-func (s *sessionManagerStub) NewSession(_ context.Context, userID uuid.UUID) error {
+func (s *serviceSessionManagerStub) NewSession(_ context.Context, userID uuid.UUID) error {
 	s.userID = &userID
 	return nil
 }
 
-func (s *sessionManagerStub) DeleteSession(_ context.Context) error {
+func (s *serviceSessionManagerStub) DeleteSession(_ context.Context) error {
 	s.userID = nil
 	return nil
 }
@@ -64,7 +67,7 @@ func (p *passwordHasherStub) Check(hashedPassword, password string) error {
 	return nil
 }
 
-type authRepositoryStub struct {
+type serviceRepositoryStub struct {
 	user             readmodel.AuthnUser
 	username         string
 	storeCode        string
@@ -72,7 +75,7 @@ type authRepositoryStub struct {
 	loginCodeDeleted bool
 }
 
-func (a *authRepositoryStub) GetUserByUsernameAndStoreCode(
+func (a *serviceRepositoryStub) GetUserByUsernameAndStoreCode(
 	_ context.Context,
 	username string,
 	storeCode string,
@@ -85,7 +88,11 @@ func (a *authRepositoryStub) GetUserByUsernameAndStoreCode(
 	return a.user, nil
 }
 
-func (a *authRepositoryStub) CheckAndDeleteUserLoginCode(_ context.Context, userID uuid.UUID, loginCode string) error {
+func (a *serviceRepositoryStub) CheckAndDeleteUserLoginCode(
+	_ context.Context,
+	userID uuid.UUID,
+	loginCode string,
+) error {
 	if a.user.ID.String() != userID.String() || a.loginCode != loginCode {
 		return apperror.ErrLoginCodeMismatch
 	}
@@ -124,9 +131,9 @@ func TestLogin(t *testing.T) {
 	t.Run("returns unauthorized when password is wrong", func(t *testing.T) {
 		t.Parallel()
 
-		sessionManager := new(sessionManagerStub)
+		sessionManager := new(serviceSessionManagerStub)
 		loginCodePromptManager := new(loginCodePromptManagerStub)
-		repo := &authRepositoryStub{
+		repo := &serviceRepositoryStub{
 			user:             adminUser,
 			username:         correctUsername,
 			storeCode:        correctStoreCode,
@@ -153,9 +160,9 @@ func TestLogin(t *testing.T) {
 	t.Run("returns unauthorized when store code is wrong", func(t *testing.T) {
 		t.Parallel()
 
-		sessionManager := new(sessionManagerStub)
+		sessionManager := new(serviceSessionManagerStub)
 		loginCodePromptManager := new(loginCodePromptManagerStub)
-		repo := &authRepositoryStub{
+		repo := &serviceRepositoryStub{
 			user:             adminUser,
 			username:         correctUsername,
 			storeCode:        correctStoreCode,
@@ -183,9 +190,9 @@ func TestLogin(t *testing.T) {
 	t.Run("returns unauthorized when username is wrong", func(t *testing.T) {
 		t.Parallel()
 
-		sessionManager := new(sessionManagerStub)
+		sessionManager := new(serviceSessionManagerStub)
 		loginCodePromptManager := new(loginCodePromptManagerStub)
-		repo := &authRepositoryStub{
+		repo := &serviceRepositoryStub{
 			user:             adminUser,
 			username:         correctUsername,
 			storeCode:        correctStoreCode,
@@ -213,9 +220,9 @@ func TestLogin(t *testing.T) {
 	t.Run("creates new session when user is store admin and credentials are correct", func(t *testing.T) {
 		t.Parallel()
 
-		sessionManager := new(sessionManagerStub)
+		sessionManager := new(serviceSessionManagerStub)
 		loginCodePromptManager := new(loginCodePromptManagerStub)
-		repo := &authRepositoryStub{
+		repo := &serviceRepositoryStub{
 			user:             adminUser,
 			username:         correctUsername,
 			storeCode:        correctStoreCode,
@@ -241,9 +248,9 @@ func TestLogin(t *testing.T) {
 	t.Run("creates new login code prompt when user is store employee and credentials are correct", func(t *testing.T) {
 		t.Parallel()
 
-		sessionManager := new(sessionManagerStub)
+		sessionManager := new(serviceSessionManagerStub)
 		loginCodePromptManager := new(loginCodePromptManagerStub)
-		repo := &authRepositoryStub{
+		repo := &serviceRepositoryStub{
 			user:             employeeUser,
 			username:         correctUsername,
 			storeCode:        correctStoreCode,
@@ -282,9 +289,9 @@ func TestLoginCodePrompt(t *testing.T) {
 	t.Run("returns bad request when prompt hasn't been initiated yet", func(t *testing.T) {
 		t.Parallel()
 
-		sessionManager := new(sessionManagerStub)
+		sessionManager := new(serviceSessionManagerStub)
 		loginCodePromptManager := new(loginCodePromptManagerStub)
-		repo := &authRepositoryStub{
+		repo := &serviceRepositoryStub{
 			user:             user,
 			loginCode:        loginCode,
 			username:         "testuser",
@@ -309,9 +316,9 @@ func TestLoginCodePrompt(t *testing.T) {
 	t.Run("returns bad request when login code is wrong", func(t *testing.T) {
 		t.Parallel()
 
-		sessionManager := new(sessionManagerStub)
+		sessionManager := new(serviceSessionManagerStub)
 		loginCodePromptManager := &loginCodePromptManagerStub{userID: &userID}
-		repo := &authRepositoryStub{
+		repo := &serviceRepositoryStub{
 			user:             user,
 			loginCode:        loginCode,
 			username:         "testuser",
@@ -338,9 +345,9 @@ func TestLoginCodePrompt(t *testing.T) {
 	t.Run("creates new session when login code is correct", func(t *testing.T) {
 		t.Parallel()
 
-		sessionManager := new(sessionManagerStub)
+		sessionManager := new(serviceSessionManagerStub)
 		loginCodePromptManager := &loginCodePromptManagerStub{userID: &userID}
-		repo := &authRepositoryStub{
+		repo := &serviceRepositoryStub{
 			user:             user,
 			loginCode:        loginCode,
 			username:         "testuser",
@@ -370,12 +377,12 @@ func TestLogout(t *testing.T) {
 
 		var userID = uuid.New()
 
-		sessionManager := &sessionManagerStub{userID: &userID}
+		sessionManager := &serviceSessionManagerStub{userID: &userID}
 
 		s := auth.NewService(
 			sessionManager,
 			new(loginCodePromptManagerStub),
-			new(authRepositoryStub),
+			new(serviceRepositoryStub),
 			new(passwordHasherStub),
 		)
 

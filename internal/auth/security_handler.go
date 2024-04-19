@@ -1,4 +1,4 @@
-package core
+package auth
 
 import (
 	"context"
@@ -10,42 +10,44 @@ import (
 	"github.com/JosephJoshua/remana-backend/internal/shared/apierror"
 	"github.com/JosephJoshua/remana-backend/internal/shared/apperror"
 	"github.com/JosephJoshua/remana-backend/internal/shared/readmodel"
-	"github.com/alexedwards/scs/v2"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 )
 
-type securityHandlerRepository interface {
+type SecurityHandlerSessionManager interface {
+	GetUserID(ctx context.Context) (uuid.UUID, error)
+}
+
+type SecurityHandlerRepository interface {
 	GetUserDetailsByID(ctx context.Context, userID uuid.UUID) (readmodel.UserDetails, error)
 }
 
-type securityHandler struct {
-	sm   *scs.SessionManager
-	repo securityHandlerRepository
+type SecurityHandler struct {
+	sessionManager SecurityHandlerSessionManager
+	repo           SecurityHandlerRepository
 }
 
-func newSecurityHandler(sm *scs.SessionManager, repo securityHandlerRepository) *securityHandler {
-	return &securityHandler{
-		sm:   sm,
-		repo: repo,
+func NewSecurityHandler(sessionManager SecurityHandlerSessionManager, repo SecurityHandlerRepository) *SecurityHandler {
+	return &SecurityHandler{
+		sessionManager: sessionManager,
+		repo:           repo,
 	}
 }
 
-func (s *securityHandler) HandleSessionCookie(
+func (s *SecurityHandler) HandleSessionCookie(
 	ctx context.Context,
 	_ string,
 	_ genapi.SessionCookie,
 ) (context.Context, error) {
 	l := zerolog.Ctx(ctx)
 
-	userIDStr := s.sm.GetString(ctx, userIDKey)
-	if userIDStr == "" {
-		return ctx, apierror.ToAPIError(http.StatusUnauthorized, "unauthorized")
-	}
-
-	userID, err := uuid.Parse(userIDStr)
+	userID, err := s.sessionManager.GetUserID(ctx)
 	if err != nil {
-		l.Error().Err(err).Msg("invalid user ID found in session")
+		if errors.Is(err, apperror.ErrMissingSession) {
+			return ctx, apierror.ToAPIError(http.StatusUnauthorized, "unauthorized")
+		}
+
+		l.Error().Err(err).Msg("failed to get user ID from session")
 
 		return ctx, apierror.ToAPIError(
 			http.StatusUnauthorized,

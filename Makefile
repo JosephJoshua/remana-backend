@@ -51,6 +51,18 @@ generate:
 	go generate ./...
 	sqlc generate
 
-.PHONY: test
-test:
-	go test -count=1 -tags testing ./...
+.PHONY: test/unit
+test/unit:
+	go test -count=1 -tags unit ./...
+
+.PHONY: test/integration
+test/integration:
+	go test -count=1 -tags integration ./...
+
+.PHONY: test/e2e
+test/e2e:
+	go test -count=1 -tags e2e ./...
+
+.PHONY: test/all
+test/all:
+	go test -count=1 ./...

@@ -1,3 +1,6 @@
+//go:build unit
+// +build unit
+
 package misc_test
 
 import (

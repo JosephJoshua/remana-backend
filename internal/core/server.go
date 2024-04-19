@@ -54,7 +54,7 @@ func NewAPIServer(db *pgxpool.Pool) (*genapi.Server, []Middleware, error) {
 		miscService: miscService,
 	}
 
-	securityHandler := newSecurityHandler(sm.sm, repository.NewSQLUserRepository(db))
+	securityHandler := auth.NewSecurityHandler(sm, repository.NewSQLUserRepository(db))
 
 	oasSrv, err := genapi.NewServer(srv, securityHandler, genapi.WithErrorHandler(handleServerError))
 	if err != nil {

@@ -13,7 +13,7 @@ import (
 	"github.com/rs/zerolog"
 )
 
-type SessionManager interface {
+type ServiceSessionManager interface {
 	NewSession(ctx context.Context, userID uuid.UUID) error
 	DeleteSession(ctx context.Context) error
 }
@@ -24,7 +24,7 @@ type LoginCodePromptManager interface {
 	DeletePrompt(ctx context.Context) error
 }
 
-type Repository interface {
+type ServiceRepository interface {
 	GetUserByUsernameAndStoreCode(ctx context.Context, username string, storeCode string) (readmodel.AuthnUser, error)
 	CheckAndDeleteUserLoginCode(ctx context.Context, userID uuid.UUID, loginCode string) error
 }
@@ -35,16 +35,16 @@ type PasswordHasher interface {
 }
 
 type Service struct {
-	sessionManager         SessionManager
+	sessionManager         ServiceSessionManager
 	loginCodePromptManager LoginCodePromptManager
-	repo                   Repository
+	repo                   ServiceRepository
 	hasher                 PasswordHasher
 }
 
 func NewService(
-	sessionManager SessionManager,
+	sessionManager ServiceSessionManager,
 	loginCodePromptManager LoginCodePromptManager,
-	repo Repository,
+	repo ServiceRepository,
 	hasher PasswordHasher,
 ) *Service {
 	return &Service{
