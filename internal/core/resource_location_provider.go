@@ -1,7 +1,6 @@
 package core
 
 import (
-	"context"
 	"fmt"
 	"net/url"
 
@@ -10,7 +9,7 @@ import (
 
 type resourceLocationProvider struct{}
 
-func (r resourceLocationProvider) RepairOrder(ctx context.Context, orderID uuid.UUID) (url.URL, error) {
+func (r resourceLocationProvider) RepairOrder(orderID uuid.UUID) (url.URL, error) {
 	url := url.URL{
 		Path: fmt.Sprintf("/repair-orders/%s", orderID.String()),
 	}

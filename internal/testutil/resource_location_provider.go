@@ -1,7 +1,6 @@
 package testutil
 
 import (
-	"context"
 	"net/url"
 
 	"github.com/JosephJoshua/remana-backend/internal/shared/optional"
@@ -29,7 +28,7 @@ func (r *ResourceLocationProviderStub) SetRepairOrderErr(err error) {
 	r.repairOrderErr = err
 }
 
-func (r *ResourceLocationProviderStub) RepairOrder(_ context.Context, orderID uuid.UUID) (url.URL, error) {
+func (r *ResourceLocationProviderStub) RepairOrder(orderID uuid.UUID) (url.URL, error) {
 	if r.repairOrderErr != nil {
 		return url.URL{}, r.repairOrderErr
 	}

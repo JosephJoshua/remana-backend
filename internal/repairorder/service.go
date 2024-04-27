@@ -36,7 +36,7 @@ type TimeProvider interface {
 }
 
 type ResourceLocationProvider interface {
-	RepairOrder(ctx context.Context, orderID uuid.UUID) (url.URL, error)
+	RepairOrder(orderID uuid.UUID) (url.URL, error)
 }
 
 type Service struct {
@@ -156,7 +156,7 @@ func (s *Service) CreateRepairOrder(
 		return nil, apierror.ToAPIError(http.StatusInternalServerError, "failed to create repair order")
 	}
 
-	location, err := s.locationProvider.RepairOrder(ctx, repairOrder.ID())
+	location, err := s.locationProvider.RepairOrder(repairOrder.ID())
 	if err != nil {
 		l.Error().Err(err).Msg("failed to get resource location")
 		return nil, apierror.ToAPIError(http.StatusInternalServerError, "failed to get resource location")
