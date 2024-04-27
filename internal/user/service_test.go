@@ -8,11 +8,13 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/JosephJoshua/remana-backend/internal/genapi"
 	"github.com/JosephJoshua/remana-backend/internal/shared"
+	"github.com/JosephJoshua/remana-backend/internal/shared/logger"
 	"github.com/JosephJoshua/remana-backend/internal/shared/readmodel"
+	"github.com/JosephJoshua/remana-backend/internal/testutil"
 	"github.com/JosephJoshua/remana-backend/internal/user"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -20,17 +22,16 @@ import (
 func TestGetMyUserDetails(t *testing.T) {
 	t.Parallel()
 
+	logger.Init(zerolog.ErrorLevel, shared.AppEnvDev)
+	requestCtx := testutil.RequestContextWithLogger(context.Background())
+
 	t.Run("returns internal server error if user is missing from context", func(t *testing.T) {
 		t.Parallel()
 
 		s := user.NewService()
-		got, err := s.GetMyUserDetails(context.Background())
+		_, err := s.GetMyUserDetails(requestCtx)
 
-		var apiErr *genapi.ErrorStatusCode
-		require.ErrorAs(t, err, &apiErr)
-
-		assert.Equal(t, http.StatusInternalServerError, apiErr.StatusCode)
-		assert.Nil(t, got)
+		testutil.AssertAPIStatusCode(t, http.StatusInternalServerError, err)
 	})
 
 	t.Run("returns user details", func(t *testing.T) {
@@ -53,7 +54,7 @@ func TestGetMyUserDetails(t *testing.T) {
 			},
 		}
 
-		ctx := shared.NewContextWithUser(context.Background(), &user)
+		ctx := shared.NewContextWithUser(requestCtx, &user)
 		got, err := s.GetMyUserDetails(ctx)
 
 		require.NoError(t, err)

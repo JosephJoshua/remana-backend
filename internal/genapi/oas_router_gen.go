@@ -160,6 +160,27 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				}
 
 				elem = origElem
+			case 'r': // Prefix: "repair-orders"
+				origElem := elem
+				if l := len("repair-orders"); len(elem) >= l && elem[0:l] == "repair-orders" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch r.Method {
+					case "POST":
+						s.handleCreateRepairOrderRequest([0]string{}, elemIsEscaped, w, r)
+					default:
+						s.notAllowed(w, r, "POST")
+					}
+
+					return
+				}
+
+				elem = origElem
 			case 'u': // Prefix: "users/me"
 				origElem := elem
 				if l := len("users/me"); len(elem) >= l && elem[0:l] == "users/me" {
@@ -383,6 +404,31 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 						r.summary = "Returns the health status of the service"
 						r.operationID = "getHealth"
 						r.pathPattern = "/healthz"
+						r.args = args
+						r.count = 0
+						return r, true
+					default:
+						return
+					}
+				}
+
+				elem = origElem
+			case 'r': // Prefix: "repair-orders"
+				origElem := elem
+				if l := len("repair-orders"); len(elem) >= l && elem[0:l] == "repair-orders" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					switch method {
+					case "POST":
+						// Leaf: CreateRepairOrder
+						r.name = "CreateRepairOrder"
+						r.summary = "Creates a new repair order"
+						r.operationID = "createRepairOrder"
+						r.pathPattern = "/repair-orders"
 						r.args = args
 						r.count = 0
 						return r, true

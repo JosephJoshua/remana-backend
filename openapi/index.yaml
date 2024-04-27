@@ -15,6 +15,10 @@ tags:
     description: Authentication into the API
   - name: user
     description: User details
+  - name: repair_order
+    description: Repair orders
+  - name: misc
+    description: Miscellaneous endpoints
 components:
   securitySchemes:
     sessionCookie:
@@ -32,3 +36,5 @@ paths:
     $ref: paths/auth/logout.yaml
   /users/me:
     $ref: paths/user/getMyUserDetails.yaml
+  /repair-orders:
+    $ref: paths/repair_orders/createRepairOrder.yaml

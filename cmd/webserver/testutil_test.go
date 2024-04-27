@@ -16,11 +16,9 @@ import (
 	"time"
 
 	main "github.com/JosephJoshua/remana-backend/cmd/webserver"
-	"github.com/JosephJoshua/remana-backend/internal/core"
+	"github.com/JosephJoshua/remana-backend/internal/testutil"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/ory/dockertest/v3"
-	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -59,35 +57,19 @@ dQd9qZZanIpKpI4L2tIuldtWX1B4yTg=
 func setupTest(t testing.TB) (*pgxpool.Pool, func() error) {
 	t.Helper()
 
-	const (
-		migrationMaxWait = 5 * time.Second
-	)
+	pool, err := testutil.StartDockerPool()
+	require.NoError(t, err, "error starting docker pool")
 
-	pool, err := dockertest.NewPool("")
-	require.NoError(t, err, "error creating docker pool")
-
-	err = pool.Client.Ping()
-	require.NoError(t, err, "error pinging docker server")
-
-	postgresResource, db, err := deployPostgres(pool)
+	postgresResource, db, err := testutil.StartPostgresContainer(pool)
 	require.NoError(t, err, "error deploying postgres container")
 
-	migrationCtx, cancelMigration := context.WithTimeout(context.Background(), migrationMaxWait)
-	defer cancelMigration()
-
-	err = migrate(migrationCtx, db)
+	err = testutil.MigratePostgres(context.Background(), db)
 	require.NoError(t, err, "error migrating database")
 
 	resources := []*dockertest.Resource{postgresResource}
 
 	return db, func() error {
-		for _, resource := range resources {
-			if purgeErr := pool.Purge(resource); purgeErr != nil {
-				return fmt.Errorf("error purging resource: %w", purgeErr)
-			}
-		}
-
-		return nil
+		return testutil.PurgeDockerResources(pool, resources)
 	}
 }
 
@@ -179,64 +161,6 @@ func getFreeAddress() (string, error) {
 	}
 
 	return addr.String(), nil
-}
-
-func deployPostgres(pool *dockertest.Pool) (*dockertest.Resource, *pgxpool.Pool, error) {
-	const (
-		pgUsername = "username"
-		pgPassword = "secretpassword"
-		pgDBName   = "remana"
-
-		pgContainerLifetimeSecs = 30
-		pgContainerMaxWait      = 30 * time.Second
-	)
-
-	resource, err := pool.RunWithOptions(&dockertest.RunOptions{
-		Repository: "postgres",
-		Tag:        "16",
-		Env: []string{
-			fmt.Sprintf("POSTGRES_USER=%s", pgUsername),
-			fmt.Sprintf("POSTGRES_PASSWORD=%s", pgPassword),
-			fmt.Sprintf("POSTGRES_DB=%s", pgDBName),
-			"listen_addresses = '*'",
-		},
-	}, func(config *docker.HostConfig) {
-		config.AutoRemove = true
-		config.RestartPolicy = docker.NeverRestart()
-	})
-
-	if err != nil {
-		return nil, nil, fmt.Errorf("error running postgres container: %w", err)
-	}
-
-	hostAndPort := resource.GetHostPort("5432/tcp")
-	databaseURL := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", pgUsername, pgPassword, hostAndPort, pgDBName)
-
-	if err = resource.Expire(pgContainerLifetimeSecs); err != nil {
-		return nil, nil, fmt.Errorf("error setting expiry date on postgres container: %w", err)
-	}
-
-	pool.MaxWait = pgContainerMaxWait
-
-	var db *pgxpool.Pool
-
-	if err = pool.Retry(func() error {
-		db, err = pgxpool.New(context.Background(), databaseURL)
-		if err != nil {
-			return err
-		}
-
-		return db.Ping(context.Background())
-	}); err != nil {
-		return nil, nil, fmt.Errorf("error connecting to database: %w", err)
-	}
-
-	return resource, db, nil
-}
-
-func migrate(ctx context.Context, db *pgxpool.Pool) error {
-	rawDB := stdlib.OpenDBFromPool(db)
-	return core.Migrate(ctx, rawDB, "postgres")
 }
 
 func getEndpointURL(baseAddr string, endpoint string) string {

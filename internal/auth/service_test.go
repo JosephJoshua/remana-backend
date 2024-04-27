@@ -10,9 +10,13 @@ import (
 
 	"github.com/JosephJoshua/remana-backend/internal/auth"
 	"github.com/JosephJoshua/remana-backend/internal/genapi"
+	"github.com/JosephJoshua/remana-backend/internal/shared"
 	"github.com/JosephJoshua/remana-backend/internal/shared/apperror"
+	"github.com/JosephJoshua/remana-backend/internal/shared/logger"
 	"github.com/JosephJoshua/remana-backend/internal/shared/readmodel"
+	"github.com/JosephJoshua/remana-backend/internal/testutil"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -104,6 +108,9 @@ func (a *serviceRepositoryStub) CheckAndDeleteUserLoginCode(
 func TestLogin(t *testing.T) {
 	t.Parallel()
 
+	logger.Init(zerolog.ErrorLevel, shared.AppEnvDev)
+	requestCtx := testutil.RequestContextWithLogger(context.Background())
+
 	const (
 		correctUsername  = "testuser"
 		correctPassword  = "testpassword"
@@ -128,93 +135,63 @@ func TestLogin(t *testing.T) {
 		IsStoreAdmin: false,
 	}
 
-	t.Run("returns unauthorized when password is wrong", func(t *testing.T) {
-		t.Parallel()
-
-		sessionManager := new(serviceSessionManagerStub)
-		loginCodePromptManager := new(loginCodePromptManagerStub)
-		repo := &serviceRepositoryStub{
-			user:             adminUser,
-			username:         correctUsername,
-			storeCode:        correctStoreCode,
-			loginCode:        "",
-			loginCodeDeleted: false,
-		}
-		s := auth.NewService(sessionManager, loginCodePromptManager, repo, &passwordHasherStub{})
-
-		_, err := s.Login(context.Background(), &genapi.LoginCredentials{
-			Username:  correctUsername,
-			Password:  wrongPassword,
-			StoreCode: correctStoreCode,
-		})
-
-		var apiError *genapi.ErrorStatusCode
-
-		require.ErrorAs(t, err, &apiError)
-		assert.Equal(t, http.StatusUnauthorized, apiError.GetStatusCode())
-
-		assert.Nil(t, sessionManager.userID)
-		assert.Nil(t, loginCodePromptManager.userID)
-	})
-
-	t.Run("returns unauthorized when store code is wrong", func(t *testing.T) {
-		t.Parallel()
-
-		sessionManager := new(serviceSessionManagerStub)
-		loginCodePromptManager := new(loginCodePromptManagerStub)
-		repo := &serviceRepositoryStub{
-			user:             adminUser,
-			username:         correctUsername,
-			storeCode:        correctStoreCode,
-			loginCode:        "",
-			loginCodeDeleted: false,
+	t.Run("returns unauthorized", func(t *testing.T) {
+		testCases := []struct {
+			name string
+			req  *genapi.LoginCredentials
+		}{
+			{
+				name: "when password is wrong",
+				req: &genapi.LoginCredentials{
+					Username:  correctUsername,
+					Password:  wrongPassword,
+					StoreCode: correctStoreCode,
+				},
+			},
+			{
+				name: "when store code is wrong",
+				req: &genapi.LoginCredentials{
+					Username:  correctUsername,
+					Password:  correctPassword,
+					StoreCode: wrongStoreCode,
+				},
+			},
+			{
+				name: "when username is wrong",
+				req: &genapi.LoginCredentials{
+					Username:  wrongUsername,
+					Password:  correctPassword,
+					StoreCode: correctStoreCode,
+				},
+			},
 		}
 
-		s := auth.NewService(sessionManager, loginCodePromptManager, repo, &passwordHasherStub{})
+		for _, tc := range testCases {
+			tc := tc
 
-		_, err := s.Login(context.Background(), &genapi.LoginCredentials{
-			Username:  correctUsername,
-			Password:  correctPassword,
-			StoreCode: wrongStoreCode,
-		})
+			t.Run(tc.name, func(t *testing.T) {
+				t.Parallel()
 
-		var apiError *genapi.ErrorStatusCode
+				sessionManager := new(serviceSessionManagerStub)
+				loginCodePromptManager := new(loginCodePromptManagerStub)
 
-		require.ErrorAs(t, err, &apiError)
-		assert.Equal(t, http.StatusUnauthorized, apiError.GetStatusCode())
+				repo := &serviceRepositoryStub{
+					user:             adminUser,
+					username:         correctUsername,
+					storeCode:        correctStoreCode,
+					loginCode:        "",
+					loginCodeDeleted: false,
+				}
 
-		assert.Nil(t, sessionManager.userID)
-		assert.Nil(t, loginCodePromptManager.userID)
-	})
+				s := auth.NewService(sessionManager, loginCodePromptManager, repo, &passwordHasherStub{})
+				_, err := s.Login(requestCtx, tc.req)
 
-	t.Run("returns unauthorized when username is wrong", func(t *testing.T) {
-		t.Parallel()
+				testutil.AssertAPIStatusCode(t, http.StatusUnauthorized, err)
 
-		sessionManager := new(serviceSessionManagerStub)
-		loginCodePromptManager := new(loginCodePromptManagerStub)
-		repo := &serviceRepositoryStub{
-			user:             adminUser,
-			username:         correctUsername,
-			storeCode:        correctStoreCode,
-			loginCode:        "",
-			loginCodeDeleted: false,
+				assert.Nil(t, sessionManager.userID)
+				assert.Nil(t, loginCodePromptManager.userID)
+			})
 		}
-
-		s := auth.NewService(sessionManager, loginCodePromptManager, repo, &passwordHasherStub{})
-
-		_, err := s.Login(context.Background(), &genapi.LoginCredentials{
-			Username:  wrongUsername,
-			Password:  correctPassword,
-			StoreCode: correctStoreCode,
-		})
-
-		var apiError *genapi.ErrorStatusCode
-
-		require.ErrorAs(t, err, &apiError)
-		assert.Equal(t, http.StatusUnauthorized, apiError.GetStatusCode())
-
-		assert.Nil(t, sessionManager.userID)
-		assert.Nil(t, loginCodePromptManager.userID)
 	})
 
 	t.Run("creates new session when user is store admin and credentials are correct", func(t *testing.T) {
@@ -232,7 +209,7 @@ func TestLogin(t *testing.T) {
 
 		s := auth.NewService(sessionManager, loginCodePromptManager, repo, &passwordHasherStub{})
 
-		got, err := s.Login(context.Background(), &genapi.LoginCredentials{
+		got, err := s.Login(requestCtx, &genapi.LoginCredentials{
 			Username:  correctUsername,
 			Password:  correctPassword,
 			StoreCode: correctStoreCode,
@@ -260,7 +237,7 @@ func TestLogin(t *testing.T) {
 
 		s := auth.NewService(sessionManager, loginCodePromptManager, repo, &passwordHasherStub{})
 
-		got, err := s.Login(context.Background(), &genapi.LoginCredentials{
+		got, err := s.Login(requestCtx, &genapi.LoginCredentials{
 			Username:  correctUsername,
 			Password:  correctPassword,
 			StoreCode: correctStoreCode,
@@ -276,6 +253,9 @@ func TestLogin(t *testing.T) {
 
 func TestLoginCodePrompt(t *testing.T) {
 	t.Parallel()
+
+	logger.Init(zerolog.ErrorLevel, shared.AppEnvDev)
+	requestCtx := testutil.RequestContextWithLogger(context.Background())
 
 	var userID = uuid.New()
 	const loginCode = "A1B2C3D4"
@@ -301,14 +281,12 @@ func TestLoginCodePrompt(t *testing.T) {
 
 		s := auth.NewService(sessionManager, loginCodePromptManager, repo, &passwordHasherStub{})
 
-		err := s.LoginCodePrompt(context.Background(), &genapi.LoginCodePrompt{
+		err := s.LoginCodePrompt(requestCtx, &genapi.LoginCodePrompt{
 			LoginCode: "12345678",
 		})
 
-		var apiError *genapi.ErrorStatusCode
+		testutil.AssertAPIStatusCode(t, http.StatusBadRequest, err)
 
-		require.ErrorAs(t, err, &apiError)
-		assert.Equal(t, http.StatusBadRequest, apiError.GetStatusCode())
 		assert.Nil(t, sessionManager.userID)
 		assert.False(t, repo.loginCodeDeleted)
 	})
@@ -328,14 +306,12 @@ func TestLoginCodePrompt(t *testing.T) {
 
 		s := auth.NewService(sessionManager, loginCodePromptManager, repo, &passwordHasherStub{})
 
-		err := s.LoginCodePrompt(context.Background(), &genapi.LoginCodePrompt{
+		err := s.LoginCodePrompt(requestCtx, &genapi.LoginCodePrompt{
 			LoginCode: "12345678",
 		})
 
-		var apiError *genapi.ErrorStatusCode
+		testutil.AssertAPIStatusCode(t, http.StatusBadRequest, err)
 
-		require.ErrorAs(t, err, &apiError)
-		assert.Equal(t, http.StatusBadRequest, apiError.GetStatusCode())
 		assert.Nil(t, sessionManager.userID)
 		assert.NotNil(t, loginCodePromptManager.userID)
 		assert.Equal(t, userID.String(), loginCodePromptManager.userID.String())
@@ -357,7 +333,7 @@ func TestLoginCodePrompt(t *testing.T) {
 
 		s := auth.NewService(sessionManager, loginCodePromptManager, repo, &passwordHasherStub{})
 
-		err := s.LoginCodePrompt(context.Background(), &genapi.LoginCodePrompt{
+		err := s.LoginCodePrompt(requestCtx, &genapi.LoginCodePrompt{
 			LoginCode: loginCode,
 		})
 
@@ -371,6 +347,9 @@ func TestLoginCodePrompt(t *testing.T) {
 
 func TestLogout(t *testing.T) {
 	t.Parallel()
+
+	logger.Init(zerolog.ErrorLevel, shared.AppEnvDev)
+	requestCtx := testutil.RequestContextWithLogger(context.Background())
 
 	t.Run("deletes session", func(t *testing.T) {
 		t.Parallel()
@@ -386,7 +365,7 @@ func TestLogout(t *testing.T) {
 			new(passwordHasherStub),
 		)
 
-		err := s.Logout(context.Background())
+		err := s.Logout(requestCtx)
 
 		require.NoError(t, err)
 		assert.Nil(t, sessionManager.userID)

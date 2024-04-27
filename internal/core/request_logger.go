@@ -52,6 +52,9 @@ func requestLoggerMiddleware(next http.Handler) http.Handler {
 				lrw.statusCode = http.StatusInternalServerError
 			}
 
+			// Get the most up-to-date logger in case any other middlewares/security providers added to its context.
+			l := zerolog.Ctx(r.Context())
+
 			requestLogger := l.
 				With().
 				Str("method", r.Method).

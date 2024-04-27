@@ -9,6 +9,7 @@ import (
 	"github.com/JosephJoshua/remana-backend/internal/auth"
 	"github.com/JosephJoshua/remana-backend/internal/genapi"
 	"github.com/JosephJoshua/remana-backend/internal/misc"
+	"github.com/JosephJoshua/remana-backend/internal/repairorder"
 	"github.com/JosephJoshua/remana-backend/internal/shared/apierror"
 	"github.com/JosephJoshua/remana-backend/internal/shared/repository"
 	"github.com/JosephJoshua/remana-backend/internal/user"
@@ -22,11 +23,13 @@ import (
 
 type authService = auth.Service
 type userService = user.Service
+type repairOrderService = repairorder.Service
 type miscService = misc.Service
 
 type server struct {
 	*authService
 	*userService
+	*repairOrderService
 	*miscService
 }
 
@@ -45,13 +48,21 @@ func NewAPIServer(db *pgxpool.Pool) (*genapi.Server, []Middleware, error) {
 		&PasswordHasher{},
 	)
 
+	repairOrderService := repairorder.NewService(
+		timeProvider{},
+		resourceLocationProvider{},
+		repository.NewSQLRepairOrderRepository(db),
+		newRepairOrderSlugProvider(db),
+	)
+
 	userService := user.NewService()
 	miscService := misc.NewService()
 
 	srv := server{
-		authService: authService,
-		userService: userService,
-		miscService: miscService,
+		authService:        authService,
+		userService:        userService,
+		repairOrderService: repairOrderService,
+		miscService:        miscService,
 	}
 
 	securityHandler := auth.NewSecurityHandler(sm, repository.NewSQLUserRepository(db))

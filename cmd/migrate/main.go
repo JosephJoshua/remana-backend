@@ -65,21 +65,23 @@ func main() {
 	}
 
 	logger.Init(zerolog.DebugLevel, config.AppEnv)
-	log := logger.MustGet()
+	l := logger.MustGet()
 
 	ctx := context.Background()
 
 	db, err := connectDB(config.ConnString)
 	if err != nil {
-		log.Fatal().Err(err).Msg("error connecting to database")
+		l.Fatal().Err(err).Msg("error connecting to database")
 	}
 	defer func() {
 		if err = db.Close(); err != nil {
-			log.Panic().Err(err).Msg("error closing database connection")
+			l.Panic().Err(err).Msg("error closing database connection")
 		}
 	}()
 
-	if err = core.Migrate(ctx, db, "postgres"); err != nil {
-		log.Panic().Err(err).Msg("error migrating database")
+	if n, migrateErr := core.Migrate(ctx, db, "postgres"); migrateErr != nil {
+		l.Panic().Err(migrateErr).Msg("error migrating database")
+	} else {
+		l.Info().Int("count", n).Msg("applied migrations")
 	}
 }

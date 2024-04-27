@@ -13,6 +13,15 @@ type UnimplementedHandler struct{}
 
 var _ Handler = UnimplementedHandler{}
 
+// CreateRepairOrder implements createRepairOrder operation.
+//
+// Creates a new repair order.
+//
+// POST /repair-orders
+func (UnimplementedHandler) CreateRepairOrder(ctx context.Context, req *CreateRepairOrderRequest) (r *CreateRepairOrderCreated, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // GetHealth implements getHealth operation.
 //
 // Returns the health status of the service.

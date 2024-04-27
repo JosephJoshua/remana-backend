@@ -65,4 +65,8 @@ test/e2e:
 
 .PHONY: test/all
 test/all:
-	go test -count=1 ./...
+	go test -count=1 -tags unit,integration,e2e ./...
+
+.PHONY: test/list
+test/list:
+	go test -list=. ./...

@@ -6,8 +6,8 @@ import (
 
 	"github.com/JosephJoshua/remana-backend/internal/gensql"
 	"github.com/JosephJoshua/remana-backend/internal/shared/readmodel"
+	"github.com/JosephJoshua/remana-backend/internal/shared/typemapper"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -22,27 +22,24 @@ func NewSQLUserRepository(db *pgxpool.Pool) *SQLUserRepository {
 }
 
 func (r *SQLUserRepository) GetUserDetailsByID(ctx context.Context, userID uuid.UUID) (readmodel.UserDetails, error) {
-	user, err := r.queries.GetUserDetailsByID(ctx, pgtype.UUID{
-		Bytes: userID,
-		Valid: true,
-	})
+	user, err := r.queries.GetUserDetailsByID(ctx, typemapper.UUIDToPgtypeUUID(userID))
 
 	var emptyUser readmodel.UserDetails
 	if err != nil {
 		return emptyUser, fmt.Errorf("failed to get user details by ID: %w", err)
 	}
 
-	userID, err = pgtypeUUIDToGoogleUUID(user.UserID)
+	userID, err = typemapper.PgtypeUUIDToUUID(user.UserID)
 	if err != nil {
 		return emptyUser, fmt.Errorf("failed to parse user ID from bytes: %w", err)
 	}
 
-	roleID, err := pgtypeUUIDToGoogleUUID(user.RoleID)
+	roleID, err := typemapper.PgtypeUUIDToUUID(user.RoleID)
 	if err != nil {
 		return emptyUser, fmt.Errorf("failed to parse role ID from bytes: %w", err)
 	}
 
-	storeID, err := pgtypeUUIDToGoogleUUID(user.StoreID)
+	storeID, err := typemapper.PgtypeUUIDToUUID(user.StoreID)
 	if err != nil {
 		return emptyUser, fmt.Errorf("failed to parse store ID from bytes: %w", err)
 	}

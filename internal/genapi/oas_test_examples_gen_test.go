@@ -16,6 +16,42 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestCreateRepairOrderRequest_EncodeDecode(t *testing.T) {
+	var typ CreateRepairOrderRequest
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 CreateRepairOrderRequest
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestCreateRepairOrderRequestDownPayment_EncodeDecode(t *testing.T) {
+	var typ CreateRepairOrderRequestDownPayment
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 CreateRepairOrderRequestDownPayment
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestCreateRepairOrderRequestPasscode_EncodeDecode(t *testing.T) {
+	var typ CreateRepairOrderRequestPasscode
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 CreateRepairOrderRequestPasscode
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
 func TestError_EncodeDecode(t *testing.T) {
 	var typ Error
 	typ.SetFake()

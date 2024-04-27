@@ -8,6 +8,12 @@ import (
 
 // Handler handles operations described by OpenAPI v3 specification.
 type Handler interface {
+	// CreateRepairOrder implements createRepairOrder operation.
+	//
+	// Creates a new repair order.
+	//
+	// POST /repair-orders
+	CreateRepairOrder(ctx context.Context, req *CreateRepairOrderRequest) (*CreateRepairOrderCreated, error)
 	// GetHealth implements getHealth operation.
 	//
 	// Returns the health status of the service.

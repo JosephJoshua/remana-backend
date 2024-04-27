@@ -25,7 +25,7 @@ import (
 func TestAuthnFlow(t *testing.T) {
 	t.Parallel()
 
-	logger.Init(zerolog.DebugLevel, shared.AppEnvDev)
+	logger.Init(zerolog.ErrorLevel, shared.AppEnvDev)
 
 	db, cleanup := setupTest(t)
 	t.Cleanup(func() {

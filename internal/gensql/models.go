@@ -8,10 +8,94 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type DamageType struct {
+	DamageTypeID   pgtype.UUID
+	StoreID        pgtype.UUID
+	DamageTypeName string
+}
+
 type LoginCode struct {
 	LoginCodeID pgtype.UUID
 	UserID      pgtype.UUID
 	LoginCode   string
+}
+
+type PaymentMethod struct {
+	PaymentMethodID   pgtype.UUID
+	StoreID           pgtype.UUID
+	PaymentMethodName string
+}
+
+type PhoneCondition struct {
+	PhoneConditionID   pgtype.UUID
+	StoreID            pgtype.UUID
+	PhoneConditionName string
+}
+
+type PhoneEquipment struct {
+	PhoneEquipmentID   pgtype.UUID
+	StoreID            pgtype.UUID
+	PhoneEquipmentName string
+}
+
+type RepairOrder struct {
+	RepairOrderID       pgtype.UUID
+	CreationTime        pgtype.Timestamptz
+	Slug                string
+	StoreID             pgtype.UUID
+	CustomerName        string
+	ContactNumber       string
+	PhoneType           string
+	Imei                pgtype.Text
+	PartsNotCheckedYet  pgtype.Text
+	Color               string
+	PasscodeOrPattern   pgtype.Text
+	IsPatternLocked     pgtype.Bool
+	PickUpTime          pgtype.Timestamptz
+	CompletionTime      pgtype.Timestamptz
+	CancellationTime    pgtype.Timestamptz
+	CancellationReason  pgtype.Text
+	ConfirmationTime    pgtype.Timestamptz
+	ConfirmationContent pgtype.Text
+	WarrantyDays        pgtype.Int4
+	DownPaymentAmount   pgtype.Int4
+	DownPaymentMethodID pgtype.UUID
+	RepaymentAmount     pgtype.Int4
+	RepaymentMethodID   pgtype.UUID
+	TechnicianID        pgtype.UUID
+	SalesID             pgtype.UUID
+}
+
+type RepairOrderCost struct {
+	RepairOrderCostID pgtype.UUID
+	RepairOrderID     pgtype.UUID
+	Amount            int32
+	Reason            pgtype.Text
+	CreationTime      pgtype.Timestamptz
+}
+
+type RepairOrderDamage struct {
+	RepairOrderDamageID pgtype.UUID
+	RepairOrderID       pgtype.UUID
+	DamageName          string
+}
+
+type RepairOrderPhoneCondition struct {
+	RepairOrderPhoneConditionID pgtype.UUID
+	RepairOrderID               pgtype.UUID
+	PhoneConditionName          string
+}
+
+type RepairOrderPhoneEquipment struct {
+	RepairOrderPhoneEquipmentID pgtype.UUID
+	RepairOrderID               pgtype.UUID
+	PhoneEquipmentName          string
+}
+
+type RepairOrderPhoto struct {
+	RepairOrderPhotoID pgtype.UUID
+	RepairOrderID      pgtype.UUID
+	PhotoUrl           string
 }
 
 type Role struct {
@@ -21,12 +105,24 @@ type Role struct {
 	IsStoreAdmin bool
 }
 
+type Sale struct {
+	SalesID   pgtype.UUID
+	StoreID   pgtype.UUID
+	SalesName string
+}
+
 type Store struct {
 	StoreID      pgtype.UUID
 	StoreName    string
 	StoreCode    string
 	StoreAddress string
 	PhoneNumber  string
+}
+
+type Technician struct {
+	TechnicianID   pgtype.UUID
+	StoreID        pgtype.UUID
+	TechnicianName string
 }
 
 type User struct {

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/JosephJoshua/remana-backend/internal/shared/logger"
 	"github.com/JosephJoshua/remana-backend/internal/shared/projectpath"
 	migrate "github.com/rubenv/sql-migrate"
 )
@@ -26,15 +25,11 @@ func GetPendingMigrationCount(db *sql.DB, dialect string) (int, error) {
 	return len(plannedMigrations), nil
 }
 
-func Migrate(ctx context.Context, db *sql.DB, dialect string) error {
-	l := logger.MustGet()
-	l.Info().Msgf("running migrations in %s...", migrationSource.Dir)
-
+func Migrate(ctx context.Context, db *sql.DB, dialect string) (int, error) {
 	n, err := migrate.ExecContext(ctx, db, dialect, migrationSource, migrate.Up)
 	if err != nil {
-		return fmt.Errorf("failed to execute migration: %w", err)
+		return 0, fmt.Errorf("failed to execute migration: %w", err)
 	}
 
-	l.Info().Int("count", n).Msg("applied migrations")
-	return nil
+	return n, nil
 }

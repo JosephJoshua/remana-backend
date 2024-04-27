@@ -8,9 +8,9 @@ import (
 	"github.com/JosephJoshua/remana-backend/internal/gensql"
 	"github.com/JosephJoshua/remana-backend/internal/shared/apperror"
 	"github.com/JosephJoshua/remana-backend/internal/shared/readmodel"
+	"github.com/JosephJoshua/remana-backend/internal/shared/typemapper"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -39,7 +39,7 @@ func (r *SQLAuthRepository) GetUserByUsernameAndStoreCode(
 		return emptyUser, fmt.Errorf("failed to get user by username and store code: %w", err)
 	}
 
-	userID, err := pgtypeUUIDToGoogleUUID(user.UserID)
+	userID, err := typemapper.PgtypeUUIDToUUID(user.UserID)
 	if err != nil {
 		return emptyUser, fmt.Errorf("failed to parse user ID from bytes: %w", err)
 	}
@@ -57,10 +57,7 @@ func (r *SQLAuthRepository) CheckAndDeleteUserLoginCode(
 	loginCode string,
 ) error {
 	loginCodeID, err := r.queries.GetLoginCodeByUserIDAndCode(ctx, gensql.GetLoginCodeByUserIDAndCodeParams{
-		UserID: pgtype.UUID{
-			Bytes: userID,
-			Valid: true,
-		},
+		UserID:    typemapper.UUIDToPgtypeUUID(userID),
 		LoginCode: loginCode,
 	})
 

@@ -4,6 +4,7 @@ package genapi
 
 import (
 	"fmt"
+	"net/url"
 
 	"github.com/go-faster/errors"
 	"github.com/google/uuid"
@@ -11,6 +12,240 @@ import (
 
 func (s *ErrorStatusCode) Error() string {
 	return fmt.Sprintf("code %d: %+v", s.StatusCode, s.Response)
+}
+
+// CreateRepairOrderCreated is response for CreateRepairOrder operation.
+type CreateRepairOrderCreated struct {
+	Location url.URL
+}
+
+// GetLocation returns the value of Location.
+func (s *CreateRepairOrderCreated) GetLocation() url.URL {
+	return s.Location
+}
+
+// SetLocation sets the value of Location.
+func (s *CreateRepairOrderCreated) SetLocation(val url.URL) {
+	s.Location = val
+}
+
+// Ref: #
+type CreateRepairOrderRequest struct {
+	CustomerName       string                                 `json:"customer_name"`
+	ContactPhoneNumber string                                 `json:"contact_phone_number"`
+	PhoneType          string                                 `json:"phone_type"`
+	Imei               OptString                              `json:"imei"`
+	PartsNotCheckedYet OptString                              `json:"parts_not_checked_yet"`
+	Passcode           OptCreateRepairOrderRequestPasscode    `json:"passcode"`
+	Color              string                                 `json:"color"`
+	InitialCost        int                                    `json:"initial_cost"`
+	DownPayment        OptCreateRepairOrderRequestDownPayment `json:"down_payment"`
+	SalesID            uuid.UUID                              `json:"sales_id"`
+	TechnicianID       uuid.UUID                              `json:"technician_id"`
+	PhoneConditions    []uuid.UUID                            `json:"phone_conditions"`
+	DamageTypes        []uuid.UUID                            `json:"damage_types"`
+	PhoneEquipments    []uuid.UUID                            `json:"phone_equipments"`
+	Photos             []url.URL                              `json:"photos"`
+}
+
+// GetCustomerName returns the value of CustomerName.
+func (s *CreateRepairOrderRequest) GetCustomerName() string {
+	return s.CustomerName
+}
+
+// GetContactPhoneNumber returns the value of ContactPhoneNumber.
+func (s *CreateRepairOrderRequest) GetContactPhoneNumber() string {
+	return s.ContactPhoneNumber
+}
+
+// GetPhoneType returns the value of PhoneType.
+func (s *CreateRepairOrderRequest) GetPhoneType() string {
+	return s.PhoneType
+}
+
+// GetImei returns the value of Imei.
+func (s *CreateRepairOrderRequest) GetImei() OptString {
+	return s.Imei
+}
+
+// GetPartsNotCheckedYet returns the value of PartsNotCheckedYet.
+func (s *CreateRepairOrderRequest) GetPartsNotCheckedYet() OptString {
+	return s.PartsNotCheckedYet
+}
+
+// GetPasscode returns the value of Passcode.
+func (s *CreateRepairOrderRequest) GetPasscode() OptCreateRepairOrderRequestPasscode {
+	return s.Passcode
+}
+
+// GetColor returns the value of Color.
+func (s *CreateRepairOrderRequest) GetColor() string {
+	return s.Color
+}
+
+// GetInitialCost returns the value of InitialCost.
+func (s *CreateRepairOrderRequest) GetInitialCost() int {
+	return s.InitialCost
+}
+
+// GetDownPayment returns the value of DownPayment.
+func (s *CreateRepairOrderRequest) GetDownPayment() OptCreateRepairOrderRequestDownPayment {
+	return s.DownPayment
+}
+
+// GetSalesID returns the value of SalesID.
+func (s *CreateRepairOrderRequest) GetSalesID() uuid.UUID {
+	return s.SalesID
+}
+
+// GetTechnicianID returns the value of TechnicianID.
+func (s *CreateRepairOrderRequest) GetTechnicianID() uuid.UUID {
+	return s.TechnicianID
+}
+
+// GetPhoneConditions returns the value of PhoneConditions.
+func (s *CreateRepairOrderRequest) GetPhoneConditions() []uuid.UUID {
+	return s.PhoneConditions
+}
+
+// GetDamageTypes returns the value of DamageTypes.
+func (s *CreateRepairOrderRequest) GetDamageTypes() []uuid.UUID {
+	return s.DamageTypes
+}
+
+// GetPhoneEquipments returns the value of PhoneEquipments.
+func (s *CreateRepairOrderRequest) GetPhoneEquipments() []uuid.UUID {
+	return s.PhoneEquipments
+}
+
+// GetPhotos returns the value of Photos.
+func (s *CreateRepairOrderRequest) GetPhotos() []url.URL {
+	return s.Photos
+}
+
+// SetCustomerName sets the value of CustomerName.
+func (s *CreateRepairOrderRequest) SetCustomerName(val string) {
+	s.CustomerName = val
+}
+
+// SetContactPhoneNumber sets the value of ContactPhoneNumber.
+func (s *CreateRepairOrderRequest) SetContactPhoneNumber(val string) {
+	s.ContactPhoneNumber = val
+}
+
+// SetPhoneType sets the value of PhoneType.
+func (s *CreateRepairOrderRequest) SetPhoneType(val string) {
+	s.PhoneType = val
+}
+
+// SetImei sets the value of Imei.
+func (s *CreateRepairOrderRequest) SetImei(val OptString) {
+	s.Imei = val
+}
+
+// SetPartsNotCheckedYet sets the value of PartsNotCheckedYet.
+func (s *CreateRepairOrderRequest) SetPartsNotCheckedYet(val OptString) {
+	s.PartsNotCheckedYet = val
+}
+
+// SetPasscode sets the value of Passcode.
+func (s *CreateRepairOrderRequest) SetPasscode(val OptCreateRepairOrderRequestPasscode) {
+	s.Passcode = val
+}
+
+// SetColor sets the value of Color.
+func (s *CreateRepairOrderRequest) SetColor(val string) {
+	s.Color = val
+}
+
+// SetInitialCost sets the value of InitialCost.
+func (s *CreateRepairOrderRequest) SetInitialCost(val int) {
+	s.InitialCost = val
+}
+
+// SetDownPayment sets the value of DownPayment.
+func (s *CreateRepairOrderRequest) SetDownPayment(val OptCreateRepairOrderRequestDownPayment) {
+	s.DownPayment = val
+}
+
+// SetSalesID sets the value of SalesID.
+func (s *CreateRepairOrderRequest) SetSalesID(val uuid.UUID) {
+	s.SalesID = val
+}
+
+// SetTechnicianID sets the value of TechnicianID.
+func (s *CreateRepairOrderRequest) SetTechnicianID(val uuid.UUID) {
+	s.TechnicianID = val
+}
+
+// SetPhoneConditions sets the value of PhoneConditions.
+func (s *CreateRepairOrderRequest) SetPhoneConditions(val []uuid.UUID) {
+	s.PhoneConditions = val
+}
+
+// SetDamageTypes sets the value of DamageTypes.
+func (s *CreateRepairOrderRequest) SetDamageTypes(val []uuid.UUID) {
+	s.DamageTypes = val
+}
+
+// SetPhoneEquipments sets the value of PhoneEquipments.
+func (s *CreateRepairOrderRequest) SetPhoneEquipments(val []uuid.UUID) {
+	s.PhoneEquipments = val
+}
+
+// SetPhotos sets the value of Photos.
+func (s *CreateRepairOrderRequest) SetPhotos(val []url.URL) {
+	s.Photos = val
+}
+
+type CreateRepairOrderRequestDownPayment struct {
+	Amount int       `json:"amount"`
+	Method uuid.UUID `json:"method"`
+}
+
+// GetAmount returns the value of Amount.
+func (s *CreateRepairOrderRequestDownPayment) GetAmount() int {
+	return s.Amount
+}
+
+// GetMethod returns the value of Method.
+func (s *CreateRepairOrderRequestDownPayment) GetMethod() uuid.UUID {
+	return s.Method
+}
+
+// SetAmount sets the value of Amount.
+func (s *CreateRepairOrderRequestDownPayment) SetAmount(val int) {
+	s.Amount = val
+}
+
+// SetMethod sets the value of Method.
+func (s *CreateRepairOrderRequestDownPayment) SetMethod(val uuid.UUID) {
+	s.Method = val
+}
+
+type CreateRepairOrderRequestPasscode struct {
+	IsPatternLocked bool   `json:"is_pattern_locked"`
+	Value           string `json:"value"`
+}
+
+// GetIsPatternLocked returns the value of IsPatternLocked.
+func (s *CreateRepairOrderRequestPasscode) GetIsPatternLocked() bool {
+	return s.IsPatternLocked
+}
+
+// GetValue returns the value of Value.
+func (s *CreateRepairOrderRequestPasscode) GetValue() string {
+	return s.Value
+}
+
+// SetIsPatternLocked sets the value of IsPatternLocked.
+func (s *CreateRepairOrderRequestPasscode) SetIsPatternLocked(val bool) {
+	s.IsPatternLocked = val
+}
+
+// SetValue sets the value of Value.
+func (s *CreateRepairOrderRequestPasscode) SetValue(val string) {
+	s.Value = val
 }
 
 // Ref: #
@@ -184,6 +419,144 @@ func (s *LoginResponseType) UnmarshalText(data []byte) error {
 
 // LogoutResetContent is response for Logout operation.
 type LogoutResetContent struct{}
+
+// NewOptCreateRepairOrderRequestDownPayment returns new OptCreateRepairOrderRequestDownPayment with value set to v.
+func NewOptCreateRepairOrderRequestDownPayment(v CreateRepairOrderRequestDownPayment) OptCreateRepairOrderRequestDownPayment {
+	return OptCreateRepairOrderRequestDownPayment{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptCreateRepairOrderRequestDownPayment is optional CreateRepairOrderRequestDownPayment.
+type OptCreateRepairOrderRequestDownPayment struct {
+	Value CreateRepairOrderRequestDownPayment
+	Set   bool
+}
+
+// IsSet returns true if OptCreateRepairOrderRequestDownPayment was set.
+func (o OptCreateRepairOrderRequestDownPayment) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptCreateRepairOrderRequestDownPayment) Reset() {
+	var v CreateRepairOrderRequestDownPayment
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptCreateRepairOrderRequestDownPayment) SetTo(v CreateRepairOrderRequestDownPayment) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptCreateRepairOrderRequestDownPayment) Get() (v CreateRepairOrderRequestDownPayment, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptCreateRepairOrderRequestDownPayment) Or(d CreateRepairOrderRequestDownPayment) CreateRepairOrderRequestDownPayment {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptCreateRepairOrderRequestPasscode returns new OptCreateRepairOrderRequestPasscode with value set to v.
+func NewOptCreateRepairOrderRequestPasscode(v CreateRepairOrderRequestPasscode) OptCreateRepairOrderRequestPasscode {
+	return OptCreateRepairOrderRequestPasscode{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptCreateRepairOrderRequestPasscode is optional CreateRepairOrderRequestPasscode.
+type OptCreateRepairOrderRequestPasscode struct {
+	Value CreateRepairOrderRequestPasscode
+	Set   bool
+}
+
+// IsSet returns true if OptCreateRepairOrderRequestPasscode was set.
+func (o OptCreateRepairOrderRequestPasscode) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptCreateRepairOrderRequestPasscode) Reset() {
+	var v CreateRepairOrderRequestPasscode
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptCreateRepairOrderRequestPasscode) SetTo(v CreateRepairOrderRequestPasscode) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptCreateRepairOrderRequestPasscode) Get() (v CreateRepairOrderRequestPasscode, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptCreateRepairOrderRequestPasscode) Or(d CreateRepairOrderRequestPasscode) CreateRepairOrderRequestPasscode {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptString returns new OptString with value set to v.
+func NewOptString(v string) OptString {
+	return OptString{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptString is optional string.
+type OptString struct {
+	Value string
+	Set   bool
+}
+
+// IsSet returns true if OptString was set.
+func (o OptString) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptString) Reset() {
+	var v string
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptString) SetTo(v string) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptString) Get() (v string, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptString) Or(d string) string {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
 
 type SessionCookie struct {
 	APIKey string
