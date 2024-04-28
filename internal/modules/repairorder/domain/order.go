@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/JosephJoshua/remana-backend/internal/apperror"
+	shareddomain "github.com/JosephJoshua/remana-backend/internal/modules/shared/domain"
 	"github.com/JosephJoshua/remana-backend/internal/optional"
-	shareddomain "github.com/JosephJoshua/remana-backend/internal/shared/domain"
 	"github.com/google/uuid"
 )
 

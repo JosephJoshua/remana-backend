@@ -6,10 +6,10 @@ import (
 	"net/http"
 
 	"github.com/JosephJoshua/remana-backend/internal/apierror"
+	"github.com/JosephJoshua/remana-backend/internal/appcontext"
 	"github.com/JosephJoshua/remana-backend/internal/apperror"
 	"github.com/JosephJoshua/remana-backend/internal/genapi"
-	"github.com/JosephJoshua/remana-backend/internal/shared"
-	"github.com/JosephJoshua/remana-backend/internal/shared/readmodel"
+	"github.com/JosephJoshua/remana-backend/internal/modules/user/readmodel"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 )
@@ -72,6 +72,6 @@ func (s *SecurityHandler) HandleSessionCookie(
 		return c.Interface("user", user)
 	})
 
-	ctx = shared.NewContextWithUser(ctx, &user)
+	ctx = appcontext.NewContextWithUser(ctx, &user)
 	return ctx, nil
 }

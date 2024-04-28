@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/JosephJoshua/remana-backend/internal/gensql"
-	"github.com/JosephJoshua/remana-backend/internal/shared/readmodel"
+	"github.com/JosephJoshua/remana-backend/internal/modules/user/readmodel"
 	"github.com/JosephJoshua/remana-backend/internal/typemapper"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"

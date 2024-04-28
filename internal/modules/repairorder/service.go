@@ -8,11 +8,11 @@ import (
 	"time"
 
 	"github.com/JosephJoshua/remana-backend/internal/apierror"
+	"github.com/JosephJoshua/remana-backend/internal/appcontext"
 	"github.com/JosephJoshua/remana-backend/internal/apperror"
 	"github.com/JosephJoshua/remana-backend/internal/genapi"
 	"github.com/JosephJoshua/remana-backend/internal/modules/repairorder/domain"
-	"github.com/JosephJoshua/remana-backend/internal/shared"
-	shareddomain "github.com/JosephJoshua/remana-backend/internal/shared/domain"
+	shareddomain "github.com/JosephJoshua/remana-backend/internal/modules/shared/domain"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 )
@@ -67,7 +67,7 @@ func (s *Service) CreateRepairOrder(
 	l := zerolog.Ctx(ctx)
 	creationTime := s.timeProvider.Now()
 
-	user, ok := shared.GetUserFromContext(ctx)
+	user, ok := appcontext.GetUserFromContext(ctx)
 	if !ok {
 		return nil, apierror.ToAPIError(http.StatusUnauthorized, "unauthorized")
 	}

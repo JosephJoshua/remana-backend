@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/JosephJoshua/remana-backend/internal/modules/repairorder/domain"
-	shareddomain "github.com/JosephJoshua/remana-backend/internal/shared/domain"
+	shareddomain "github.com/JosephJoshua/remana-backend/internal/modules/shared/domain"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

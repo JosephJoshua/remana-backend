@@ -1,9 +1,9 @@
-package shared
+package appcontext
 
 import (
 	"context"
 
-	"github.com/JosephJoshua/remana-backend/internal/shared/readmodel"
+	"github.com/JosephJoshua/remana-backend/internal/modules/user/readmodel"
 )
 
 type userCtxKey struct{}

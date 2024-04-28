@@ -9,7 +9,7 @@ import (
 
 	"github.com/JosephJoshua/remana-backend/internal/logger"
 	"github.com/JosephJoshua/remana-backend/internal/modules/misc"
-	"github.com/JosephJoshua/remana-backend/internal/shared"
+	"github.com/JosephJoshua/remana-backend/internal/modules/shared"
 	"github.com/JosephJoshua/remana-backend/internal/testutil"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"

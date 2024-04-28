@@ -8,7 +8,7 @@ import (
 	"github.com/JosephJoshua/remana-backend/internal/apierror"
 	"github.com/JosephJoshua/remana-backend/internal/apperror"
 	"github.com/JosephJoshua/remana-backend/internal/genapi"
-	"github.com/JosephJoshua/remana-backend/internal/shared/readmodel"
+	"github.com/JosephJoshua/remana-backend/internal/modules/auth/readmodel"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 )
@@ -25,7 +25,7 @@ type LoginCodePromptManager interface {
 }
 
 type ServiceRepository interface {
-	GetUserByUsernameAndStoreCode(ctx context.Context, username string, storeCode string) (readmodel.AuthnUser, error)
+	GetUserByUsernameAndStoreCode(ctx context.Context, username string, storeCode string) (readmodel.User, error)
 	CheckAndDeleteUserLoginCode(ctx context.Context, userID uuid.UUID, loginCode string) error
 }
 

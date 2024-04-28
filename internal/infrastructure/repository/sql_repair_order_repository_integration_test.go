@@ -11,13 +11,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/JosephJoshua/remana-backend/internal/appcontext"
 	"github.com/JosephJoshua/remana-backend/internal/genapi"
 	"github.com/JosephJoshua/remana-backend/internal/gensql"
 	"github.com/JosephJoshua/remana-backend/internal/infrastructure/repository"
 	"github.com/JosephJoshua/remana-backend/internal/logger"
 	"github.com/JosephJoshua/remana-backend/internal/modules/repairorder"
-	"github.com/JosephJoshua/remana-backend/internal/shared"
-	"github.com/JosephJoshua/remana-backend/internal/shared/readmodel"
+	"github.com/JosephJoshua/remana-backend/internal/modules/shared"
+	"github.com/JosephJoshua/remana-backend/internal/modules/user/readmodel"
 	"github.com/JosephJoshua/remana-backend/internal/testutil"
 	"github.com/JosephJoshua/remana-backend/internal/typemapper"
 	"github.com/google/uuid"
@@ -109,7 +110,7 @@ func TestCreateRepairOrder(t *testing.T) {
 		}
 	)
 
-	requestCtx = shared.NewContextWithUser(requestCtx, &readmodel.UserDetails{
+	requestCtx = appcontext.NewContextWithUser(requestCtx, &readmodel.UserDetails{
 		ID:       uuid.New(),
 		Username: "not important",
 		Role: readmodel.UserDetailsRole{

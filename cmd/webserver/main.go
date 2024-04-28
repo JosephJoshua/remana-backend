@@ -16,8 +16,8 @@ import (
 
 	"github.com/JosephJoshua/remana-backend/internal/infrastructure/core"
 	"github.com/JosephJoshua/remana-backend/internal/logger"
+	"github.com/JosephJoshua/remana-backend/internal/modules/shared"
 	"github.com/JosephJoshua/remana-backend/internal/projectpath"
-	"github.com/JosephJoshua/remana-backend/internal/shared"
 	"github.com/go-playground/validator/v10"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"

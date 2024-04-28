@@ -10,7 +10,7 @@ import (
 
 	"github.com/JosephJoshua/remana-backend/internal/infrastructure/core"
 	"github.com/JosephJoshua/remana-backend/internal/logger"
-	"github.com/JosephJoshua/remana-backend/internal/shared"
+	"github.com/JosephJoshua/remana-backend/internal/modules/shared"
 	"github.com/go-playground/validator/v10"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/rs/zerolog"

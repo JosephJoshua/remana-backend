@@ -10,5 +10,5 @@ var (
 )
 
 func Root() string {
-	return filepath.Join(filepath.Dir(b), "../../../")
+	return filepath.Join(filepath.Dir(b), "../../")
 }

@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/JosephJoshua/remana-backend/internal/apierror"
+	"github.com/JosephJoshua/remana-backend/internal/appcontext"
 	"github.com/JosephJoshua/remana-backend/internal/genapi"
-	"github.com/JosephJoshua/remana-backend/internal/shared"
 	"github.com/rs/zerolog"
 )
 
@@ -19,7 +19,7 @@ func NewService() *Service {
 func (s *Service) GetMyUserDetails(ctx context.Context) (*genapi.UserDetails, error) {
 	l := zerolog.Ctx(ctx)
 
-	user, ok := shared.GetUserFromContext(ctx)
+	user, ok := appcontext.GetUserFromContext(ctx)
 	if !ok {
 		l.Error().Msg("GetUserFromContext(); failed to get user from context")
 		return nil, apierror.ToAPIError(http.StatusInternalServerError, "failed to get user from context")

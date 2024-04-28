@@ -8,10 +8,11 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/JosephJoshua/remana-backend/internal/appcontext"
 	"github.com/JosephJoshua/remana-backend/internal/logger"
+	"github.com/JosephJoshua/remana-backend/internal/modules/shared"
 	"github.com/JosephJoshua/remana-backend/internal/modules/user"
-	"github.com/JosephJoshua/remana-backend/internal/shared"
-	"github.com/JosephJoshua/remana-backend/internal/shared/readmodel"
+	"github.com/JosephJoshua/remana-backend/internal/modules/user/readmodel"
 	"github.com/JosephJoshua/remana-backend/internal/testutil"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
@@ -54,7 +55,7 @@ func TestGetMyUserDetails(t *testing.T) {
 			},
 		}
 
-		ctx := shared.NewContextWithUser(requestCtx, &user)
+		ctx := appcontext.NewContextWithUser(requestCtx, &user)
 		got, err := s.GetMyUserDetails(ctx)
 
 		require.NoError(t, err)

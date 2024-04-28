@@ -13,7 +13,7 @@ import (
 	"github.com/JosephJoshua/remana-backend/internal/gensql"
 	"github.com/JosephJoshua/remana-backend/internal/infrastructure/core"
 	"github.com/JosephJoshua/remana-backend/internal/logger"
-	"github.com/JosephJoshua/remana-backend/internal/shared"
+	"github.com/JosephJoshua/remana-backend/internal/modules/shared"
 	"github.com/gavv/httpexpect/v2"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"

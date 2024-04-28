@@ -7,7 +7,7 @@ import (
 
 	"github.com/JosephJoshua/remana-backend/internal/apperror"
 	"github.com/JosephJoshua/remana-backend/internal/gensql"
-	"github.com/JosephJoshua/remana-backend/internal/shared/readmodel"
+	"github.com/JosephJoshua/remana-backend/internal/modules/auth/readmodel"
 	"github.com/JosephJoshua/remana-backend/internal/typemapper"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -28,13 +28,13 @@ func (r *SQLAuthRepository) GetUserByUsernameAndStoreCode(
 	ctx context.Context,
 	username string,
 	storeCode string,
-) (readmodel.AuthnUser, error) {
+) (readmodel.User, error) {
 	user, err := r.queries.GetUserByUsernameAndStoreCode(ctx, gensql.GetUserByUsernameAndStoreCodeParams{
 		Username:  username,
 		StoreCode: storeCode,
 	})
 
-	var emptyUser readmodel.AuthnUser
+	var emptyUser readmodel.User
 	if err != nil {
 		return emptyUser, fmt.Errorf("failed to get user by username and store code: %w", err)
 	}
@@ -44,7 +44,7 @@ func (r *SQLAuthRepository) GetUserByUsernameAndStoreCode(
 		return emptyUser, fmt.Errorf("failed to parse user ID from bytes: %w", err)
 	}
 
-	return readmodel.AuthnUser{
+	return readmodel.User{
 		ID:           userID,
 		Password:     user.UserPassword,
 		IsStoreAdmin: user.IsStoreAdmin.Bool,

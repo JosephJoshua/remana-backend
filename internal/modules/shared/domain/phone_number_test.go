@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/JosephJoshua/remana-backend/internal/shared/domain"
+	"github.com/JosephJoshua/remana-backend/internal/modules/shared/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

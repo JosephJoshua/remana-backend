@@ -12,8 +12,8 @@ import (
 	"github.com/JosephJoshua/remana-backend/internal/genapi"
 	"github.com/JosephJoshua/remana-backend/internal/logger"
 	"github.com/JosephJoshua/remana-backend/internal/modules/auth"
-	"github.com/JosephJoshua/remana-backend/internal/shared"
-	"github.com/JosephJoshua/remana-backend/internal/shared/readmodel"
+	"github.com/JosephJoshua/remana-backend/internal/modules/auth/readmodel"
+	"github.com/JosephJoshua/remana-backend/internal/modules/shared"
 	"github.com/JosephJoshua/remana-backend/internal/testutil"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
@@ -72,7 +72,7 @@ func (p *passwordHasherStub) Check(hashedPassword, password string) error {
 }
 
 type serviceRepositoryStub struct {
-	user             readmodel.AuthnUser
+	user             readmodel.User
 	username         string
 	storeCode        string
 	loginCode        string
@@ -83,9 +83,9 @@ func (a *serviceRepositoryStub) GetUserByUsernameAndStoreCode(
 	_ context.Context,
 	username string,
 	storeCode string,
-) (readmodel.AuthnUser, error) {
+) (readmodel.User, error) {
 	if a.username != username || a.storeCode != storeCode {
-		var user readmodel.AuthnUser
+		var user readmodel.User
 		return user, apperror.ErrUserNotFound
 	}
 
@@ -123,13 +123,13 @@ func TestLogin(t *testing.T) {
 
 	var userID = uuid.New()
 
-	adminUser := readmodel.AuthnUser{
+	adminUser := readmodel.User{
 		ID:           userID,
 		Password:     correctPassword,
 		IsStoreAdmin: true,
 	}
 
-	employeeUser := readmodel.AuthnUser{
+	employeeUser := readmodel.User{
 		ID:           userID,
 		Password:     correctPassword,
 		IsStoreAdmin: false,
@@ -260,7 +260,7 @@ func TestLoginCodePrompt(t *testing.T) {
 	var userID = uuid.New()
 	const loginCode = "A1B2C3D4"
 
-	user := readmodel.AuthnUser{
+	user := readmodel.User{
 		ID:           userID,
 		Password:     "password",
 		IsStoreAdmin: false,

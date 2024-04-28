@@ -9,11 +9,11 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/JosephJoshua/remana-backend/internal/appcontext"
 	"github.com/JosephJoshua/remana-backend/internal/apperror"
 	"github.com/JosephJoshua/remana-backend/internal/genapi"
 	"github.com/JosephJoshua/remana-backend/internal/modules/auth"
-	"github.com/JosephJoshua/remana-backend/internal/shared"
-	"github.com/JosephJoshua/remana-backend/internal/shared/readmodel"
+	"github.com/JosephJoshua/remana-backend/internal/modules/user/readmodel"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -79,7 +79,7 @@ func TestHandleSessionCookie(t *testing.T) {
 
 		assert.Equal(t, http.StatusUnauthorized, apiErr.StatusCode)
 
-		_, ok := shared.GetUserFromContext(ctx)
+		_, ok := appcontext.GetUserFromContext(ctx)
 		assert.False(t, ok)
 	})
 
@@ -99,7 +99,7 @@ func TestHandleSessionCookie(t *testing.T) {
 
 		assert.Equal(t, http.StatusUnauthorized, apiErr.StatusCode)
 
-		_, ok := shared.GetUserFromContext(ctx)
+		_, ok := appcontext.GetUserFromContext(ctx)
 		assert.False(t, ok)
 	})
 
@@ -121,7 +121,7 @@ func TestHandleSessionCookie(t *testing.T) {
 
 		assert.Equal(t, http.StatusUnauthorized, apiErr.StatusCode)
 
-		_, ok := shared.GetUserFromContext(ctx)
+		_, ok := appcontext.GetUserFromContext(ctx)
 		assert.False(t, ok)
 	})
 
@@ -145,7 +145,7 @@ func TestHandleSessionCookie(t *testing.T) {
 
 		assert.Equal(t, http.StatusInternalServerError, apiErr.StatusCode)
 
-		_, ok := shared.GetUserFromContext(ctx)
+		_, ok := appcontext.GetUserFromContext(ctx)
 		assert.False(t, ok)
 	})
 
@@ -179,7 +179,7 @@ func TestHandleSessionCookie(t *testing.T) {
 
 		require.NoError(t, err)
 
-		got, ok := shared.GetUserFromContext(ctx)
+		got, ok := appcontext.GetUserFromContext(ctx)
 
 		require.True(t, ok)
 		assert.EqualExportedValues(t, userDetails, *got)
