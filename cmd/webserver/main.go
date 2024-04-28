@@ -111,7 +111,14 @@ func connectDB(ctx context.Context, connString string) (*pgxpool.Pool, error) {
 
 	log.Info().Msg("connecting to database...")
 
-	conn, err := pgxpool.New(ctx, connString)
+	config, err := pgxpool.ParseConfig(connString)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing conn string: %w", err)
+	}
+
+	config.ConnConfig.Tracer = &logger.PgxLogTracer{}
+
+	conn, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to database: %w", err)
 	}

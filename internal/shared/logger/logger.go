@@ -82,6 +82,7 @@ func Init(logLevel zerolog.Level, appEnv shared.AppEnv) {
 		Str("go_version", goVersion).
 		Logger()
 
+	zerolog.DefaultContextLogger = &l
 	log = &l
 }
 
