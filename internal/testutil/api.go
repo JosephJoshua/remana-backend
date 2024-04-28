@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/JosephJoshua/remana-backend/internal/genapi"
-	"github.com/JosephJoshua/remana-backend/internal/shared/logger"
+	"github.com/JosephJoshua/remana-backend/internal/logger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/JosephJoshua/remana-backend/internal/core"
+	"github.com/JosephJoshua/remana-backend/internal/infrastructure/core"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/ory/dockertest/v3"

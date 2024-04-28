@@ -3,7 +3,7 @@ package testutil
 import (
 	"net/url"
 
-	"github.com/JosephJoshua/remana-backend/internal/shared/optional"
+	"github.com/JosephJoshua/remana-backend/internal/optional"
 	"github.com/google/uuid"
 )
 

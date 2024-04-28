@@ -8,9 +8,9 @@ import (
 	"io/fs"
 	stdlog "log"
 
-	"github.com/JosephJoshua/remana-backend/internal/core"
+	"github.com/JosephJoshua/remana-backend/internal/infrastructure/core"
+	"github.com/JosephJoshua/remana-backend/internal/logger"
 	"github.com/JosephJoshua/remana-backend/internal/shared"
-	"github.com/JosephJoshua/remana-backend/internal/shared/logger"
 	"github.com/go-playground/validator/v10"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/rs/zerolog"
