@@ -16,7 +16,9 @@ tags:
   - name: user
     description: User details
   - name: repair_order
-    description: Repair orders
+    description: Repair order management
+  - name: technicians
+    description: Technician management
   - name: misc
     description: Miscellaneous endpoints
 components:
@@ -38,3 +40,5 @@ paths:
     $ref: paths/user/getMyUserDetails.yaml
   /repair-orders:
     $ref: paths/repair_orders/createRepairOrder.yaml
+  /technicians:
+    $ref: paths/technicians/createTechnician.yaml

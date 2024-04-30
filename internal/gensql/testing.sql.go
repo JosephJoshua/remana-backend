@@ -193,6 +193,21 @@ func (q *Queries) GetRepairOrderPhotosForTesting(ctx context.Context, repairOrde
 	return items, nil
 }
 
+const getTechnicianForTesting = `-- name: GetTechnicianForTesting :one
+SELECT
+  technicians.technician_id, technicians.store_id, technicians.technician_name
+FROM technicians
+WHERE technicians.technician_id = $1
+LIMIT 1
+`
+
+func (q *Queries) GetTechnicianForTesting(ctx context.Context, technicianID pgtype.UUID) (Technician, error) {
+	row := q.db.QueryRow(ctx, getTechnicianForTesting, technicianID)
+	var i Technician
+	err := row.Scan(&i.TechnicianID, &i.StoreID, &i.TechnicianName)
+	return i, err
+}
+
 const seedDamageType = `-- name: SeedDamageType :one
 INSERT INTO damage_types (damage_type_id, damage_type_name, store_id)
 VALUES ($1, $2, $3)

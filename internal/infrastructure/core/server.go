@@ -12,6 +12,7 @@ import (
 	"github.com/JosephJoshua/remana-backend/internal/modules/auth"
 	"github.com/JosephJoshua/remana-backend/internal/modules/misc"
 	"github.com/JosephJoshua/remana-backend/internal/modules/repairorder"
+	"github.com/JosephJoshua/remana-backend/internal/modules/technician"
 	"github.com/JosephJoshua/remana-backend/internal/modules/user"
 	"github.com/go-faster/jx"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -23,12 +24,14 @@ import (
 
 type authService = auth.Service
 type userService = user.Service
+type technicianService = technician.Service
 type repairOrderService = repairorder.Service
 type miscService = misc.Service
 
 type server struct {
 	*authService
 	*userService
+	*technicianService
 	*repairOrderService
 	*miscService
 }
@@ -55,12 +58,18 @@ func NewAPIServer(db *pgxpool.Pool) (*genapi.Server, []Middleware, error) {
 		newRepairOrderSlugProvider(db),
 	)
 
+	technicianService := technician.NewService(
+		resourceLocationProvider{},
+		repository.NewSQLTechnicianRepository(db),
+	)
+
 	userService := user.NewService()
 	miscService := misc.NewService()
 
 	srv := server{
 		authService:        authService,
 		userService:        userService,
+		technicianService:  technicianService,
 		repairOrderService: repairOrderService,
 		miscService:        miscService,
 	}

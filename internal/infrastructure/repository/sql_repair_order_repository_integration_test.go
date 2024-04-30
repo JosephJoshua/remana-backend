@@ -45,29 +45,30 @@ type phoneEquipment struct {
 }
 
 func TestCreateRepairOrder(t *testing.T) {
-	t.Parallel()
-
 	logger.Init(zerolog.ErrorLevel, shared.AppEnvDev)
-	l := logger.MustGet()
 
-	requestCtx := l.WithContext(context.Background())
+	pool, initErr := testutil.StartDockerPool()
+	require.NoError(t, initErr, "error starting docker pool")
 
-	pool, err := testutil.StartDockerPool()
-	require.NoError(t, err, "error starting docker pool")
-
-	postgresResource, db, err := testutil.StartPostgresContainer(pool)
-	require.NoError(t, err, "error starting postgres container")
+	postgresResource, db, initErr := testutil.StartPostgresContainer(pool)
+	require.NoError(t, initErr, "error starting postgres container")
 
 	t.Cleanup(func() {
-		testutil.PurgeDockerResources(pool, []*dockertest.Resource{postgresResource})
+		if purgeErr := testutil.PurgeDockerResources(pool, []*dockertest.Resource{postgresResource}); purgeErr != nil {
+			t.Fatalf("failed to purge docker resources: %v", initErr)
+		}
 	})
 
-	testutil.MigratePostgres(context.Background(), db)
-	require.NoError(t, err, "error migrating database")
+	initErr = testutil.MigratePostgres(context.Background(), db)
+	require.NoError(t, initErr, "error migrating database")
 
 	var (
 		theCreationTime = time.Unix(1713917762, 0)
-		theLocation     = url.URL{Scheme: "http", Host: "example.com", Path: "/repair-orders"}
+		theLocation     = url.URL{
+			Scheme: "http",
+			Host:   "example.com",
+			Path:   "/repair-orders/61821d3a-dbdd-4f41-a2c6-14faf7b57c67",
+		}
 
 		theStoreID         = uuid.New()
 		theSalesID         = uuid.New()
@@ -110,24 +111,26 @@ func TestCreateRepairOrder(t *testing.T) {
 		}
 	)
 
-	requestCtx = appcontext.NewContextWithUser(requestCtx, &readmodel.UserDetails{
-		ID:       uuid.New(),
-		Username: "not important",
-		Role: readmodel.UserDetailsRole{
-			ID:           uuid.New(),
-			Name:         "not important",
-			IsStoreAdmin: true,
-		},
-		Store: readmodel.UserDetailsStore{
-			ID:   theStoreID,
-			Name: "not important",
-			Code: "not-important",
-		},
-	})
+	requestCtx := appcontext.NewContextWithUser(
+		testutil.RequestContextWithLogger(context.Background()),
+		&readmodel.UserDetails{
+			ID:       uuid.New(),
+			Username: "not important",
+			Role: readmodel.UserDetailsRole{
+				ID:           uuid.New(),
+				Name:         "not important",
+				IsStoreAdmin: true,
+			},
+			Store: readmodel.UserDetailsStore{
+				ID:   theStoreID,
+				Name: "not important",
+				Code: "not-important",
+			},
+		})
 
 	queries := gensql.New(db)
 
-	seed(
+	seedCreateRepairOrder(
 		context.Background(),
 		t,
 		queries,
@@ -175,7 +178,7 @@ func TestCreateRepairOrder(t *testing.T) {
 
 	t.Run("creates repair order in db", func(t *testing.T) {
 		timeProvider := testutil.NewTimeProviderStub(theCreationTime)
-		locationProvider := testutil.NewResourceLocationProviderStubForRepairOrder(theLocation, nil)
+		locationProvider := testutil.NewResourceLocationProviderStubForRepairOrder(theLocation)
 		slugProvider := testutil.NewRepairOrderSlugProviderStub("some-slug", nil)
 
 		repo := repository.NewSQLRepairOrderRepository(db)
@@ -375,7 +378,7 @@ func TestCreateRepairOrder(t *testing.T) {
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
 				timeProvider := testutil.NewTimeProviderStub(theCreationTime)
-				locationProvider := testutil.NewResourceLocationProviderStubForRepairOrder(theLocation, nil)
+				locationProvider := testutil.NewResourceLocationProviderStubForRepairOrder(theLocation)
 				slugProvider := testutil.NewRepairOrderSlugProviderStub("some-slug", nil)
 				repo := repository.NewSQLRepairOrderRepository(db)
 
@@ -391,7 +394,7 @@ func TestCreateRepairOrder(t *testing.T) {
 	})
 }
 
-func seed(
+func seedCreateRepairOrder(
 	ctx context.Context,
 	t *testing.T,
 	queries *gensql.Queries,

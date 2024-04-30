@@ -22,6 +22,15 @@ func (UnimplementedHandler) CreateRepairOrder(ctx context.Context, req *CreateRe
 	return r, ht.ErrNotImplemented
 }
 
+// CreateTechnician implements createTechnician operation.
+//
+// Creates a new technician.
+//
+// POST /technicians
+func (UnimplementedHandler) CreateTechnician(ctx context.Context, req *CreateTechnicianRequest) (r *CreateTechnicianCreated, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // GetHealth implements getHealth operation.
 //
 // Returns the health status of the service.

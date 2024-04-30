@@ -45,7 +45,6 @@ type repositoryStub struct {
 	damages                []damage
 	phoneConditions        []phoneCondition
 	phoneEquipments        []phoneEquipment
-	storeID                uuid.UUID
 	technicianID           uuid.UUID
 	salesID                uuid.UUID
 	paymentMethodID        uuid.UUID
@@ -221,7 +220,6 @@ func TestCreateRepairOrder(t *testing.T) {
 			damages:         theDamages,
 			phoneConditions: thePhoneConditions,
 			phoneEquipments: thePhoneEquipments,
-			storeID:         theStoreID,
 			technicianID:    theTechnicianID,
 			salesID:         theSalesID,
 			paymentMethodID: thePaymentMethodID,
@@ -380,7 +378,7 @@ func TestCreateRepairOrder(t *testing.T) {
 				t.Parallel()
 
 				repo := baseRepo()
-				s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}, nil), repo, testutil.NewRepairOrderSlugProviderStub("random-slug", nil))
+				s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}), repo, testutil.NewRepairOrderSlugProviderStub("random-slug", nil))
 
 				_, err := s.CreateRepairOrder(requestCtx, tc.req)
 
@@ -446,7 +444,7 @@ func TestCreateRepairOrder(t *testing.T) {
 		slugProvider := testutil.NewRepairOrderSlugProviderStub(theSlug, nil)
 		repo := baseRepo()
 
-		s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}, nil), repo, slugProvider)
+		s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}), repo, slugProvider)
 
 		req := validRequest()
 		_, err := s.CreateRepairOrder(requestCtx, &req)
@@ -463,7 +461,7 @@ func TestCreateRepairOrder(t *testing.T) {
 		now := time.Unix(1713917762, 0)
 		repo := baseRepo()
 
-		s := repairorder.NewService(testutil.NewTimeProviderStub(now), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}, nil), repo, testutil.NewRepairOrderSlugProviderStub("random-slug", nil))
+		s := repairorder.NewService(testutil.NewTimeProviderStub(now), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}), repo, testutil.NewRepairOrderSlugProviderStub("random-slug", nil))
 
 		req := validRequest()
 		_, err := s.CreateRepairOrder(requestCtx, &req)
@@ -486,7 +484,7 @@ func TestCreateRepairOrder(t *testing.T) {
 		repo := baseRepo()
 		repo.damages = damages
 
-		s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}, nil), repo, testutil.NewRepairOrderSlugProviderStub("random-slug", nil))
+		s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}), repo, testutil.NewRepairOrderSlugProviderStub("random-slug", nil))
 
 		req := validRequest()
 		req.DamageTypes = []uuid.UUID{damages[0].id, damages[1].id}
@@ -525,7 +523,7 @@ func TestCreateRepairOrder(t *testing.T) {
 		repo := baseRepo()
 		repo.damages = damages
 
-		s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}, nil), repo, testutil.NewRepairOrderSlugProviderStub("random-slug", nil))
+		s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}), repo, testutil.NewRepairOrderSlugProviderStub("random-slug", nil))
 
 		req := validRequest()
 		req.DamageTypes = []uuid.UUID{damages[0].id, randomID}
@@ -545,7 +543,7 @@ func TestCreateRepairOrder(t *testing.T) {
 		repo := baseRepo()
 		repo.phoneConditions = phoneConditions
 
-		s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}, nil), repo, testutil.NewRepairOrderSlugProviderStub("random-slug", nil))
+		s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}), repo, testutil.NewRepairOrderSlugProviderStub("random-slug", nil))
 
 		req := validRequest()
 		req.PhoneConditions = []uuid.UUID{phoneConditions[0].id, phoneConditions[1].id}
@@ -583,7 +581,7 @@ func TestCreateRepairOrder(t *testing.T) {
 		repo := baseRepo()
 		repo.phoneConditions = phoneConditions
 
-		s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}, nil), repo, testutil.NewRepairOrderSlugProviderStub("random-slug", nil))
+		s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}), repo, testutil.NewRepairOrderSlugProviderStub("random-slug", nil))
 
 		req := validRequest()
 		req.PhoneConditions = []uuid.UUID{phoneConditions[0].id, randomID}
@@ -603,7 +601,7 @@ func TestCreateRepairOrder(t *testing.T) {
 		repo := baseRepo()
 		repo.phoneEquipments = equipments
 
-		s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}, nil), repo, testutil.NewRepairOrderSlugProviderStub("random-slug", nil))
+		s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}), repo, testutil.NewRepairOrderSlugProviderStub("random-slug", nil))
 
 		req := validRequest()
 		req.PhoneEquipments = []uuid.UUID{equipments[0].id, equipments[1].id}
@@ -641,7 +639,7 @@ func TestCreateRepairOrder(t *testing.T) {
 		repo := baseRepo()
 		repo.phoneEquipments = equipments
 
-		s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}, nil), repo, testutil.NewRepairOrderSlugProviderStub("random-slug", nil))
+		s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}), repo, testutil.NewRepairOrderSlugProviderStub("random-slug", nil))
 
 		req := validRequest()
 		req.PhoneEquipments = []uuid.UUID{equipments[0].id, randomID}
@@ -655,7 +653,7 @@ func TestCreateRepairOrder(t *testing.T) {
 
 		theLocation := url.URL{Scheme: "http", Host: "example.com", Path: "/repair-orders"}
 
-		locationProvider := testutil.NewResourceLocationProviderStubForRepairOrder(theLocation, nil)
+		locationProvider := testutil.NewResourceLocationProviderStubForRepairOrder(theLocation)
 		repo := baseRepo()
 
 		s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), locationProvider, repo, testutil.NewRepairOrderSlugProviderStub("random-slug", nil))
@@ -683,7 +681,7 @@ func TestCreateRepairOrder(t *testing.T) {
 		repo := baseRepo()
 		repo.technicianID = technicianID
 
-		s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}, nil), repo, testutil.NewRepairOrderSlugProviderStub("random-slug", nil))
+		s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}), repo, testutil.NewRepairOrderSlugProviderStub("random-slug", nil))
 
 		req := validRequest()
 		req.TechnicianID = randomID
@@ -701,7 +699,7 @@ func TestCreateRepairOrder(t *testing.T) {
 		repo := baseRepo()
 		repo.salesID = salesID
 
-		s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}, nil), repo, testutil.NewRepairOrderSlugProviderStub("random-slug", nil))
+		s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}), repo, testutil.NewRepairOrderSlugProviderStub("random-slug", nil))
 
 		req := validRequest()
 		req.SalesID = randomID
@@ -719,7 +717,7 @@ func TestCreateRepairOrder(t *testing.T) {
 		repo := baseRepo()
 		repo.paymentMethodID = thePaymentMethodID
 
-		s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}, nil), repo, testutil.NewRepairOrderSlugProviderStub("random-slug", nil))
+		s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}), repo, testutil.NewRepairOrderSlugProviderStub("random-slug", nil))
 
 		req := validRequest()
 		req.DownPayment = genapi.NewOptCreateRepairOrderRequestDownPayment(genapi.CreateRepairOrderRequestDownPayment{
@@ -759,7 +757,7 @@ func TestCreateRepairOrder(t *testing.T) {
 				t.Parallel()
 
 				repo := baseRepo()
-				s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}, nil), repo, testutil.NewRepairOrderSlugProviderStub("random-slug", nil))
+				s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}), repo, testutil.NewRepairOrderSlugProviderStub("random-slug", nil))
 
 				req := validRequest()
 				req.ContactPhoneNumber = tc.contactNumber
@@ -774,7 +772,7 @@ func TestCreateRepairOrder(t *testing.T) {
 		t.Parallel()
 
 		repo := baseRepo()
-		s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}, nil), repo, testutil.NewRepairOrderSlugProviderStub("random-slug", nil))
+		s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}), repo, testutil.NewRepairOrderSlugProviderStub("random-slug", nil))
 
 		req := validRequest()
 		emptyCtx := testutil.RequestContextWithLogger(context.Background())
@@ -838,12 +836,6 @@ func TestCreateRepairOrder(t *testing.T) {
 				},
 			},
 			{
-				name: "when resource location provider errors",
-				setup: func(_ *repositoryStub, locationProvider *testutil.ResourceLocationProviderStub, _ *testutil.OrderSlugProviderStub) {
-					locationProvider.SetRepairOrderErr(errors.New("oh no!"))
-				},
-			},
-			{
 				name: "when order slug provider errors",
 				setup: func(_ *repositoryStub, _ *testutil.ResourceLocationProviderStub, slugProvider *testutil.OrderSlugProviderStub) {
 					slugProvider.SetError(errors.New("oh no!"))
@@ -860,7 +852,6 @@ func TestCreateRepairOrder(t *testing.T) {
 				repo := baseRepo()
 				locationProvider := testutil.NewResourceLocationProviderStubForRepairOrder(
 					url.URL{Scheme: "http", Host: "example.com", Path: "/repair-orders"},
-					nil,
 				)
 				slugProvider := testutil.NewRepairOrderSlugProviderStub("random-slug", nil)
 

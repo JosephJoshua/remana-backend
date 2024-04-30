@@ -248,6 +248,36 @@ func (s *CreateRepairOrderRequestPasscode) SetValue(val string) {
 	s.Value = val
 }
 
+// CreateTechnicianCreated is response for CreateTechnician operation.
+type CreateTechnicianCreated struct {
+	Location url.URL
+}
+
+// GetLocation returns the value of Location.
+func (s *CreateTechnicianCreated) GetLocation() url.URL {
+	return s.Location
+}
+
+// SetLocation sets the value of Location.
+func (s *CreateTechnicianCreated) SetLocation(val url.URL) {
+	s.Location = val
+}
+
+// Ref: #
+type CreateTechnicianRequest struct {
+	Name string `json:"name"`
+}
+
+// GetName returns the value of Name.
+func (s *CreateTechnicianRequest) GetName() string {
+	return s.Name
+}
+
+// SetName sets the value of Name.
+func (s *CreateTechnicianRequest) SetName(val string) {
+	s.Name = val
+}
+
 // Ref: #
 type Error struct {
 	Message string `json:"message"`

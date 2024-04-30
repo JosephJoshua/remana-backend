@@ -181,6 +181,27 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				}
 
 				elem = origElem
+			case 't': // Prefix: "technicians"
+				origElem := elem
+				if l := len("technicians"); len(elem) >= l && elem[0:l] == "technicians" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch r.Method {
+					case "POST":
+						s.handleCreateTechnicianRequest([0]string{}, elemIsEscaped, w, r)
+					default:
+						s.notAllowed(w, r, "POST")
+					}
+
+					return
+				}
+
+				elem = origElem
 			case 'u': // Prefix: "users/me"
 				origElem := elem
 				if l := len("users/me"); len(elem) >= l && elem[0:l] == "users/me" {
@@ -429,6 +450,31 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 						r.summary = "Creates a new repair order"
 						r.operationID = "createRepairOrder"
 						r.pathPattern = "/repair-orders"
+						r.args = args
+						r.count = 0
+						return r, true
+					default:
+						return
+					}
+				}
+
+				elem = origElem
+			case 't': // Prefix: "technicians"
+				origElem := elem
+				if l := len("technicians"); len(elem) >= l && elem[0:l] == "technicians" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					switch method {
+					case "POST":
+						// Leaf: CreateTechnician
+						r.name = "CreateTechnician"
+						r.summary = "Creates a new technician"
+						r.operationID = "createTechnician"
+						r.pathPattern = "/technicians"
 						r.args = args
 						r.count = 0
 						return r, true

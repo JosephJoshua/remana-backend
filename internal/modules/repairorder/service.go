@@ -36,7 +36,7 @@ type TimeProvider interface {
 }
 
 type ResourceLocationProvider interface {
-	RepairOrder(orderID uuid.UUID) (url.URL, error)
+	RepairOrder(orderID uuid.UUID) url.URL
 }
 
 type Service struct {
@@ -69,6 +69,7 @@ func (s *Service) CreateRepairOrder(
 
 	user, ok := appcontext.GetUserFromContext(ctx)
 	if !ok {
+		l.Error().Msg("user is missing from context")
 		return nil, apierror.ToAPIError(http.StatusUnauthorized, "unauthorized")
 	}
 
@@ -156,12 +157,7 @@ func (s *Service) CreateRepairOrder(
 		return nil, apierror.ToAPIError(http.StatusInternalServerError, "failed to create repair order")
 	}
 
-	location, err := s.locationProvider.RepairOrder(repairOrder.ID())
-	if err != nil {
-		l.Error().Err(err).Msg("failed to get resource location")
-		return nil, apierror.ToAPIError(http.StatusInternalServerError, "failed to get resource location")
-	}
-
+	location := s.locationProvider.RepairOrder(repairOrder.ID())
 	return &genapi.CreateRepairOrderCreated{
 		Location: location,
 	}, nil

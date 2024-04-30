@@ -21,7 +21,7 @@ post:
           schema:
             type: string
             format: uri
-          example: https://example.com/repair-orders/90b79dd6-17eb-4e95-b2df-86f0fc4617ce
+          example: /repair-orders/90b79dd6-17eb-4e95-b2df-86f0fc4617ce
     default:
       content:
         application/json:
