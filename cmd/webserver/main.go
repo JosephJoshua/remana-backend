@@ -14,9 +14,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/JosephJoshua/remana-backend/internal/appconstant"
 	"github.com/JosephJoshua/remana-backend/internal/infrastructure/core"
 	"github.com/JosephJoshua/remana-backend/internal/logger"
-	"github.com/JosephJoshua/remana-backend/internal/modules/shared"
 	"github.com/JosephJoshua/remana-backend/internal/projectpath"
 	"github.com/go-playground/validator/v10"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -127,11 +127,11 @@ func connectDB(ctx context.Context, connString string) (*pgxpool.Pool, error) {
 }
 
 type appConfig struct {
-	ServerAddr   string        `mapstructure:"remana_server_addr"    validate:"required"`
-	AppEnv       shared.AppEnv `mapstructure:"remana_app_env"        validate:"required"`
-	ConnString   string        `mapstructure:"remana_conn_string"    validate:"required"`
-	CertFilePath string        `mapstructure:"remana_cert_file_path" validate:"required"`
-	KeyFilePath  string        `mapstructure:"remana_key_file_path"  validate:"required"`
+	ServerAddr   string             `mapstructure:"remana_server_addr"    validate:"required"`
+	AppEnv       appconstant.AppEnv `mapstructure:"remana_app_env"        validate:"required"`
+	ConnString   string             `mapstructure:"remana_conn_string"    validate:"required"`
+	CertFilePath string             `mapstructure:"remana_cert_file_path" validate:"required"`
+	KeyFilePath  string             `mapstructure:"remana_key_file_path"  validate:"required"`
 }
 
 func loadConfig() (appConfig, error) {

@@ -9,12 +9,12 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/JosephJoshua/remana-backend/internal/appconstant"
 	"github.com/JosephJoshua/remana-backend/internal/apperror"
 	"github.com/JosephJoshua/remana-backend/internal/genapi"
 	"github.com/JosephJoshua/remana-backend/internal/logger"
 	"github.com/JosephJoshua/remana-backend/internal/modules/auth"
 	"github.com/JosephJoshua/remana-backend/internal/modules/auth/readmodel"
-	"github.com/JosephJoshua/remana-backend/internal/modules/shared"
 	"github.com/JosephJoshua/remana-backend/internal/testutil"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
@@ -106,7 +106,7 @@ func (a *serviceRepositoryStub) CheckAndDeleteUserLoginCode(
 func TestLogin(t *testing.T) {
 	t.Parallel()
 
-	logger.Init(zerolog.ErrorLevel, shared.AppEnvDev)
+	logger.Init(zerolog.ErrorLevel, appconstant.AppEnvDev)
 	requestCtx := testutil.RequestContextWithLogger(context.Background())
 
 	const (
@@ -280,7 +280,7 @@ func TestLogin(t *testing.T) {
 func TestLoginCodePrompt(t *testing.T) {
 	t.Parallel()
 
-	logger.Init(zerolog.ErrorLevel, shared.AppEnvDev)
+	logger.Init(zerolog.ErrorLevel, appconstant.AppEnvDev)
 	requestCtx := testutil.RequestContextWithLogger(context.Background())
 
 	var userID = uuid.New()
@@ -402,7 +402,7 @@ func TestLoginCodePrompt(t *testing.T) {
 func TestLogout(t *testing.T) {
 	t.Parallel()
 
-	logger.Init(zerolog.ErrorLevel, shared.AppEnvDev)
+	logger.Init(zerolog.ErrorLevel, appconstant.AppEnvDev)
 	requestCtx := testutil.RequestContextWithLogger(context.Background())
 
 	t.Run("deletes session", func(t *testing.T) {

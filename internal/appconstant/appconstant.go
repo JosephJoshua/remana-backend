@@ -1,4 +1,4 @@
-package shared
+package appconstant
 
 type AppEnv string
 

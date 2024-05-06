@@ -8,9 +8,9 @@ import (
 	"io/fs"
 	stdlog "log"
 
+	"github.com/JosephJoshua/remana-backend/internal/appconstant"
 	"github.com/JosephJoshua/remana-backend/internal/infrastructure/core"
 	"github.com/JosephJoshua/remana-backend/internal/logger"
-	"github.com/JosephJoshua/remana-backend/internal/modules/shared"
 	"github.com/go-playground/validator/v10"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/rs/zerolog"
@@ -18,8 +18,8 @@ import (
 )
 
 type appConfig struct {
-	AppEnv     shared.AppEnv `mapstructure:"remana_app_env"     validate:"required"`
-	ConnString string        `mapstructure:"remana_conn_string" validate:"required"`
+	AppEnv     appconstant.AppEnv `mapstructure:"remana_app_env"     validate:"required"`
+	ConnString string             `mapstructure:"remana_conn_string" validate:"required"`
 }
 
 func connectDB(connString string) (*sql.DB, error) {

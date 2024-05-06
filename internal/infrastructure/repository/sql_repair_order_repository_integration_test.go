@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/JosephJoshua/remana-backend/internal/appconstant"
 	"github.com/JosephJoshua/remana-backend/internal/appcontext"
 	"github.com/JosephJoshua/remana-backend/internal/genapi"
 	"github.com/JosephJoshua/remana-backend/internal/gensql"
@@ -18,7 +19,6 @@ import (
 	"github.com/JosephJoshua/remana-backend/internal/logger"
 	"github.com/JosephJoshua/remana-backend/internal/modules/auth/readmodel"
 	"github.com/JosephJoshua/remana-backend/internal/modules/repairorder"
-	"github.com/JosephJoshua/remana-backend/internal/modules/shared"
 	"github.com/JosephJoshua/remana-backend/internal/testutil"
 	"github.com/JosephJoshua/remana-backend/internal/typemapper"
 	"github.com/google/uuid"
@@ -45,7 +45,7 @@ type phoneEquipment struct {
 }
 
 func TestCreateRepairOrder(t *testing.T) {
-	logger.Init(zerolog.ErrorLevel, shared.AppEnvDev)
+	logger.Init(zerolog.ErrorLevel, appconstant.AppEnvDev)
 
 	pool, initErr := testutil.StartDockerPool()
 	require.NoError(t, initErr, "error starting docker pool")

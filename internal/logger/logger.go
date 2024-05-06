@@ -7,7 +7,7 @@ import (
 	"runtime/debug"
 	"time"
 
-	"github.com/JosephJoshua/remana-backend/internal/modules/shared"
+	"github.com/JosephJoshua/remana-backend/internal/appconstant"
 	"github.com/rs/zerolog"
 )
 
@@ -23,12 +23,12 @@ const (
 
 var log *zerolog.Logger
 
-func Init(logLevel zerolog.Level, appEnv shared.AppEnv) {
+func Init(logLevel zerolog.Level, appEnv appconstant.AppEnv) {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 
 	var output io.Writer
 
-	if appEnv == shared.AppEnvProduction {
+	if appEnv == appconstant.AppEnvProduction {
 		output = os.Stderr
 	} else {
 		output = zerolog.NewConsoleWriter(func(w *zerolog.ConsoleWriter) {

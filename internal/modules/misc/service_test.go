@@ -7,9 +7,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/JosephJoshua/remana-backend/internal/appconstant"
 	"github.com/JosephJoshua/remana-backend/internal/logger"
 	"github.com/JosephJoshua/remana-backend/internal/modules/misc"
-	"github.com/JosephJoshua/remana-backend/internal/modules/shared"
 	"github.com/JosephJoshua/remana-backend/internal/testutil"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
@@ -18,7 +18,7 @@ import (
 func TestGetHealth(t *testing.T) {
 	t.Parallel()
 
-	logger.Init(zerolog.ErrorLevel, shared.AppEnvDev)
+	logger.Init(zerolog.ErrorLevel, appconstant.AppEnvDev)
 	requestCtx := testutil.RequestContextWithLogger(context.Background())
 
 	t.Run("returns no error", func(t *testing.T) {

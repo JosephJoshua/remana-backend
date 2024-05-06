@@ -10,10 +10,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/JosephJoshua/remana-backend/internal/appconstant"
 	"github.com/JosephJoshua/remana-backend/internal/gensql"
 	"github.com/JosephJoshua/remana-backend/internal/infrastructure/core"
 	"github.com/JosephJoshua/remana-backend/internal/logger"
-	"github.com/JosephJoshua/remana-backend/internal/modules/shared"
 	"github.com/JosephJoshua/remana-backend/internal/typemapper"
 	"github.com/gavv/httpexpect/v2"
 	"github.com/google/uuid"
@@ -25,7 +25,7 @@ import (
 func TestAuthnFlow(t *testing.T) {
 	t.Parallel()
 
-	logger.Init(zerolog.ErrorLevel, shared.AppEnvDev)
+	logger.Init(zerolog.ErrorLevel, appconstant.AppEnvDev)
 
 	db, cleanup := setupTest(t)
 	t.Cleanup(func() {

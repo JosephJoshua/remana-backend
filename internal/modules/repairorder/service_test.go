@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/JosephJoshua/remana-backend/internal/appconstant"
 	"github.com/JosephJoshua/remana-backend/internal/appcontext"
 	"github.com/JosephJoshua/remana-backend/internal/apperror"
 	"github.com/JosephJoshua/remana-backend/internal/genapi"
@@ -18,7 +19,6 @@ import (
 	"github.com/JosephJoshua/remana-backend/internal/modules/auth/readmodel"
 	"github.com/JosephJoshua/remana-backend/internal/modules/repairorder"
 	"github.com/JosephJoshua/remana-backend/internal/modules/repairorder/domain"
-	"github.com/JosephJoshua/remana-backend/internal/modules/shared"
 	"github.com/JosephJoshua/remana-backend/internal/testutil"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
@@ -195,7 +195,7 @@ func TestCreateRepairOrder(t *testing.T) {
 		}
 	)
 
-	logger.Init(zerolog.ErrorLevel, shared.AppEnvDev)
+	logger.Init(zerolog.ErrorLevel, appconstant.AppEnvDev)
 
 	requestCtx := appcontext.NewContextWithUser(
 		testutil.RequestContextWithLogger(context.Background()),

@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/JosephJoshua/remana-backend/internal/appconstant"
 	"github.com/JosephJoshua/remana-backend/internal/appcontext"
 	"github.com/JosephJoshua/remana-backend/internal/genapi"
 	"github.com/JosephJoshua/remana-backend/internal/gensql"
@@ -16,7 +17,6 @@ import (
 	"github.com/JosephJoshua/remana-backend/internal/logger"
 	"github.com/JosephJoshua/remana-backend/internal/modules/auth"
 	"github.com/JosephJoshua/remana-backend/internal/modules/auth/readmodel"
-	"github.com/JosephJoshua/remana-backend/internal/modules/shared"
 	"github.com/JosephJoshua/remana-backend/internal/testutil"
 	"github.com/JosephJoshua/remana-backend/internal/typemapper"
 	"github.com/google/uuid"
@@ -28,7 +28,7 @@ import (
 )
 
 func TestLogin(t *testing.T) {
-	logger.Init(zerolog.ErrorLevel, shared.AppEnvDev)
+	logger.Init(zerolog.ErrorLevel, appconstant.AppEnvDev)
 	requestCtx := testutil.RequestContextWithLogger(context.Background())
 
 	pool, initErr := testutil.StartDockerPool()
@@ -166,7 +166,7 @@ func TestLogin(t *testing.T) {
 }
 
 func TestLoginCodePrompt(t *testing.T) {
-	logger.Init(zerolog.ErrorLevel, shared.AppEnvDev)
+	logger.Init(zerolog.ErrorLevel, appconstant.AppEnvDev)
 	requestCtx := testutil.RequestContextWithLogger(context.Background())
 
 	pool, initErr := testutil.StartDockerPool()
@@ -274,7 +274,7 @@ func TestLoginCodePrompt(t *testing.T) {
 }
 
 func TestHandleSessionCookie(t *testing.T) {
-	logger.Init(zerolog.ErrorLevel, shared.AppEnvDev)
+	logger.Init(zerolog.ErrorLevel, appconstant.AppEnvDev)
 	requestCtx := testutil.RequestContextWithLogger(context.Background())
 
 	pool, initErr := testutil.StartDockerPool()

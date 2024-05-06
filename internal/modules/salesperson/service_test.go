@@ -10,12 +10,12 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/JosephJoshua/remana-backend/internal/appconstant"
 	"github.com/JosephJoshua/remana-backend/internal/appcontext"
 	"github.com/JosephJoshua/remana-backend/internal/genapi"
 	"github.com/JosephJoshua/remana-backend/internal/logger"
 	"github.com/JosephJoshua/remana-backend/internal/modules/auth/readmodel"
 	"github.com/JosephJoshua/remana-backend/internal/modules/salesperson"
-	"github.com/JosephJoshua/remana-backend/internal/modules/shared"
 	"github.com/JosephJoshua/remana-backend/internal/testutil"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
@@ -62,7 +62,7 @@ func TestCreateSalesPerson(t *testing.T) {
 		theStoreID = uuid.New()
 	)
 
-	logger.Init(zerolog.ErrorLevel, shared.AppEnvDev)
+	logger.Init(zerolog.ErrorLevel, appconstant.AppEnvDev)
 	requestCtx := appcontext.NewContextWithUser(
 		testutil.RequestContextWithLogger(context.Background()),
 		&readmodel.UserDetails{

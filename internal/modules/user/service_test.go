@@ -8,10 +8,10 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/JosephJoshua/remana-backend/internal/appconstant"
 	"github.com/JosephJoshua/remana-backend/internal/appcontext"
 	"github.com/JosephJoshua/remana-backend/internal/logger"
 	"github.com/JosephJoshua/remana-backend/internal/modules/auth/readmodel"
-	"github.com/JosephJoshua/remana-backend/internal/modules/shared"
 	"github.com/JosephJoshua/remana-backend/internal/modules/user"
 	"github.com/JosephJoshua/remana-backend/internal/testutil"
 	"github.com/google/uuid"
@@ -23,7 +23,7 @@ import (
 func TestGetMyUserDetails(t *testing.T) {
 	t.Parallel()
 
-	logger.Init(zerolog.ErrorLevel, shared.AppEnvDev)
+	logger.Init(zerolog.ErrorLevel, appconstant.AppEnvDev)
 	requestCtx := testutil.RequestContextWithLogger(context.Background())
 
 	t.Run("returns internal server error if user is missing from context", func(t *testing.T) {
