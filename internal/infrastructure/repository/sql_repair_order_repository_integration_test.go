@@ -71,7 +71,7 @@ func TestCreateRepairOrder(t *testing.T) {
 		}
 
 		theStoreID         = uuid.New()
-		theSalesID         = uuid.New()
+		theSalesPersonID   = uuid.New()
 		theTechnicianID    = uuid.New()
 		thePaymentMethodID = uuid.New()
 
@@ -91,7 +91,7 @@ func TestCreateRepairOrder(t *testing.T) {
 		}
 
 		otherStoreID              = uuid.New()
-		otherStoreSalesID         = uuid.New()
+		otherStoreSalesPersonID   = uuid.New()
 		otherStoreTechnicianID    = uuid.New()
 		otherStorePaymentMethodID = uuid.New()
 
@@ -136,8 +136,8 @@ func TestCreateRepairOrder(t *testing.T) {
 		queries,
 		theStoreID,
 		otherStoreID,
-		theSalesID,
-		otherStoreSalesID,
+		theSalesPersonID,
+		otherStoreSalesPersonID,
 		theTechnicianID,
 		otherStoreTechnicianID,
 		thePaymentMethodID,
@@ -156,7 +156,7 @@ func TestCreateRepairOrder(t *testing.T) {
 			ContactPhoneNumber: "08123456789",
 			PhoneType:          "iPhone 12",
 			Color:              "Black",
-			SalesID:            theSalesID,
+			SalesPersonID:      theSalesPersonID,
 			TechnicianID:       theTechnicianID,
 			InitialCost:        100,
 			DamageTypes:        []uuid.UUID{theDamage.id},
@@ -210,8 +210,8 @@ func TestCreateRepairOrder(t *testing.T) {
 		assert.NotEmpty(t, order.ContactNumber)
 		assert.Equal(t, req.PhoneType, order.PhoneType)
 
-		require.True(t, order.SalesID.Valid)
-		assert.Equal(t, req.SalesID, typemapper.MustPgtypeUUIDToUUID(order.SalesID))
+		require.True(t, order.SalesPersonID.Valid)
+		assert.Equal(t, req.SalesPersonID, typemapper.MustPgtypeUUIDToUUID(order.SalesPersonID))
 
 		require.True(t, order.TechnicianID.Valid)
 		assert.Equal(t, req.TechnicianID, typemapper.MustPgtypeUUIDToUUID(order.TechnicianID))
@@ -329,9 +329,9 @@ func TestCreateRepairOrder(t *testing.T) {
 				},
 			},
 			{
-				name: "when sales does not exist",
+				name: "when sales person does not exist",
 				setup: func(req *genapi.CreateRepairOrderRequest) {
-					req.SalesID = someRandomID
+					req.SalesPersonID = someRandomID
 				},
 			},
 			{
@@ -368,9 +368,9 @@ func TestCreateRepairOrder(t *testing.T) {
 				},
 			},
 			{
-				name: "when sales is from different store",
+				name: "when sales person is from different store",
 				setup: func(req *genapi.CreateRepairOrderRequest) {
-					req.SalesID = otherStoreSalesID
+					req.SalesPersonID = otherStoreSalesPersonID
 				},
 			},
 		}
@@ -400,8 +400,8 @@ func seedCreateRepairOrder(
 	queries *gensql.Queries,
 	theStoreID uuid.UUID,
 	otherStoreID uuid.UUID,
-	theSalesID uuid.UUID,
-	otherStoreSalesID uuid.UUID,
+	theSalesPersonID uuid.UUID,
+	otherStoreSalesPersonID uuid.UUID,
 	theTechnicianID uuid.UUID,
 	otherStoreTechnicianID uuid.UUID,
 	thePaymentMethodID uuid.UUID,
@@ -438,17 +438,17 @@ func seedCreateRepairOrder(
 	})
 	require.NoError(t, err)
 
-	_, err = queries.SeedSales(ctx, gensql.SeedSalesParams{
-		SalesID:   typemapper.UUIDToPgtypeUUID(theSalesID),
-		SalesName: "Not important",
-		StoreID:   typemapper.UUIDToPgtypeUUID(theStoreID),
+	_, err = queries.SeedSalesPerson(ctx, gensql.SeedSalesPersonParams{
+		SalesPersonID:   typemapper.UUIDToPgtypeUUID(theSalesPersonID),
+		SalesPersonName: "Not important",
+		StoreID:         typemapper.UUIDToPgtypeUUID(theStoreID),
 	})
 	require.NoError(t, err)
 
-	_, err = queries.SeedSales(ctx, gensql.SeedSalesParams{
-		SalesID:   typemapper.UUIDToPgtypeUUID(otherStoreSalesID),
-		SalesName: "Not important",
-		StoreID:   typemapper.UUIDToPgtypeUUID(otherStoreID),
+	_, err = queries.SeedSalesPerson(ctx, gensql.SeedSalesPersonParams{
+		SalesPersonID:   typemapper.UUIDToPgtypeUUID(otherStoreSalesPersonID),
+		SalesPersonName: "Not important",
+		StoreID:         typemapper.UUIDToPgtypeUUID(otherStoreID),
 	})
 	require.NoError(t, err)
 

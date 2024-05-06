@@ -40,7 +40,7 @@ type CreateRepairOrderRequest struct {
 	Color              string                                 `json:"color"`
 	InitialCost        int                                    `json:"initial_cost"`
 	DownPayment        OptCreateRepairOrderRequestDownPayment `json:"down_payment"`
-	SalesID            uuid.UUID                              `json:"sales_id"`
+	SalesPersonID      uuid.UUID                              `json:"sales_person_id"`
 	TechnicianID       uuid.UUID                              `json:"technician_id"`
 	PhoneConditions    []uuid.UUID                            `json:"phone_conditions"`
 	DamageTypes        []uuid.UUID                            `json:"damage_types"`
@@ -93,9 +93,9 @@ func (s *CreateRepairOrderRequest) GetDownPayment() OptCreateRepairOrderRequestD
 	return s.DownPayment
 }
 
-// GetSalesID returns the value of SalesID.
-func (s *CreateRepairOrderRequest) GetSalesID() uuid.UUID {
-	return s.SalesID
+// GetSalesPersonID returns the value of SalesPersonID.
+func (s *CreateRepairOrderRequest) GetSalesPersonID() uuid.UUID {
+	return s.SalesPersonID
 }
 
 // GetTechnicianID returns the value of TechnicianID.
@@ -168,9 +168,9 @@ func (s *CreateRepairOrderRequest) SetDownPayment(val OptCreateRepairOrderReques
 	s.DownPayment = val
 }
 
-// SetSalesID sets the value of SalesID.
-func (s *CreateRepairOrderRequest) SetSalesID(val uuid.UUID) {
-	s.SalesID = val
+// SetSalesPersonID sets the value of SalesPersonID.
+func (s *CreateRepairOrderRequest) SetSalesPersonID(val uuid.UUID) {
+	s.SalesPersonID = val
 }
 
 // SetTechnicianID sets the value of TechnicianID.

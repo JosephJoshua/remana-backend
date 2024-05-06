@@ -8,7 +8,7 @@ INSERT INTO repair_orders (
   contact_number,
   phone_type,
   color,
-  sales_id,
+  sales_person_id,
   technician_id,
   imei,
   parts_not_checked_yet,
@@ -94,10 +94,10 @@ INSERT INTO repair_order_costs (
   $5
 );
 
--- name: DoesSalesExist :one
+-- name: DoesSalesPersonExist :one
 SELECT 1
-FROM sales
-WHERE sales.store_id = $1 AND sales.sales_id = $2;
+FROM sales_persons
+WHERE sales_persons.store_id = $1 AND sales_persons.sales_person_id = $2;
 
 -- name: DoesTechnicianExist :one
 SELECT 1

@@ -23,7 +23,7 @@ type Repository interface {
 	GetPhoneConditionNamesByIDs(ctx context.Context, storeID uuid.UUID, ids []uuid.UUID) ([]string, error)
 	GetPhoneEquipmentNamesByIDs(ctx context.Context, storeID uuid.UUID, ids []uuid.UUID) ([]string, error)
 	DoesTechnicianExist(ctx context.Context, storeID uuid.UUID, technicianID uuid.UUID) (bool, error)
-	DoesSalesExist(ctx context.Context, storeID uuid.UUID, salesID uuid.UUID) (bool, error)
+	DoesSalesPersonExist(ctx context.Context, storeID uuid.UUID, salesPersonID uuid.UUID) (bool, error)
 	DoesPaymentMethodExist(ctx context.Context, storeID uuid.UUID, paymentMethodID uuid.UUID) (bool, error)
 }
 
@@ -142,7 +142,7 @@ func (s *Service) CreateRepairOrder(
 		phoneEquipments,
 		damages,
 		req.Photos,
-		req.SalesID,
+		req.SalesPersonID,
 		req.TechnicianID,
 		opts...,
 	)
@@ -180,15 +180,15 @@ func (s *Service) checkReferentialIntegrity(
 		return apierror.ToAPIError(http.StatusBadRequest, "technician does not exist")
 	}
 
-	ok, err = s.repo.DoesSalesExist(ctx, storeID, req.SalesID)
+	ok, err = s.repo.DoesSalesPersonExist(ctx, storeID, req.SalesPersonID)
 
 	if err != nil {
-		l.Error().Err(err).Msg("failed to check if sales exists")
-		return apierror.ToAPIError(http.StatusInternalServerError, "failed to check if sales exists")
+		l.Error().Err(err).Msg("failed to check if sales person exists")
+		return apierror.ToAPIError(http.StatusInternalServerError, "failed to check if sales person exists")
 	}
 
 	if !ok {
-		return apierror.ToAPIError(http.StatusBadRequest, "sales does not exist")
+		return apierror.ToAPIError(http.StatusBadRequest, "sales person does not exist")
 	}
 
 	if req.DownPayment.IsSet() {

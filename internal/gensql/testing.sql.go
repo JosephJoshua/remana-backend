@@ -73,7 +73,7 @@ func (q *Queries) GetRepairOrderDamagesForTesting(ctx context.Context, repairOrd
 
 const getRepairOrderForTesting = `-- name: GetRepairOrderForTesting :one
 SELECT
-  repair_orders.repair_order_id, repair_orders.creation_time, repair_orders.slug, repair_orders.store_id, repair_orders.customer_name, repair_orders.contact_number, repair_orders.phone_type, repair_orders.imei, repair_orders.parts_not_checked_yet, repair_orders.color, repair_orders.passcode_or_pattern, repair_orders.is_pattern_locked, repair_orders.pick_up_time, repair_orders.completion_time, repair_orders.cancellation_time, repair_orders.cancellation_reason, repair_orders.confirmation_time, repair_orders.confirmation_content, repair_orders.warranty_days, repair_orders.down_payment_amount, repair_orders.down_payment_method_id, repair_orders.repayment_amount, repair_orders.repayment_method_id, repair_orders.technician_id, repair_orders.sales_id
+  repair_orders.repair_order_id, repair_orders.creation_time, repair_orders.slug, repair_orders.store_id, repair_orders.customer_name, repair_orders.contact_number, repair_orders.phone_type, repair_orders.imei, repair_orders.parts_not_checked_yet, repair_orders.color, repair_orders.passcode_or_pattern, repair_orders.is_pattern_locked, repair_orders.pick_up_time, repair_orders.completion_time, repair_orders.cancellation_time, repair_orders.cancellation_reason, repair_orders.confirmation_time, repair_orders.confirmation_content, repair_orders.warranty_days, repair_orders.down_payment_amount, repair_orders.down_payment_method_id, repair_orders.repayment_amount, repair_orders.repayment_method_id, repair_orders.technician_id, repair_orders.sales_person_id
 FROM repair_orders
 WHERE repair_orders.repair_order_id = $1
 LIMIT 1
@@ -107,7 +107,7 @@ func (q *Queries) GetRepairOrderForTesting(ctx context.Context, repairOrderID pg
 		&i.RepaymentAmount,
 		&i.RepaymentMethodID,
 		&i.TechnicianID,
-		&i.SalesID,
+		&i.SalesPersonID,
 	)
 	return i, err
 }
@@ -328,23 +328,23 @@ func (q *Queries) SeedRole(ctx context.Context, arg SeedRoleParams) (pgtype.UUID
 	return role_id, err
 }
 
-const seedSales = `-- name: SeedSales :one
-INSERT INTO sales (sales_id, sales_name, store_id)
+const seedSalesPerson = `-- name: SeedSalesPerson :one
+INSERT INTO sales_persons (sales_person_id, sales_person_name, store_id)
 VALUES ($1, $2, $3)
-RETURNING sales_id
+RETURNING sales_person_id
 `
 
-type SeedSalesParams struct {
-	SalesID   pgtype.UUID
-	SalesName string
-	StoreID   pgtype.UUID
+type SeedSalesPersonParams struct {
+	SalesPersonID   pgtype.UUID
+	SalesPersonName string
+	StoreID         pgtype.UUID
 }
 
-func (q *Queries) SeedSales(ctx context.Context, arg SeedSalesParams) (pgtype.UUID, error) {
-	row := q.db.QueryRow(ctx, seedSales, arg.SalesID, arg.SalesName, arg.StoreID)
-	var sales_id pgtype.UUID
-	err := row.Scan(&sales_id)
-	return sales_id, err
+func (q *Queries) SeedSalesPerson(ctx context.Context, arg SeedSalesPersonParams) (pgtype.UUID, error) {
+	row := q.db.QueryRow(ctx, seedSalesPerson, arg.SalesPersonID, arg.SalesPersonName, arg.StoreID)
+	var sales_person_id pgtype.UUID
+	err := row.Scan(&sales_person_id)
+	return sales_person_id, err
 }
 
 const seedStore = `-- name: SeedStore :one

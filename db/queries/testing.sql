@@ -23,10 +23,10 @@ INSERT INTO technicians (technician_id, technician_name, store_id)
 VALUES ($1, $2, $3)
 RETURNING technician_id;
 
--- name: SeedSales :one
-INSERT INTO sales (sales_id, sales_name, store_id)
+-- name: SeedSalesPerson :one
+INSERT INTO sales_persons (sales_person_id, sales_person_name, store_id)
 VALUES ($1, $2, $3)
-RETURNING sales_id;
+RETURNING sales_person_id;
 
 -- name: SeedDamageType :one
 INSERT INTO damage_types (damage_type_id, damage_type_name, store_id)

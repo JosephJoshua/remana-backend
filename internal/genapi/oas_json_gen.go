@@ -69,8 +69,8 @@ func (s *CreateRepairOrderRequest) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
-		e.FieldStart("sales_id")
-		json.EncodeUUID(e, s.SalesID)
+		e.FieldStart("sales_person_id")
+		json.EncodeUUID(e, s.SalesPersonID)
 	}
 	{
 		e.FieldStart("technician_id")
@@ -124,7 +124,7 @@ var jsonFieldsNameOfCreateRepairOrderRequest = [15]string{
 	6:  "color",
 	7:  "initial_cost",
 	8:  "down_payment",
-	9:  "sales_id",
+	9:  "sales_person_id",
 	10: "technician_id",
 	11: "phone_conditions",
 	12: "damage_types",
@@ -241,17 +241,17 @@ func (s *CreateRepairOrderRequest) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"down_payment\"")
 			}
-		case "sales_id":
+		case "sales_person_id":
 			requiredBitSet[1] |= 1 << 1
 			if err := func() error {
 				v, err := json.DecodeUUID(d)
-				s.SalesID = v
+				s.SalesPersonID = v
 				if err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"sales_id\"")
+				return errors.Wrap(err, "decode field \"sales_person_id\"")
 			}
 		case "technician_id":
 			requiredBitSet[1] |= 1 << 2

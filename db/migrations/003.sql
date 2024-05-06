@@ -5,10 +5,10 @@ CREATE TABLE technicians (
   technician_name TEXT NOT NULL
 );
 
-CREATE TABLE sales (
-  sales_id UUID NOT NULL PRIMARY KEY,
+CREATE TABLE sales_persons (
+  sales_person_id UUID NOT NULL PRIMARY KEY,
   store_id UUID NOT NULL REFERENCES stores (store_id),
-  sales_name TEXT NOT NULL
+  sales_person_name TEXT NOT NULL
 );
 
 CREATE TABLE damage_types (
@@ -60,7 +60,7 @@ CREATE TABLE repair_orders (
   repayment_amount INTEGER,
   repayment_method_id UUID REFERENCES payment_methods (payment_method_id),
   technician_id UUID REFERENCES technicians (technician_id),
-  sales_id UUID NOT NULL REFERENCES sales (sales_id)
+  sales_person_id UUID NOT NULL REFERENCES sales_persons (sales_person_id)
 );
 
 CREATE TABLE repair_order_damages (
@@ -97,7 +97,7 @@ CREATE TABLE repair_order_photos (
 
 -- +migrate Down
 DROP TABLE technicians;
-DROP TABLE sales;
+DROP TABLE sales_persons;
 DROP TABLE damage_types;
 DROP TABLE phone_conditions;
 DROP TABLE payment_methods;

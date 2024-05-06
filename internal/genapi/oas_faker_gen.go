@@ -57,7 +57,7 @@ func (s *CreateRepairOrderRequest) SetFake() {
 	}
 	{
 		{
-			s.SalesID = uuid.New()
+			s.SalesPersonID = uuid.New()
 		}
 	}
 	{

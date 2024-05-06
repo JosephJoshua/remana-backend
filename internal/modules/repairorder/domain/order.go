@@ -33,7 +33,7 @@ type Order interface {
 	ContactNumber() shareddomain.PhoneNumber
 	PhoneType() string
 	Color() string
-	SalesID() uuid.UUID
+	SalesPersonID() uuid.UUID
 	TechnicianID() uuid.UUID
 	Costs() []OrderCost
 	PhoneConditions() []PhoneCondition
@@ -69,7 +69,7 @@ type order struct {
 	contactNumber        shareddomain.PhoneNumber
 	phoneType            string
 	color                string
-	salesID              uuid.UUID
+	salesPersonID        uuid.UUID
 	technicianID         uuid.UUID
 	costs                []OrderCost
 	phoneConditions      []PhoneCondition
@@ -102,7 +102,7 @@ func NewOrder(
 	phoneEquipments []string,
 	damages []string,
 	photos []url.URL,
-	salesID uuid.UUID,
+	salesPersonID uuid.UUID,
 	technicianID uuid.UUID,
 	options ...OrderOption,
 ) (Order, error) {
@@ -185,7 +185,7 @@ func NewOrder(
 		phoneEquipments:      phoneEquipmentVOs,
 		damages:              damageVOs,
 		photos:               photoVOs,
-		salesID:              salesID,
+		salesPersonID:        salesPersonID,
 		technicianID:         technicianID,
 		imei:                 optional.None[string](),
 		partsNotCheckedYet:   optional.None[string](),
@@ -281,8 +281,8 @@ func (o *order) Color() string {
 	return o.color
 }
 
-func (o *order) SalesID() uuid.UUID {
-	return o.salesID
+func (o *order) SalesPersonID() uuid.UUID {
+	return o.salesPersonID
 }
 
 func (o *order) TechnicianID() uuid.UUID {

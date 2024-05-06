@@ -46,7 +46,7 @@ type repositoryStub struct {
 	phoneConditions        []phoneCondition
 	phoneEquipments        []phoneEquipment
 	technicianID           uuid.UUID
-	salesID                uuid.UUID
+	salesPersonID          uuid.UUID
 	paymentMethodID        uuid.UUID
 	calledWithOrder        domain.Order
 	createErr              error
@@ -55,7 +55,7 @@ type repositoryStub struct {
 	phoneEquipmentNameErr  error
 	storeExistsErr         error
 	technicianExistsErr    error
-	salesExistsErr         error
+	salesPersonExistsErr   error
 	paymentMethodExistsErr error
 }
 
@@ -157,12 +157,12 @@ func (r *repositoryStub) DoesTechnicianExist(_ context.Context, storeID uuid.UUI
 	return technicianID == r.technicianID, nil
 }
 
-func (r *repositoryStub) DoesSalesExist(_ context.Context, storeID uuid.UUID, salesID uuid.UUID) (bool, error) {
-	if r.salesExistsErr != nil {
-		return false, r.salesExistsErr
+func (r *repositoryStub) DoesSalesPersonExist(_ context.Context, storeID uuid.UUID, salesPersonID uuid.UUID) (bool, error) {
+	if r.salesPersonExistsErr != nil {
+		return false, r.salesPersonExistsErr
 	}
 
-	return salesID == r.salesID, nil
+	return salesPersonID == r.salesPersonID, nil
 }
 
 func (r *repositoryStub) DoesPaymentMethodExist(_ context.Context, storeID uuid.UUID, paymentMethodID uuid.UUID) (bool, error) {
@@ -179,7 +179,7 @@ func TestCreateRepairOrder(t *testing.T) {
 	var (
 		theStoreID         = uuid.New()
 		theTechnicianID    = uuid.New()
-		theSalesID         = uuid.New()
+		theSalesPersonID   = uuid.New()
 		thePaymentMethodID = uuid.New()
 
 		theDamages = []damage{
@@ -221,7 +221,7 @@ func TestCreateRepairOrder(t *testing.T) {
 			phoneConditions: thePhoneConditions,
 			phoneEquipments: thePhoneEquipments,
 			technicianID:    theTechnicianID,
-			salesID:         theSalesID,
+			salesPersonID:   theSalesPersonID,
 			paymentMethodID: thePaymentMethodID,
 		}
 	}
@@ -232,7 +232,7 @@ func TestCreateRepairOrder(t *testing.T) {
 			ContactPhoneNumber: "08123456789",
 			PhoneType:          "iPhone 12",
 			Color:              "Black",
-			SalesID:            theSalesID,
+			SalesPersonID:      theSalesPersonID,
 			TechnicianID:       theTechnicianID,
 			InitialCost:        100,
 			DamageTypes:        []uuid.UUID{theDamages[0].id},
@@ -266,7 +266,7 @@ func TestCreateRepairOrder(t *testing.T) {
 					ContactPhoneNumber: "08123456789",
 					PhoneType:          "iPhone 12",
 					Color:              "Black",
-					SalesID:            theSalesID,
+					SalesPersonID:      theSalesPersonID,
 					TechnicianID:       theTechnicianID,
 					InitialCost:        100,
 					DamageTypes:        []uuid.UUID{theDamages[0].id},
@@ -282,7 +282,7 @@ func TestCreateRepairOrder(t *testing.T) {
 					ContactPhoneNumber: "08123456789",
 					PhoneType:          "iPhone 12",
 					Color:              "Black",
-					SalesID:            theSalesID,
+					SalesPersonID:      theSalesPersonID,
 					TechnicianID:       theTechnicianID,
 					InitialCost:        100,
 					DamageTypes:        []uuid.UUID{theDamages[0].id},
@@ -299,7 +299,7 @@ func TestCreateRepairOrder(t *testing.T) {
 					ContactPhoneNumber: "08123456789",
 					PhoneType:          "iPhone 12",
 					Color:              "Black",
-					SalesID:            theSalesID,
+					SalesPersonID:      theSalesPersonID,
 					TechnicianID:       theTechnicianID,
 					InitialCost:        100,
 					DamageTypes:        []uuid.UUID{theDamages[0].id},
@@ -316,7 +316,7 @@ func TestCreateRepairOrder(t *testing.T) {
 					ContactPhoneNumber: "08123456789",
 					PhoneType:          "iPhone 12",
 					Color:              "Black",
-					SalesID:            theSalesID,
+					SalesPersonID:      theSalesPersonID,
 					TechnicianID:       theTechnicianID,
 					InitialCost:        100,
 					DamageTypes:        []uuid.UUID{theDamages[0].id},
@@ -336,7 +336,7 @@ func TestCreateRepairOrder(t *testing.T) {
 					ContactPhoneNumber: "08123456789",
 					PhoneType:          "iPhone 12",
 					Color:              "Black",
-					SalesID:            theSalesID,
+					SalesPersonID:      theSalesPersonID,
 					TechnicianID:       theTechnicianID,
 					InitialCost:        100,
 					DamageTypes:        []uuid.UUID{theDamages[0].id},
@@ -356,7 +356,7 @@ func TestCreateRepairOrder(t *testing.T) {
 					ContactPhoneNumber: "08123456789",
 					PhoneType:          "iPhone 12",
 					Color:              "Black",
-					SalesID:            theSalesID,
+					SalesPersonID:      theSalesPersonID,
 					TechnicianID:       theTechnicianID,
 					InitialCost:        100,
 					DamageTypes:        []uuid.UUID{theDamages[0].id},
@@ -390,7 +390,7 @@ func TestCreateRepairOrder(t *testing.T) {
 				assert.NotEmpty(t, repo.calledWithOrder.ContactNumber().Value())
 				assert.Equal(t, tc.req.PhoneType, repo.calledWithOrder.PhoneType())
 				assert.Equal(t, tc.req.Color, repo.calledWithOrder.Color())
-				assert.Equal(t, tc.req.SalesID, repo.calledWithOrder.SalesID())
+				assert.Equal(t, tc.req.SalesPersonID, repo.calledWithOrder.SalesPersonID())
 				assert.Equal(t, tc.req.TechnicianID, repo.calledWithOrder.TechnicianID())
 				assert.Equal(t, 1, len(repo.calledWithOrder.Costs()))
 				assert.Equal(t, tc.req.InitialCost, repo.calledWithOrder.Costs()[0].Amount())
@@ -690,19 +690,19 @@ func TestCreateRepairOrder(t *testing.T) {
 		testutil.AssertAPIStatusCode(t, http.StatusBadRequest, err)
 	})
 
-	t.Run("returns bad request when sales does not exist", func(t *testing.T) {
+	t.Run("returns bad request when sales person does not exist", func(t *testing.T) {
 		t.Parallel()
 
-		salesID := uuid.New()
+		salesPersonID := uuid.New()
 		randomID := uuid.New()
 
 		repo := baseRepo()
-		repo.salesID = salesID
+		repo.salesPersonID = salesPersonID
 
 		s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}), repo, testutil.NewRepairOrderSlugProviderStub("random-slug", nil))
 
 		req := validRequest()
-		req.SalesID = randomID
+		req.SalesPersonID = randomID
 
 		_, err := s.CreateRepairOrder(requestCtx, &req)
 		testutil.AssertAPIStatusCode(t, http.StatusBadRequest, err)
@@ -794,9 +794,9 @@ func TestCreateRepairOrder(t *testing.T) {
 				},
 			},
 			{
-				name: "when repository.DoesSalesExist() errors",
+				name: "when repository.DoesSalesPersonIDExist() errors",
 				setup: func(repo *repositoryStub, _ *testutil.ResourceLocationProviderStub, _ *testutil.OrderSlugProviderStub) {
-					repo.salesExistsErr = errors.New("oh no!")
+					repo.salesPersonExistsErr = errors.New("oh no!")
 				},
 			},
 			{

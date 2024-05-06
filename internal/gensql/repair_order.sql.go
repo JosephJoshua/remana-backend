@@ -53,7 +53,7 @@ INSERT INTO repair_orders (
   contact_number,
   phone_type,
   color,
-  sales_id,
+  sales_person_id,
   technician_id,
   imei,
   parts_not_checked_yet,
@@ -90,7 +90,7 @@ type CreateRepairOrderParams struct {
 	ContactNumber       string
 	PhoneType           string
 	Color               string
-	SalesID             pgtype.UUID
+	SalesPersonID       pgtype.UUID
 	TechnicianID        pgtype.UUID
 	Imei                pgtype.Text
 	PartsNotCheckedYet  pgtype.Text
@@ -110,7 +110,7 @@ func (q *Queries) CreateRepairOrder(ctx context.Context, arg CreateRepairOrderPa
 		arg.ContactNumber,
 		arg.PhoneType,
 		arg.Color,
-		arg.SalesID,
+		arg.SalesPersonID,
 		arg.TechnicianID,
 		arg.Imei,
 		arg.PartsNotCheckedYet,
@@ -140,19 +140,19 @@ func (q *Queries) DoesPaymentMethodExist(ctx context.Context, arg DoesPaymentMet
 	return column_1, err
 }
 
-const doesSalesExist = `-- name: DoesSalesExist :one
+const doesSalesPersonExist = `-- name: DoesSalesPersonExist :one
 SELECT 1
-FROM sales
-WHERE sales.store_id = $1 AND sales.sales_id = $2
+FROM sales_persons
+WHERE sales_persons.store_id = $1 AND sales_persons.sales_person_id = $2
 `
 
-type DoesSalesExistParams struct {
-	StoreID pgtype.UUID
-	SalesID pgtype.UUID
+type DoesSalesPersonExistParams struct {
+	StoreID       pgtype.UUID
+	SalesPersonID pgtype.UUID
 }
 
-func (q *Queries) DoesSalesExist(ctx context.Context, arg DoesSalesExistParams) (int32, error) {
-	row := q.db.QueryRow(ctx, doesSalesExist, arg.StoreID, arg.SalesID)
+func (q *Queries) DoesSalesPersonExist(ctx context.Context, arg DoesSalesPersonExistParams) (int32, error) {
+	row := q.db.QueryRow(ctx, doesSalesPersonExist, arg.StoreID, arg.SalesPersonID)
 	var column_1 int32
 	err := row.Scan(&column_1)
 	return column_1, err

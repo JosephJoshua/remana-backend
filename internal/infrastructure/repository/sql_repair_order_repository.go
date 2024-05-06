@@ -154,16 +154,16 @@ func (r *SQLRepairOrderRepository) GetPhoneEquipmentNamesByIDs(
 	return phoneEquipmentNames, nil
 }
 
-func (r *SQLRepairOrderRepository) DoesSalesExist(
+func (r *SQLRepairOrderRepository) DoesSalesPersonExist(
 	ctx context.Context,
 	storeID uuid.UUID,
-	salesID uuid.UUID,
+	salesPersonID uuid.UUID,
 ) (bool, error) {
-	_, err := r.queries.DoesSalesExist(
+	_, err := r.queries.DoesSalesPersonExist(
 		ctx,
-		gensql.DoesSalesExistParams{
-			StoreID: typemapper.UUIDToPgtypeUUID(storeID),
-			SalesID: typemapper.UUIDToPgtypeUUID(salesID),
+		gensql.DoesSalesPersonExistParams{
+			StoreID:       typemapper.UUIDToPgtypeUUID(storeID),
+			SalesPersonID: typemapper.UUIDToPgtypeUUID(salesPersonID),
 		},
 	)
 
@@ -172,7 +172,7 @@ func (r *SQLRepairOrderRepository) DoesSalesExist(
 	}
 
 	if err != nil {
-		return false, fmt.Errorf("failed to check if sales exists: %w", err)
+		return false, fmt.Errorf("failed to check if sales person exists: %w", err)
 	}
 
 	return true, nil
@@ -262,7 +262,7 @@ func (r *SQLRepairOrderRepository) buildCreateRepairOrderParams(
 		ContactNumber:       order.ContactNumber().Value(),
 		PhoneType:           order.PhoneType(),
 		Color:               order.Color(),
-		SalesID:             typemapper.UUIDToPgtypeUUID(order.SalesID()),
+		SalesPersonID:       typemapper.UUIDToPgtypeUUID(order.SalesPersonID()),
 		TechnicianID:        typemapper.UUIDToPgtypeUUID(order.TechnicianID()),
 		Imei:                typemapper.OptionalStringToPgtypeText(order.IMEI()),
 		PartsNotCheckedYet:  typemapper.OptionalStringToPgtypeText(order.PartsNotCheckedYet()),

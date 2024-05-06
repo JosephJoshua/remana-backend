@@ -5,7 +5,7 @@ required:
   - phone_type
   - color
   - initial_cost
-  - sales_id
+  - sales_person_id
   - technician_id
   - damage_types
   - photos
@@ -62,7 +62,7 @@ properties:
         type: string
         format: uuid
         example: 90b79dd6-17eb-4e95-b2df-86f0fc4617ce
-  sales_id:
+  sales_person_id:
     type: string
     format: uuid
     example: 90b79dd6-17eb-4e95-b2df-86f0fc4617ce

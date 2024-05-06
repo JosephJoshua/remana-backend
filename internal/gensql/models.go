@@ -63,7 +63,7 @@ type RepairOrder struct {
 	RepaymentAmount     pgtype.Int4
 	RepaymentMethodID   pgtype.UUID
 	TechnicianID        pgtype.UUID
-	SalesID             pgtype.UUID
+	SalesPersonID       pgtype.UUID
 }
 
 type RepairOrderCost struct {
@@ -105,10 +105,10 @@ type Role struct {
 	IsStoreAdmin bool
 }
 
-type Sale struct {
-	SalesID   pgtype.UUID
-	StoreID   pgtype.UUID
-	SalesName string
+type SalesPerson struct {
+	SalesPersonID   pgtype.UUID
+	StoreID         pgtype.UUID
+	SalesPersonName string
 }
 
 type Store struct {
