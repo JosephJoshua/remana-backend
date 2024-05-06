@@ -8,6 +8,12 @@ import (
 
 // Handler handles operations described by OpenAPI v3 specification.
 type Handler interface {
+	// CreateDamageType implements createDamageType operation.
+	//
+	// Creates a new damage type.
+	//
+	// POST /damage-types
+	CreateDamageType(ctx context.Context, req *CreateDamageTypeRequest) (*CreateDamageTypeCreated, error)
 	// CreateRepairOrder implements createRepairOrder operation.
 	//
 	// Creates a new repair order.

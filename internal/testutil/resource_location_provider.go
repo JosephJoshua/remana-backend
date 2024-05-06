@@ -11,10 +11,12 @@ type ResourceLocationProviderStub struct {
 	repairOrderLocation url.URL
 	technicianLocation  url.URL
 	salesPersonLocation url.URL
+	damageTypeLocation  url.URL
 
 	RepairOrderID optional.Optional[uuid.UUID]
 	TechnicianID  optional.Optional[uuid.UUID]
 	SalesPersonID optional.Optional[uuid.UUID]
+	DamageTypeID  optional.Optional[uuid.UUID]
 }
 
 func NewResourceLocationProviderStubForRepairOrder(location url.URL) *ResourceLocationProviderStub {
@@ -38,6 +40,13 @@ func NewResourceLocationProviderStubForSalesPerson(location url.URL) *ResourceLo
 	}
 }
 
+func NewResourceLocationProviderStubForDamageType(location url.URL) *ResourceLocationProviderStub {
+	return &ResourceLocationProviderStub{
+		damageTypeLocation: location,
+		DamageTypeID:       optional.None[uuid.UUID](),
+	}
+}
+
 func (r *ResourceLocationProviderStub) RepairOrder(orderID uuid.UUID) url.URL {
 	r.RepairOrderID = optional.Some(orderID)
 	return r.repairOrderLocation
@@ -51,4 +60,9 @@ func (r *ResourceLocationProviderStub) Technician(technicianID uuid.UUID) url.UR
 func (r *ResourceLocationProviderStub) SalesPerson(salesPersonID uuid.UUID) url.URL {
 	r.SalesPersonID = optional.Some(salesPersonID)
 	return r.salesPersonLocation
+}
+
+func (r *ResourceLocationProviderStub) DamageType(damageTypeID uuid.UUID) url.URL {
+	r.DamageTypeID = optional.Some(damageTypeID)
+	return r.damageTypeLocation
 }

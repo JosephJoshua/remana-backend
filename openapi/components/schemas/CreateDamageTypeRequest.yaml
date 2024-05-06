@@ -1,0 +1,9 @@
+x-ogen-name: CreateDamageTypeRequest
+type: object
+required:
+  - name
+properties:
+  name:
+    type: string
+    minLength: 1
+    example: Broken screen

@@ -21,6 +21,8 @@ tags:
     description: Technician management
   - name: sales_persons
     description: Sales person management
+  - name: damage_types
+    description: Damage type management
   - name: misc
     description: Miscellaneous endpoints
 components:
@@ -54,3 +56,6 @@ paths:
   /sales-persons:
     post:
       $ref: paths/sales_persons/createSalesPerson.yaml
+  /damage-types:
+    post:
+      $ref: paths/damage_types/createDamageType.yaml

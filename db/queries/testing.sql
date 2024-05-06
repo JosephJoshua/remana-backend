@@ -62,6 +62,13 @@ FROM sales_persons
 WHERE sales_persons.sales_person_id = $1
 LIMIT 1;
 
+-- name: GetDamageTypeForTesting :one
+SELECT
+  damage_types.*
+FROM damage_types
+WHERE damage_types.damage_type_id = $1
+LIMIT 1;
+
 -- name: GetRepairOrderForTesting :one
 SELECT
   repair_orders.*

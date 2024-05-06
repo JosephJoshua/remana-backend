@@ -13,6 +13,15 @@ type UnimplementedHandler struct{}
 
 var _ Handler = UnimplementedHandler{}
 
+// CreateDamageType implements createDamageType operation.
+//
+// Creates a new damage type.
+//
+// POST /damage-types
+func (UnimplementedHandler) CreateDamageType(ctx context.Context, req *CreateDamageTypeRequest) (r *CreateDamageTypeCreated, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // CreateRepairOrder implements createRepairOrder operation.
 //
 // Creates a new repair order.

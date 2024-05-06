@@ -14,6 +14,35 @@ func (s *ErrorStatusCode) Error() string {
 	return fmt.Sprintf("code %d: %+v", s.StatusCode, s.Response)
 }
 
+// CreateDamageTypeCreated is response for CreateDamageType operation.
+type CreateDamageTypeCreated struct {
+	Location url.URL
+}
+
+// GetLocation returns the value of Location.
+func (s *CreateDamageTypeCreated) GetLocation() url.URL {
+	return s.Location
+}
+
+// SetLocation sets the value of Location.
+func (s *CreateDamageTypeCreated) SetLocation(val url.URL) {
+	s.Location = val
+}
+
+type CreateDamageTypeRequest struct {
+	Name string `json:"name"`
+}
+
+// GetName returns the value of Name.
+func (s *CreateDamageTypeRequest) GetName() string {
+	return s.Name
+}
+
+// SetName sets the value of Name.
+func (s *CreateDamageTypeRequest) SetName(val string) {
+	s.Name = val
+}
+
 // CreateRepairOrderCreated is response for CreateRepairOrder operation.
 type CreateRepairOrderCreated struct {
 	Location url.URL

@@ -11,6 +11,21 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const getDamageTypeForTesting = `-- name: GetDamageTypeForTesting :one
+SELECT
+  damage_types.damage_type_id, damage_types.store_id, damage_types.damage_type_name
+FROM damage_types
+WHERE damage_types.damage_type_id = $1
+LIMIT 1
+`
+
+func (q *Queries) GetDamageTypeForTesting(ctx context.Context, damageTypeID pgtype.UUID) (DamageType, error) {
+	row := q.db.QueryRow(ctx, getDamageTypeForTesting, damageTypeID)
+	var i DamageType
+	err := row.Scan(&i.DamageTypeID, &i.StoreID, &i.DamageTypeName)
+	return i, err
+}
+
 const getRepairOrderCostsForTesting = `-- name: GetRepairOrderCostsForTesting :many
 SELECT
   repair_order_costs.repair_order_cost_id, repair_order_costs.repair_order_id, repair_order_costs.amount, repair_order_costs.reason, repair_order_costs.creation_time

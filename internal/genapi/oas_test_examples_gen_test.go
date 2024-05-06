@@ -16,6 +16,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestCreateDamageTypeRequest_EncodeDecode(t *testing.T) {
+	var typ CreateDamageTypeRequest
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 CreateDamageTypeRequest
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
 func TestCreateRepairOrderRequest_EncodeDecode(t *testing.T) {
 	var typ CreateRepairOrderRequest
 	typ.SetFake()

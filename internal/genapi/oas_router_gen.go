@@ -139,6 +139,27 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				}
 
 				elem = origElem
+			case 'd': // Prefix: "damage-types"
+				origElem := elem
+				if l := len("damage-types"); len(elem) >= l && elem[0:l] == "damage-types" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch r.Method {
+					case "POST":
+						s.handleCreateDamageTypeRequest([0]string{}, elemIsEscaped, w, r)
+					default:
+						s.notAllowed(w, r, "POST")
+					}
+
+					return
+				}
+
+				elem = origElem
 			case 'h': // Prefix: "healthz"
 				origElem := elem
 				if l := len("healthz"); len(elem) >= l && elem[0:l] == "healthz" {
@@ -427,6 +448,31 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 					}
 
 					elem = origElem
+				}
+
+				elem = origElem
+			case 'd': // Prefix: "damage-types"
+				origElem := elem
+				if l := len("damage-types"); len(elem) >= l && elem[0:l] == "damage-types" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					switch method {
+					case "POST":
+						// Leaf: CreateDamageType
+						r.name = "CreateDamageType"
+						r.summary = "Creates a new damage type"
+						r.operationID = "createDamageType"
+						r.pathPattern = "/damage-types"
+						r.args = args
+						r.count = 0
+						return r, true
+					default:
+						return
+					}
 				}
 
 				elem = origElem

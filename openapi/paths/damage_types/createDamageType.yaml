@@ -1,0 +1,28 @@
+tags:
+  - damage_types
+summary: Creates a new damage type
+description: Creates a new damage type
+operationId: createDamageType
+requestBody:
+  description: Damage type details
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: ../../components/schemas/CreateDamageTypeRequest.yaml
+responses:
+  "201":
+    description: Damage type created
+    headers:
+      Location:
+        description: The location of the created damage type
+        required: true
+        schema:
+          type: string
+          format: uri
+        example: /damage-types/90b79dd6-17eb-4e95-b2df-86f0fc4617ce
+  default:
+    content:
+      application/json:
+        schema:
+          $ref: ../../components/schemas/Error.yaml

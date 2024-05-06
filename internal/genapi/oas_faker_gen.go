@@ -9,6 +9,15 @@ import (
 )
 
 // SetFake set fake values.
+func (s *CreateDamageTypeRequest) SetFake() {
+	{
+		{
+			s.Name = "string"
+		}
+	}
+}
+
+// SetFake set fake values.
 func (s *CreateRepairOrderRequest) SetFake() {
 	{
 		{
