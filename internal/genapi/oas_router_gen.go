@@ -181,24 +181,60 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				}
 
 				elem = origElem
-			case 'p': // Prefix: "phone-conditions"
+			case 'p': // Prefix: "phone-"
 				origElem := elem
-				if l := len("phone-conditions"); len(elem) >= l && elem[0:l] == "phone-conditions" {
+				if l := len("phone-"); len(elem) >= l && elem[0:l] == "phone-" {
 					elem = elem[l:]
 				} else {
 					break
 				}
 
 				if len(elem) == 0 {
-					// Leaf node.
-					switch r.Method {
-					case "POST":
-						s.handleCreatePhoneConditionRequest([0]string{}, elemIsEscaped, w, r)
-					default:
-						s.notAllowed(w, r, "POST")
+					break
+				}
+				switch elem[0] {
+				case 'c': // Prefix: "conditions"
+					origElem := elem
+					if l := len("conditions"); len(elem) >= l && elem[0:l] == "conditions" {
+						elem = elem[l:]
+					} else {
+						break
 					}
 
-					return
+					if len(elem) == 0 {
+						// Leaf node.
+						switch r.Method {
+						case "POST":
+							s.handleCreatePhoneConditionRequest([0]string{}, elemIsEscaped, w, r)
+						default:
+							s.notAllowed(w, r, "POST")
+						}
+
+						return
+					}
+
+					elem = origElem
+				case 'e': // Prefix: "equipments"
+					origElem := elem
+					if l := len("equipments"); len(elem) >= l && elem[0:l] == "equipments" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch r.Method {
+						case "POST":
+							s.handleCreatePhoneEquipmentRequest([0]string{}, elemIsEscaped, w, r)
+						default:
+							s.notAllowed(w, r, "POST")
+						}
+
+						return
+					}
+
+					elem = origElem
 				}
 
 				elem = origElem
@@ -522,28 +558,68 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 				}
 
 				elem = origElem
-			case 'p': // Prefix: "phone-conditions"
+			case 'p': // Prefix: "phone-"
 				origElem := elem
-				if l := len("phone-conditions"); len(elem) >= l && elem[0:l] == "phone-conditions" {
+				if l := len("phone-"); len(elem) >= l && elem[0:l] == "phone-" {
 					elem = elem[l:]
 				} else {
 					break
 				}
 
 				if len(elem) == 0 {
-					switch method {
-					case "POST":
-						// Leaf: CreatePhoneCondition
-						r.name = "CreatePhoneCondition"
-						r.summary = "Creates a new phone condition"
-						r.operationID = "createPhoneCondition"
-						r.pathPattern = "/phone-conditions"
-						r.args = args
-						r.count = 0
-						return r, true
-					default:
-						return
+					break
+				}
+				switch elem[0] {
+				case 'c': // Prefix: "conditions"
+					origElem := elem
+					if l := len("conditions"); len(elem) >= l && elem[0:l] == "conditions" {
+						elem = elem[l:]
+					} else {
+						break
 					}
+
+					if len(elem) == 0 {
+						switch method {
+						case "POST":
+							// Leaf: CreatePhoneCondition
+							r.name = "CreatePhoneCondition"
+							r.summary = "Creates a new phone condition"
+							r.operationID = "createPhoneCondition"
+							r.pathPattern = "/phone-conditions"
+							r.args = args
+							r.count = 0
+							return r, true
+						default:
+							return
+						}
+					}
+
+					elem = origElem
+				case 'e': // Prefix: "equipments"
+					origElem := elem
+					if l := len("equipments"); len(elem) >= l && elem[0:l] == "equipments" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						switch method {
+						case "POST":
+							// Leaf: CreatePhoneEquipment
+							r.name = "CreatePhoneEquipment"
+							r.summary = "Creates a new phone equipment"
+							r.operationID = "createPhoneEquipment"
+							r.pathPattern = "/phone-equipments"
+							r.args = args
+							r.count = 0
+							return r, true
+						default:
+							return
+						}
+					}
+
+					elem = origElem
 				}
 
 				elem = origElem

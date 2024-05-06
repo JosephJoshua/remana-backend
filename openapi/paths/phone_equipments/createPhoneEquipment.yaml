@@ -1,0 +1,28 @@
+tags:
+  - phone_equipments
+summary: Creates a new phone equipment
+description: Creates a new phone equipment
+operationId: createPhoneEquipment
+requestBody:
+  description: Phone equipment details
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: ../../components/schemas/CreatePhoneEquipmentRequest.yaml
+responses:
+  "201":
+    description: Phone equipment created
+    headers:
+      Location:
+        description: The location of the created phone equipment
+        required: true
+        schema:
+          type: string
+          format: uri
+        example: /phone-equipments/90b79dd6-17eb-4e95-b2df-86f0fc4617ce
+  default:
+    content:
+      application/json:
+        schema:
+          $ref: ../../components/schemas/Error.yaml

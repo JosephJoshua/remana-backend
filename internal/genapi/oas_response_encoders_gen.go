@@ -57,6 +57,28 @@ func encodeCreatePhoneConditionResponse(response *CreatePhoneConditionCreated, w
 	return nil
 }
 
+func encodeCreatePhoneEquipmentResponse(response *CreatePhoneEquipmentCreated, w http.ResponseWriter) error {
+	// Encoding response headers.
+	{
+		h := uri.NewHeaderEncoder(w.Header())
+		// Encode "Location" header.
+		{
+			cfg := uri.HeaderParameterEncodingConfig{
+				Name:    "Location",
+				Explode: false,
+			}
+			if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+				return e.EncodeValue(conv.URLToString(response.Location))
+			}); err != nil {
+				return errors.Wrap(err, "encode Location header")
+			}
+		}
+	}
+	w.WriteHeader(201)
+
+	return nil
+}
+
 func encodeCreateRepairOrderResponse(response *CreateRepairOrderCreated, w http.ResponseWriter) error {
 	// Encoding response headers.
 	{

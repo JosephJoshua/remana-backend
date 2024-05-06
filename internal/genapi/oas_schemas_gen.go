@@ -72,6 +72,35 @@ func (s *CreatePhoneConditionRequest) SetName(val string) {
 	s.Name = val
 }
 
+// CreatePhoneEquipmentCreated is response for CreatePhoneEquipment operation.
+type CreatePhoneEquipmentCreated struct {
+	Location url.URL
+}
+
+// GetLocation returns the value of Location.
+func (s *CreatePhoneEquipmentCreated) GetLocation() url.URL {
+	return s.Location
+}
+
+// SetLocation sets the value of Location.
+func (s *CreatePhoneEquipmentCreated) SetLocation(val url.URL) {
+	s.Location = val
+}
+
+type CreatePhoneEquipmentRequest struct {
+	Name string `json:"name"`
+}
+
+// GetName returns the value of Name.
+func (s *CreatePhoneEquipmentRequest) GetName() string {
+	return s.Name
+}
+
+// SetName sets the value of Name.
+func (s *CreatePhoneEquipmentRequest) SetName(val string) {
+	s.Name = val
+}
+
 // CreateRepairOrderCreated is response for CreateRepairOrder operation.
 type CreateRepairOrderCreated struct {
 	Location url.URL

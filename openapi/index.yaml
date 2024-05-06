@@ -62,3 +62,6 @@ paths:
   /phone-conditions:
     post:
       $ref: paths/phone_conditions/createPhoneCondition.yaml
+  /phone-equipments:
+    post:
+      $ref: paths/phone_equipments/createPhoneEquipment.yaml

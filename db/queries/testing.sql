@@ -76,6 +76,13 @@ FROM phone_conditions
 WHERE phone_conditions.phone_condition_id = $1
 LIMIT 1;
 
+-- name: GetPhoneEquipmentForTesting :one
+SELECT
+  phone_equipments.*
+FROM phone_equipments
+WHERE phone_equipments.phone_equipment_id = $1
+LIMIT 1;
+
 -- name: GetRepairOrderForTesting :one
 SELECT
   repair_orders.*

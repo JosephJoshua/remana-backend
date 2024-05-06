@@ -20,6 +20,12 @@ type Handler interface {
 	//
 	// POST /phone-conditions
 	CreatePhoneCondition(ctx context.Context, req *CreatePhoneConditionRequest) (*CreatePhoneConditionCreated, error)
+	// CreatePhoneEquipment implements createPhoneEquipment operation.
+	//
+	// Creates a new phone equipment.
+	//
+	// POST /phone-equipments
+	CreatePhoneEquipment(ctx context.Context, req *CreatePhoneEquipmentRequest) (*CreatePhoneEquipmentCreated, error)
 	// CreateRepairOrder implements createRepairOrder operation.
 	//
 	// Creates a new repair order.

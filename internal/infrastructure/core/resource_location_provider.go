@@ -48,3 +48,11 @@ func (r resourceLocationProvider) PhoneCondition(id uuid.UUID) url.URL {
 
 	return url
 }
+
+func (r resourceLocationProvider) PhoneEquipment(id uuid.UUID) url.URL {
+	url := url.URL{
+		Path: fmt.Sprintf("/phone-equipments/%s", id.String()),
+	}
+
+	return url
+}

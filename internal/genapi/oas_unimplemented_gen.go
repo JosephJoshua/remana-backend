@@ -31,6 +31,15 @@ func (UnimplementedHandler) CreatePhoneCondition(ctx context.Context, req *Creat
 	return r, ht.ErrNotImplemented
 }
 
+// CreatePhoneEquipment implements createPhoneEquipment operation.
+//
+// Creates a new phone equipment.
+//
+// POST /phone-equipments
+func (UnimplementedHandler) CreatePhoneEquipment(ctx context.Context, req *CreatePhoneEquipmentRequest) (r *CreatePhoneEquipmentCreated, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // CreateRepairOrder implements createRepairOrder operation.
 //
 // Creates a new repair order.

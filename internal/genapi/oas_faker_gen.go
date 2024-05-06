@@ -27,6 +27,15 @@ func (s *CreatePhoneConditionRequest) SetFake() {
 }
 
 // SetFake set fake values.
+func (s *CreatePhoneEquipmentRequest) SetFake() {
+	{
+		{
+			s.Name = "string"
+		}
+	}
+}
+
+// SetFake set fake values.
 func (s *CreateRepairOrderRequest) SetFake() {
 	{
 		{
