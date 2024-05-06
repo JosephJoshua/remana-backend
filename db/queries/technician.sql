@@ -13,4 +13,4 @@ VALUES (
 -- name: IsTechnicianNameTaken :one
 SELECT 1
 FROM technicians
-WHERE technicians.store_id = $1 AND technicians.technician_name = $2;
+WHERE technicians.store_id = $1 AND LOWER(technicians.technician_name) = LOWER(sqlc.arg('technician_name'));

@@ -38,7 +38,7 @@ func (q *Queries) CreateDamageType(ctx context.Context, arg CreateDamageTypePara
 const isDamageTypeNameTaken = `-- name: IsDamageTypeNameTaken :one
 SELECT 1
 FROM damage_types
-WHERE damage_types.store_id = $1 AND damage_types.damage_type_name = $2
+WHERE damage_types.store_id = $1 AND LOWER(damage_types.damage_type_name) = LOWER($2)
 `
 
 type IsDamageTypeNameTakenParams struct {

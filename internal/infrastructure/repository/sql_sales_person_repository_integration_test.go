@@ -146,6 +146,35 @@ func TestCreateSalesPerson(t *testing.T) {
 		_, err = s.CreateSalesPerson(requestCtx, req)
 		testutil.AssertAPIStatusCode(t, http.StatusConflict, err)
 	})
+
+	t.Run("returns bad request when name is taken (case insensitive)", func(t *testing.T) {
+		const (
+			theNameInDB = "sales person 1"
+			theNewName  = "Sales Person 1"
+		)
+
+		_, err := queries.SeedSalesPerson(context.Background(), gensql.SeedSalesPersonParams{
+			SalesPersonID:   typemapper.UUIDToPgtypeUUID(uuid.New()),
+			SalesPersonName: theNameInDB,
+			StoreID:         typemapper.UUIDToPgtypeUUID(theStoreID),
+		})
+		require.NoError(t, err)
+
+		locationProvider := testutil.NewResourceLocationProviderStubForSalesPerson(theLocation)
+		repo := repository.NewSQLSalesPersonRepository(db)
+
+		s := salesperson.NewService(
+			locationProvider,
+			repo,
+		)
+
+		req := &genapi.CreateSalesPersonRequest{
+			Name: theNewName,
+		}
+
+		_, err = s.CreateSalesPerson(requestCtx, req)
+		testutil.AssertAPIStatusCode(t, http.StatusConflict, err)
+	})
 }
 
 func seedCreateSalesPerson(

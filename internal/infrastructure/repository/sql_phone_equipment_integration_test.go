@@ -146,6 +146,35 @@ func TestCreatePhoneEquipment(t *testing.T) {
 		_, err = s.CreatePhoneEquipment(requestCtx, req)
 		testutil.AssertAPIStatusCode(t, http.StatusConflict, err)
 	})
+
+	t.Run("returns bad request when name is taken (case insensitive)", func(t *testing.T) {
+		const (
+			theNameInDB = "phone equipment 1"
+			theNewName  = "Phone Equipment 1"
+		)
+
+		_, err := queries.SeedPhoneEquipment(context.Background(), gensql.SeedPhoneEquipmentParams{
+			PhoneEquipmentID:   typemapper.UUIDToPgtypeUUID(uuid.New()),
+			PhoneEquipmentName: theNameInDB,
+			StoreID:            typemapper.UUIDToPgtypeUUID(theStoreID),
+		})
+		require.NoError(t, err)
+
+		locationProvider := testutil.NewResourceLocationProviderStubForPhoneEquipment(theLocation)
+		repo := repository.NewSQLPhoneEquipmentRepository(db)
+
+		s := phoneequipment.NewService(
+			locationProvider,
+			repo,
+		)
+
+		req := &genapi.CreatePhoneEquipmentRequest{
+			Name: theNewName,
+		}
+
+		_, err = s.CreatePhoneEquipment(requestCtx, req)
+		testutil.AssertAPIStatusCode(t, http.StatusConflict, err)
+	})
 }
 
 func seedCreatePhoneEquipment(

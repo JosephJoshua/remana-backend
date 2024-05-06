@@ -146,6 +146,35 @@ func TestCreateDamageType(t *testing.T) {
 		_, err = s.CreateDamageType(requestCtx, req)
 		testutil.AssertAPIStatusCode(t, http.StatusConflict, err)
 	})
+
+	t.Run("returns bad request when name is taken (case insensitive)", func(t *testing.T) {
+		const (
+			theNameInDB = "damage type 1"
+			theNewName  = "Damage Type 1"
+		)
+
+		_, err := queries.SeedDamageType(context.Background(), gensql.SeedDamageTypeParams{
+			DamageTypeID:   typemapper.UUIDToPgtypeUUID(uuid.New()),
+			DamageTypeName: theNameInDB,
+			StoreID:        typemapper.UUIDToPgtypeUUID(theStoreID),
+		})
+		require.NoError(t, err)
+
+		locationProvider := testutil.NewResourceLocationProviderStubForDamageType(theLocation)
+		repo := repository.NewSQLDamageTypeRepository(db)
+
+		s := damagetype.NewService(
+			locationProvider,
+			repo,
+		)
+
+		req := &genapi.CreateDamageTypeRequest{
+			Name: theNewName,
+		}
+
+		_, err = s.CreateDamageType(requestCtx, req)
+		testutil.AssertAPIStatusCode(t, http.StatusConflict, err)
+	})
 }
 
 func seedCreateDamageType(

@@ -13,4 +13,4 @@ VALUES (
 -- name: IsDamageTypeNameTaken :one
 SELECT 1
 FROM damage_types
-WHERE damage_types.store_id = $1 AND damage_types.damage_type_name = $2;
+WHERE damage_types.store_id = $1 AND LOWER(damage_types.damage_type_name) = LOWER(sqlc.arg('damage_type_name'));

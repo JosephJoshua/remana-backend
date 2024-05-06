@@ -13,4 +13,4 @@ VALUES (
 -- name: IsPhoneEquipmentNameTaken :one
 SELECT 1
 FROM phone_equipments
-WHERE phone_equipments.store_id = $1 AND phone_equipments.phone_equipment_name = $2;
+WHERE phone_equipments.store_id = $1 AND LOWER(phone_equipments.phone_equipment_name) = LOWER(sqlc.arg('phone_equipment_name'));

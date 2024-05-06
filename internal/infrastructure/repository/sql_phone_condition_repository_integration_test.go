@@ -146,6 +146,35 @@ func TestCreatePhoneCondition(t *testing.T) {
 		_, err = s.CreatePhoneCondition(requestCtx, req)
 		testutil.AssertAPIStatusCode(t, http.StatusConflict, err)
 	})
+
+	t.Run("returns bad request when name is taken (case insensitive)", func(t *testing.T) {
+		const (
+			theNameInDB = "phone condition 1"
+			theNewName  = "Phone Condition 1"
+		)
+
+		_, err := queries.SeedPhoneCondition(context.Background(), gensql.SeedPhoneConditionParams{
+			PhoneConditionID:   typemapper.UUIDToPgtypeUUID(uuid.New()),
+			PhoneConditionName: theNameInDB,
+			StoreID:            typemapper.UUIDToPgtypeUUID(theStoreID),
+		})
+		require.NoError(t, err)
+
+		locationProvider := testutil.NewResourceLocationProviderStubForPhoneCondition(theLocation)
+		repo := repository.NewSQLPhoneConditionRepository(db)
+
+		s := phonecondition.NewService(
+			locationProvider,
+			repo,
+		)
+
+		req := &genapi.CreatePhoneConditionRequest{
+			Name: theNewName,
+		}
+
+		_, err = s.CreatePhoneCondition(requestCtx, req)
+		testutil.AssertAPIStatusCode(t, http.StatusConflict, err)
+	})
 }
 
 func seedCreatePhoneCondition(

@@ -146,6 +146,35 @@ func TestCreateTechnician(t *testing.T) {
 		_, err = s.CreateTechnician(requestCtx, req)
 		testutil.AssertAPIStatusCode(t, http.StatusConflict, err)
 	})
+
+	t.Run("returns bad request when name is taken (case insensitive)", func(t *testing.T) {
+		const (
+			theNameInDB = "technician 1"
+			theNewName  = "Technician 1"
+		)
+
+		_, err := queries.SeedTechnician(context.Background(), gensql.SeedTechnicianParams{
+			TechnicianID:   typemapper.UUIDToPgtypeUUID(uuid.New()),
+			TechnicianName: theNameInDB,
+			StoreID:        typemapper.UUIDToPgtypeUUID(theStoreID),
+		})
+		require.NoError(t, err)
+
+		locationProvider := testutil.NewResourceLocationProviderStubForTechnician(theLocation)
+		repo := repository.NewSQLTechnicianRepository(db)
+
+		s := technician.NewService(
+			locationProvider,
+			repo,
+		)
+
+		req := &genapi.CreateTechnicianRequest{
+			Name: theNewName,
+		}
+
+		_, err = s.CreateTechnician(requestCtx, req)
+		testutil.AssertAPIStatusCode(t, http.StatusConflict, err)
+	})
 }
 
 func seedCreateTechnician(
