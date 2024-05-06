@@ -1,4 +1,4 @@
-x-ogen-name: CreateTechnicianRequest
+x-ogen-name: CreateSalesPersonRequest
 type: object
 required:
   - name

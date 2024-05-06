@@ -29,7 +29,6 @@ func (s *CreateRepairOrderCreated) SetLocation(val url.URL) {
 	s.Location = val
 }
 
-// Ref: #
 type CreateRepairOrderRequest struct {
 	CustomerName       string                                 `json:"customer_name"`
 	ContactPhoneNumber string                                 `json:"contact_phone_number"`
@@ -248,6 +247,35 @@ func (s *CreateRepairOrderRequestPasscode) SetValue(val string) {
 	s.Value = val
 }
 
+// CreateSalesPersonCreated is response for CreateSalesPerson operation.
+type CreateSalesPersonCreated struct {
+	Location url.URL
+}
+
+// GetLocation returns the value of Location.
+func (s *CreateSalesPersonCreated) GetLocation() url.URL {
+	return s.Location
+}
+
+// SetLocation sets the value of Location.
+func (s *CreateSalesPersonCreated) SetLocation(val url.URL) {
+	s.Location = val
+}
+
+type CreateSalesPersonRequest struct {
+	Name string `json:"name"`
+}
+
+// GetName returns the value of Name.
+func (s *CreateSalesPersonRequest) GetName() string {
+	return s.Name
+}
+
+// SetName sets the value of Name.
+func (s *CreateSalesPersonRequest) SetName(val string) {
+	s.Name = val
+}
+
 // CreateTechnicianCreated is response for CreateTechnician operation.
 type CreateTechnicianCreated struct {
 	Location url.URL
@@ -263,7 +291,6 @@ func (s *CreateTechnicianCreated) SetLocation(val url.URL) {
 	s.Location = val
 }
 
-// Ref: #
 type CreateTechnicianRequest struct {
 	Name string `json:"name"`
 }
@@ -278,7 +305,6 @@ func (s *CreateTechnicianRequest) SetName(val string) {
 	s.Name = val
 }
 
-// Ref: #
 type Error struct {
 	Message string `json:"message"`
 }
@@ -322,7 +348,6 @@ func (s *ErrorStatusCode) SetResponse(val Error) {
 // GetHealthNoContent is response for GetHealth operation.
 type GetHealthNoContent struct{}
 
-// Ref: #
 type LoginCodePrompt struct {
 	LoginCode string `json:"login_code"`
 }
@@ -340,7 +365,6 @@ func (s *LoginCodePrompt) SetLoginCode(val string) {
 // LoginCodePromptNoContent is response for LoginCodePrompt operation.
 type LoginCodePromptNoContent struct{}
 
-// Ref: #
 type LoginCredentials struct {
 	Username  string `json:"username"`
 	Password  string `json:"password"`
@@ -377,7 +401,6 @@ func (s *LoginCredentials) SetStoreCode(val string) {
 	s.StoreCode = val
 }
 
-// Ref: #
 type LoginResponse struct {
 	// The type of user that logged in:
 	// * `admin` - Store admin. The session ID is returned in a cookie named
@@ -602,7 +625,6 @@ func (s *SessionCookie) SetAPIKey(val string) {
 	s.APIKey = val
 }
 
-// Ref: #
 type UserDetails struct {
 	ID       uuid.UUID        `json:"id"`
 	Username string           `json:"username"`

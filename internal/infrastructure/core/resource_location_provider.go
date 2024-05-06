@@ -24,3 +24,11 @@ func (r resourceLocationProvider) Technician(technicianID uuid.UUID) url.URL {
 
 	return url
 }
+
+func (r resourceLocationProvider) SalesPerson(salesPersonID uuid.UUID) url.URL {
+	url := url.URL{
+		Path: fmt.Sprintf("/sales-persons/%s", salesPersonID.String()),
+	}
+
+	return url
+}

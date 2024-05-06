@@ -55,6 +55,13 @@ FROM technicians
 WHERE technicians.technician_id = $1
 LIMIT 1;
 
+-- name: GetSalesPersonForTesting :one
+SELECT
+  sales_persons.*
+FROM sales_persons
+WHERE sales_persons.sales_person_id = $1
+LIMIT 1;
+
 -- name: GetRepairOrderForTesting :one
 SELECT
   repair_orders.*

@@ -10,9 +10,11 @@ import (
 type ResourceLocationProviderStub struct {
 	repairOrderLocation url.URL
 	technicianLocation  url.URL
+	salesPersonLocation url.URL
 
 	RepairOrderID optional.Optional[uuid.UUID]
 	TechnicianID  optional.Optional[uuid.UUID]
+	SalesPersonID optional.Optional[uuid.UUID]
 }
 
 func NewResourceLocationProviderStubForRepairOrder(location url.URL) *ResourceLocationProviderStub {
@@ -29,6 +31,13 @@ func NewResourceLocationProviderStubForTechnician(location url.URL) *ResourceLoc
 	}
 }
 
+func NewResourceLocationProviderStubForSalesPerson(location url.URL) *ResourceLocationProviderStub {
+	return &ResourceLocationProviderStub{
+		salesPersonLocation: location,
+		SalesPersonID:       optional.None[uuid.UUID](),
+	}
+}
+
 func (r *ResourceLocationProviderStub) RepairOrder(orderID uuid.UUID) url.URL {
 	r.RepairOrderID = optional.Some(orderID)
 	return r.repairOrderLocation
@@ -37,4 +46,9 @@ func (r *ResourceLocationProviderStub) RepairOrder(orderID uuid.UUID) url.URL {
 func (r *ResourceLocationProviderStub) Technician(technicianID uuid.UUID) url.URL {
 	r.TechnicianID = optional.Some(technicianID)
 	return r.technicianLocation
+}
+
+func (r *ResourceLocationProviderStub) SalesPerson(salesPersonID uuid.UUID) url.URL {
+	r.SalesPersonID = optional.Some(salesPersonID)
+	return r.salesPersonLocation
 }

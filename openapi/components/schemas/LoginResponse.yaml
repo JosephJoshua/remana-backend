@@ -1,3 +1,4 @@
+x-ogen-name: LoginResponse
 type: object
 required:
   - type

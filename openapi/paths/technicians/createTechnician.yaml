@@ -1,29 +1,28 @@
-post:
-  tags:
-    - technicians
-  summary: Creates a new technician
-  description: Creates a new technician
-  operationId: createTechnician
-  requestBody:
-    description: Technician details
-    required: true
+tags:
+  - technicians
+summary: Creates a new technician
+description: Creates a new technician
+operationId: createTechnician
+requestBody:
+  description: Technician details
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: ../../components/schemas/CreateTechnicianRequest.yaml
+responses:
+  "201":
+    description: Technician created
+    headers:
+      Location:
+        description: The location of the created technician
+        required: true
+        schema:
+          type: string
+          format: uri
+        example: /technicians/90b79dd6-17eb-4e95-b2df-86f0fc4617ce
+  default:
     content:
       application/json:
         schema:
-          $ref: ../../components/schemas/CreateTechnicianRequest.yaml
-  responses:
-    "201":
-      description: Technician created
-      headers:
-        Location:
-          description: The location of the created technician
-          required: true
-          schema:
-            type: string
-            format: uri
-          example: /technicians/90b79dd6-17eb-4e95-b2df-86f0fc4617ce
-    default:
-      content:
-        application/json:
-          schema:
-            $ref: ../../components/schemas/Error.yaml
+          $ref: ../../components/schemas/Error.yaml

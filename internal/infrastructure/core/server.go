@@ -12,6 +12,7 @@ import (
 	"github.com/JosephJoshua/remana-backend/internal/modules/auth"
 	"github.com/JosephJoshua/remana-backend/internal/modules/misc"
 	"github.com/JosephJoshua/remana-backend/internal/modules/repairorder"
+	"github.com/JosephJoshua/remana-backend/internal/modules/salesperson"
 	"github.com/JosephJoshua/remana-backend/internal/modules/technician"
 	"github.com/JosephJoshua/remana-backend/internal/modules/user"
 	"github.com/go-faster/jx"
@@ -25,6 +26,7 @@ import (
 type authService = auth.Service
 type userService = user.Service
 type technicianService = technician.Service
+type salesPersonService = salesperson.Service
 type repairOrderService = repairorder.Service
 type miscService = misc.Service
 
@@ -32,6 +34,7 @@ type server struct {
 	*authService
 	*userService
 	*technicianService
+	*salesPersonService
 	*repairOrderService
 	*miscService
 }
@@ -63,6 +66,11 @@ func NewAPIServer(db *pgxpool.Pool) (*genapi.Server, []Middleware, error) {
 		repository.NewSQLTechnicianRepository(db),
 	)
 
+	salesPersonService := salesperson.NewService(
+		resourceLocationProvider{},
+		repository.NewSQLSalesPersonRepository(db),
+	)
+
 	userService := user.NewService()
 	miscService := misc.NewService()
 
@@ -72,6 +80,7 @@ func NewAPIServer(db *pgxpool.Pool) (*genapi.Server, []Middleware, error) {
 		technicianService:  technicianService,
 		repairOrderService: repairOrderService,
 		miscService:        miscService,
+		salesPersonService: salesPersonService,
 	}
 
 	securityHandler := auth.NewSecurityHandler(sm, repository.NewSQLAuthRepository(db))

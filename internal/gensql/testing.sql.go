@@ -193,6 +193,21 @@ func (q *Queries) GetRepairOrderPhotosForTesting(ctx context.Context, repairOrde
 	return items, nil
 }
 
+const getSalesPersonForTesting = `-- name: GetSalesPersonForTesting :one
+SELECT
+  sales_persons.sales_person_id, sales_persons.store_id, sales_persons.sales_person_name
+FROM sales_persons
+WHERE sales_persons.sales_person_id = $1
+LIMIT 1
+`
+
+func (q *Queries) GetSalesPersonForTesting(ctx context.Context, salesPersonID pgtype.UUID) (SalesPerson, error) {
+	row := q.db.QueryRow(ctx, getSalesPersonForTesting, salesPersonID)
+	var i SalesPerson
+	err := row.Scan(&i.SalesPersonID, &i.StoreID, &i.SalesPersonName)
+	return i, err
+}
+
 const getTechnicianForTesting = `-- name: GetTechnicianForTesting :one
 SELECT
   technicians.technician_id, technicians.store_id, technicians.technician_name

@@ -1,0 +1,29 @@
+
+tags:
+  - sales_persons
+summary: Creates a new sales person
+description: Creates a new sales person
+operationId: createSalesPerson
+requestBody:
+  description: Sales person details
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: ../../components/schemas/CreateSalesPersonRequest.yaml
+responses:
+  "201":
+    description: Sales person created
+    headers:
+      Location:
+        description: The location of the created sales person
+        required: true
+        schema:
+          type: string
+          format: uri
+        example: /sales-persons/90b79dd6-17eb-4e95-b2df-86f0fc4617ce
+  default:
+    content:
+      application/json:
+        schema:
+          $ref: ../../components/schemas/Error.yaml

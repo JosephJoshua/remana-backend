@@ -144,6 +144,15 @@ func (s *CreateRepairOrderRequestPasscode) SetFake() {
 }
 
 // SetFake set fake values.
+func (s *CreateSalesPersonRequest) SetFake() {
+	{
+		{
+			s.Name = "string"
+		}
+	}
+}
+
+// SetFake set fake values.
 func (s *CreateTechnicianRequest) SetFake() {
 	{
 		{

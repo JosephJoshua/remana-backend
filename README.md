@@ -6,6 +6,8 @@ Backend API service for Remana.
 - [Go v1.22.1](https://go.dev/dl/)
 - [golangci-lint](https://github.com/golangci/golangci-lint)
 	Set of linters for Go.
+- [json-refs](https://github.com/whitlockjc/json-refs/tree/master?tab=readme-ov-file#nodejs)
+	Tool to resolve JSON refs beyond the capabilities of the OpenAPI syntax (ran before `ogen`).
 - [ogen](https://github.com/ogen-go/ogen)
 	OpenAPI v3 code generator.
 - [air](https://github.com/cosmtrek/air)

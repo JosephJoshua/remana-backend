@@ -1,17 +1,16 @@
-get:
-  tags:
-    - user
-  summary: Returns details of the currently logged in user
-  description: Returns details of the currently logged in user
-  operationId: getMyUserDetails
-  responses:
-    "200":
-      content:
-        application/json:
-          schema:
-            $ref: ../../components/schemas/UserDetails.yaml
-    default:
-      content:
-        application/json:
-          schema:
-            $ref: ../../components/schemas/Error.yaml
+tags:
+  - user
+summary: Returns details of the currently logged in user
+description: Returns details of the currently logged in user
+operationId: getMyUserDetails
+responses:
+  "200":
+    content:
+      application/json:
+        schema:
+          $ref: ../../components/schemas/UserDetails.yaml
+  default:
+    content:
+      application/json:
+        schema:
+          $ref: ../../components/schemas/Error.yaml

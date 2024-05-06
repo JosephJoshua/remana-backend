@@ -1,14 +1,13 @@
-post:
-  tags:
-    - auth
-  summary: Logs out current session
-  description: Logs out current session
-  operationId: logout
-  responses:
-    "205":
-      description: Successful logout
-    default:
-      content:
-        application/json:
-          schema:
-            $ref: ../../components/schemas/Error.yaml
+tags:
+  - auth
+summary: Logs out current session
+description: Logs out current session
+operationId: logout
+responses:
+  "205":
+    description: Successful logout
+  default:
+    content:
+      application/json:
+        schema:
+          $ref: ../../components/schemas/Error.yaml

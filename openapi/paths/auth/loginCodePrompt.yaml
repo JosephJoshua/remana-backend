@@ -1,28 +1,27 @@
-post:
-  tags:
-    - auth
-  summary: Logs store employees in with login code
-  description: >
-    Logs store employees in with the login code given by the store admin.
-    Should only be called after [/auth/login](#/auth/login) has been called.
-  operationId: loginCodePrompt
-  security: []
-  requestBody:
-    required: true
-    description:
-      Prompt for the login code given by the store admin (required after
-      a store employee logs in through the [/auth/login](#/auth/login))
+tags:
+  - auth
+summary: Logs store employees in with login code
+description: >
+  Logs store employees in with the login code given by the store admin.
+  Should only be called after [/auth/login](#/auth/login) has been called.
+operationId: loginCodePrompt
+security: []
+requestBody:
+  required: true
+  description:
+    Prompt for the login code given by the store admin (required after
+    a store employee logs in through the [/auth/login](#/auth/login))
+  content:
+    application/json:
+      schema:
+        $ref: ../../components/schemas/LoginCodePrompt.yaml
+responses:
+  "204":
+    description: >
+      Successful login. The session ID is returned in a cookie named
+      `session_id`. You need to include this cookie in subsequent requests.
+  default:
     content:
       application/json:
         schema:
-          $ref: ../../components/schemas/LoginCodePrompt.yaml
-  responses:
-    "204":
-      description: >
-        Successful login. The session ID is returned in a cookie named
-        `session_id`. You need to include this cookie in subsequent requests.
-    default:
-      content:
-        application/json:
-          schema:
-            $ref: ../../components/schemas/Error.yaml
+          $ref: ../../components/schemas/Error.yaml

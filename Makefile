@@ -1,5 +1,7 @@
 BINARY_PATH = build/webserver
 MAIN_FILE = ./cmd/webserver
+OPENAPI_INDEX_FILE = openapi/index.yaml
+OPENAPI_TMP_DIR = tmp/openapi
 
 .PHONY: migrate
 migrate:
@@ -48,7 +50,10 @@ lint-fix:
 
 .PHONY: generate
 generate:
-	go generate ./...
+	mkdir -p "${OPENAPI_TMP_DIR}"
+	rm -rf "${OPENAPI_TMP_DIR}/*"
+	json-refs resolve "${OPENAPI_INDEX_FILE}" > "${OPENAPI_TMP_DIR}/index.yaml"
+	go run github.com/ogen-go/ogen/cmd/ogen --target internal/genapi -package genapi --clean "${OPENAPI_TMP_DIR}/index.yaml"
 	sqlc generate
 
 .PHONY: test/unit

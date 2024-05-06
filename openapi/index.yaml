@@ -19,6 +19,8 @@ tags:
     description: Repair order management
   - name: technicians
     description: Technician management
+  - name: sales_persons
+    description: Sales person management
   - name: misc
     description: Miscellaneous endpoints
 components:
@@ -29,16 +31,26 @@ security:
   - sessionCookie: []
 paths:
   /healthz:
-    $ref: paths/misc/getHealth.yaml
+    get:
+      $ref: paths/misc/getHealth.yaml
   /auth/login:
-    $ref: paths/auth/login.yaml
+    post:
+      $ref: paths/auth/login.yaml
   /auth/login-code:
-    $ref: paths/auth/loginCodePrompt.yaml
+    post:
+      $ref: paths/auth/loginCodePrompt.yaml
   /auth/logout:
-    $ref: paths/auth/logout.yaml
+    post:
+      $ref: paths/auth/logout.yaml
   /users/me:
-    $ref: paths/user/getMyUserDetails.yaml
+    get:
+      $ref: paths/user/getMyUserDetails.yaml
   /repair-orders:
-    $ref: paths/repair_orders/createRepairOrder.yaml
+    post:
+      $ref: paths/repair_orders/createRepairOrder.yaml
   /technicians:
-    $ref: paths/technicians/createTechnician.yaml
+    post:
+      $ref: paths/technicians/createTechnician.yaml
+  /sales-persons:
+    post:
+      $ref: paths/sales_persons/createSalesPerson.yaml

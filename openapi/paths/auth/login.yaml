@@ -1,25 +1,24 @@
-post:
-  tags:
-    - auth
-  summary: Logs in with credentials
-  description: Logs in with credentials
-  operationId: login
-  security: []
-  requestBody:
-    description: Login credentials
-    required: true
+tags:
+  - auth
+summary: Logs in with credentials
+description: Logs in with credentials
+operationId: login
+security: []
+requestBody:
+  description: Login credentials
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: ../../components/schemas/LoginCredentials.yaml
+responses:
+  "200":
     content:
       application/json:
         schema:
-          $ref: ../../components/schemas/LoginCredentials.yaml
-  responses:
-    "200":
-      content:
-        application/json:
-          schema:
-            $ref: ../../components/schemas/LoginResponse.yaml
-    default:
-      content:
-        application/json:
-          schema:
-            $ref: ../../components/schemas/Error.yaml
+          $ref: ../../components/schemas/LoginResponse.yaml
+  default:
+    content:
+      application/json:
+        schema:
+          $ref: ../../components/schemas/Error.yaml

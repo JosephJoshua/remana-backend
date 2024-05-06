@@ -1,3 +1,4 @@
+x-ogen-name: LoginCodePrompt
 type: object
 required:
   - login_code

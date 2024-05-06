@@ -1,29 +1,28 @@
-post:
-  tags:
-    - repair_orders
-  summary: Creates a new repair order
-  description: Creates a new repair order
-  operationId: createRepairOrder
-  requestBody:
-    description: Order details
-    required: true
+tags:
+  - repair_orders
+summary: Creates a new repair order
+description: Creates a new repair order
+operationId: createRepairOrder
+requestBody:
+  description: Order details
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: ../../components/schemas/CreateRepairOrderRequest.yaml
+responses:
+  "201":
+    description: Repair order created
+    headers:
+      Location:
+        description: The location of the created repair order
+        required: true
+        schema:
+          type: string
+          format: uri
+        example: /repair-orders/90b79dd6-17eb-4e95-b2df-86f0fc4617ce
+  default:
     content:
       application/json:
         schema:
-          $ref: ../../components/schemas/CreateRepairOrderRequest.yaml
-  responses:
-    "201":
-      description: Repair order created
-      headers:
-        Location:
-          description: The location of the created repair order
-          required: true
-          schema:
-            type: string
-            format: uri
-          example: /repair-orders/90b79dd6-17eb-4e95-b2df-86f0fc4617ce
-    default:
-      content:
-        application/json:
-          schema:
-            $ref: ../../components/schemas/Error.yaml
+          $ref: ../../components/schemas/Error.yaml
