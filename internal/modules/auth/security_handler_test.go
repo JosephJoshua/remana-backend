@@ -13,7 +13,8 @@ import (
 	"github.com/JosephJoshua/remana-backend/internal/apperror"
 	"github.com/JosephJoshua/remana-backend/internal/genapi"
 	"github.com/JosephJoshua/remana-backend/internal/modules/auth"
-	"github.com/JosephJoshua/remana-backend/internal/modules/user/readmodel"
+	"github.com/JosephJoshua/remana-backend/internal/modules/auth/readmodel"
+	"github.com/JosephJoshua/remana-backend/internal/testutil"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -140,10 +141,7 @@ func TestHandleSessionCookie(t *testing.T) {
 		ctx := context.Background()
 		ctx, err := sh.HandleSessionCookie(ctx, "", genapi.SessionCookie{APIKey: ""})
 
-		var apiErr *genapi.ErrorStatusCode
-		require.ErrorAs(t, err, &apiErr)
-
-		assert.Equal(t, http.StatusInternalServerError, apiErr.StatusCode)
+		testutil.AssertAPIStatusCode(t, http.StatusInternalServerError, err)
 
 		_, ok := appcontext.GetUserFromContext(ctx)
 		assert.False(t, ok)

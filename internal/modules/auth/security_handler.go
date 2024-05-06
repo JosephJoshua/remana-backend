@@ -9,7 +9,7 @@ import (
 	"github.com/JosephJoshua/remana-backend/internal/appcontext"
 	"github.com/JosephJoshua/remana-backend/internal/apperror"
 	"github.com/JosephJoshua/remana-backend/internal/genapi"
-	"github.com/JosephJoshua/remana-backend/internal/modules/user/readmodel"
+	"github.com/JosephJoshua/remana-backend/internal/modules/auth/readmodel"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 )

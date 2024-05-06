@@ -14,9 +14,9 @@ import (
 	"github.com/JosephJoshua/remana-backend/internal/infrastructure/core"
 	"github.com/JosephJoshua/remana-backend/internal/logger"
 	"github.com/JosephJoshua/remana-backend/internal/modules/shared"
+	"github.com/JosephJoshua/remana-backend/internal/typemapper"
 	"github.com/gavv/httpexpect/v2"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
@@ -142,63 +142,57 @@ func seedUsers(ctx context.Context, t testing.TB, db *pgxpool.Pool) {
 	queries := gensql.New(db)
 
 	storeID, err := queries.SeedStore(ctx, gensql.SeedStoreParams{
-		StoreID:      pgtype.UUID{Bytes: uuid.New(), Valid: true},
+		StoreID:      typemapper.UUIDToPgtypeUUID(uuid.New()),
 		StoreName:    "Store 1",
 		StoreCode:    "store-one",
 		StoreAddress: "123 Main St",
 		PhoneNumber:  "081234567890",
 	})
-
 	require.NoError(t, err)
 
 	adminRoleID, err := queries.SeedRole(ctx, gensql.SeedRoleParams{
-		RoleID:       pgtype.UUID{Bytes: uuid.New(), Valid: true},
+		RoleID:       typemapper.UUIDToPgtypeUUID(uuid.New()),
 		RoleName:     "Admin",
 		StoreID:      storeID,
 		IsStoreAdmin: true,
 	})
-
 	require.NoError(t, err)
 
 	passwordHasher := &core.PasswordHasher{}
-	hashedPassword, err := passwordHasher.Hash("Password123")
 
+	hashedPassword, err := passwordHasher.Hash("Password123")
 	require.NoError(t, err)
 
 	_, err = queries.SeedUser(ctx, gensql.SeedUserParams{
-		UserID:       pgtype.UUID{Bytes: uuid.New(), Valid: true},
+		UserID:       typemapper.UUIDToPgtypeUUID(uuid.New()),
 		Username:     "admin",
 		UserPassword: hashedPassword,
 		RoleID:       adminRoleID,
 		StoreID:      storeID,
 	})
-
 	require.NoError(t, err)
 
 	employeeRoleID, err := queries.SeedRole(ctx, gensql.SeedRoleParams{
-		RoleID:       pgtype.UUID{Bytes: uuid.New(), Valid: true},
+		RoleID:       typemapper.UUIDToPgtypeUUID(uuid.New()),
 		RoleName:     "Employee",
 		StoreID:      storeID,
 		IsStoreAdmin: false,
 	})
-
 	require.NoError(t, err)
 
 	employeeUserID, err := queries.SeedUser(ctx, gensql.SeedUserParams{
-		UserID:       pgtype.UUID{Bytes: uuid.New(), Valid: true},
+		UserID:       typemapper.UUIDToPgtypeUUID(uuid.New()),
 		Username:     "employee",
 		UserPassword: hashedPassword,
 		RoleID:       employeeRoleID,
 		StoreID:      storeID,
 	})
-
 	require.NoError(t, err)
 
 	_, err = queries.SeedLoginCode(ctx, gensql.SeedLoginCodeParams{
-		LoginCodeID: pgtype.UUID{Bytes: uuid.New(), Valid: true},
+		LoginCodeID: typemapper.UUIDToPgtypeUUID(uuid.New()),
 		UserID:      employeeUserID,
 		LoginCode:   "A1B2C3D4",
 	})
-
 	require.NoError(t, err)
 }

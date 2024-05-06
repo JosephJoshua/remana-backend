@@ -5,6 +5,7 @@ package auth_test
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"testing"
 
@@ -57,26 +58,14 @@ func (l *loginCodePromptManagerStub) DeletePrompt(_ context.Context) error {
 	return nil
 }
 
-type passwordHasherStub struct{}
-
-func (p *passwordHasherStub) Hash(password string) (string, error) {
-	return password, nil
-}
-
-func (p *passwordHasherStub) Check(hashedPassword, password string) error {
-	if hashedPassword != password {
-		return apperror.ErrPasswordMismatch
-	}
-
-	return nil
-}
-
 type serviceRepositoryStub struct {
-	user             readmodel.User
-	username         string
-	storeCode        string
-	loginCode        string
-	loginCodeDeleted bool
+	user              readmodel.User
+	username          string
+	storeCode         string
+	loginCode         string
+	loginCodeDeleted  bool
+	getUserErr        error
+	checkLoginCodeErr error
 }
 
 func (a *serviceRepositoryStub) GetUserByUsernameAndStoreCode(
@@ -84,9 +73,14 @@ func (a *serviceRepositoryStub) GetUserByUsernameAndStoreCode(
 	username string,
 	storeCode string,
 ) (readmodel.User, error) {
+	var emptyUser readmodel.User
+
+	if a.getUserErr != nil {
+		return emptyUser, a.getUserErr
+	}
+
 	if a.username != username || a.storeCode != storeCode {
-		var user readmodel.User
-		return user, apperror.ErrUserNotFound
+		return emptyUser, apperror.ErrUserNotFound
 	}
 
 	return a.user, nil
@@ -97,6 +91,10 @@ func (a *serviceRepositoryStub) CheckAndDeleteUserLoginCode(
 	userID uuid.UUID,
 	loginCode string,
 ) error {
+	if a.checkLoginCodeErr != nil {
+		return a.checkLoginCodeErr
+	}
+
 	if a.user.ID.String() != userID.String() || a.loginCode != loginCode {
 		return apperror.ErrLoginCodeMismatch
 	}
@@ -183,7 +181,7 @@ func TestLogin(t *testing.T) {
 					loginCodeDeleted: false,
 				}
 
-				s := auth.NewService(sessionManager, loginCodePromptManager, repo, &passwordHasherStub{})
+				s := auth.NewService(sessionManager, loginCodePromptManager, repo, testutil.PasswordHasherStub{})
 				_, err := s.Login(requestCtx, tc.req)
 
 				testutil.AssertAPIStatusCode(t, http.StatusUnauthorized, err)
@@ -207,7 +205,7 @@ func TestLogin(t *testing.T) {
 			loginCodeDeleted: false,
 		}
 
-		s := auth.NewService(sessionManager, loginCodePromptManager, repo, &passwordHasherStub{})
+		s := auth.NewService(sessionManager, loginCodePromptManager, repo, testutil.PasswordHasherStub{})
 
 		got, err := s.Login(requestCtx, &genapi.LoginCredentials{
 			Username:  correctUsername,
@@ -235,7 +233,7 @@ func TestLogin(t *testing.T) {
 			loginCodeDeleted: false,
 		}
 
-		s := auth.NewService(sessionManager, loginCodePromptManager, repo, &passwordHasherStub{})
+		s := auth.NewService(sessionManager, loginCodePromptManager, repo, testutil.PasswordHasherStub{})
 
 		got, err := s.Login(requestCtx, &genapi.LoginCredentials{
 			Username:  correctUsername,
@@ -248,6 +246,34 @@ func TestLogin(t *testing.T) {
 		assert.NotNil(t, loginCodePromptManager.userID)
 		assert.Equal(t, employeeUser.ID.String(), loginCodePromptManager.userID.String())
 		assert.Nil(t, sessionManager.userID)
+	})
+
+	t.Run("returns internal server error when repository.GetUserByUsernameAndStoreCode() errors", func(t *testing.T) {
+		t.Parallel()
+
+		sessionManager := new(serviceSessionManagerStub)
+		loginCodePromptManager := new(loginCodePromptManagerStub)
+
+		repo := &serviceRepositoryStub{
+			user:             adminUser,
+			username:         correctUsername,
+			storeCode:        correctStoreCode,
+			loginCode:        "",
+			loginCodeDeleted: false,
+			getUserErr:       errors.New("oh no!"),
+		}
+
+		s := auth.NewService(sessionManager, loginCodePromptManager, repo, testutil.PasswordHasherStub{})
+		_, err := s.Login(requestCtx, &genapi.LoginCredentials{
+			Username:  correctUsername,
+			Password:  correctPassword,
+			StoreCode: correctStoreCode,
+		})
+
+		testutil.AssertAPIStatusCode(t, http.StatusInternalServerError, err)
+
+		assert.Nil(t, sessionManager.userID)
+		assert.Nil(t, loginCodePromptManager.userID)
 	})
 }
 
@@ -279,7 +305,7 @@ func TestLoginCodePrompt(t *testing.T) {
 			loginCodeDeleted: false,
 		}
 
-		s := auth.NewService(sessionManager, loginCodePromptManager, repo, &passwordHasherStub{})
+		s := auth.NewService(sessionManager, loginCodePromptManager, repo, testutil.PasswordHasherStub{})
 
 		err := s.LoginCodePrompt(requestCtx, &genapi.LoginCodePrompt{
 			LoginCode: "12345678",
@@ -304,7 +330,7 @@ func TestLoginCodePrompt(t *testing.T) {
 			loginCodeDeleted: false,
 		}
 
-		s := auth.NewService(sessionManager, loginCodePromptManager, repo, &passwordHasherStub{})
+		s := auth.NewService(sessionManager, loginCodePromptManager, repo, testutil.PasswordHasherStub{})
 
 		err := s.LoginCodePrompt(requestCtx, &genapi.LoginCodePrompt{
 			LoginCode: "12345678",
@@ -331,7 +357,7 @@ func TestLoginCodePrompt(t *testing.T) {
 			loginCodeDeleted: false,
 		}
 
-		s := auth.NewService(sessionManager, loginCodePromptManager, repo, &passwordHasherStub{})
+		s := auth.NewService(sessionManager, loginCodePromptManager, repo, testutil.PasswordHasherStub{})
 
 		err := s.LoginCodePrompt(requestCtx, &genapi.LoginCodePrompt{
 			LoginCode: loginCode,
@@ -342,6 +368,34 @@ func TestLoginCodePrompt(t *testing.T) {
 		assert.Equal(t, userID.String(), sessionManager.userID.String())
 		assert.Nil(t, loginCodePromptManager.userID)
 		assert.True(t, repo.loginCodeDeleted)
+	})
+
+	t.Run("returns internal server error when repository.CheckAndDeleteLoginCode() errors", func(t *testing.T) {
+		t.Parallel()
+
+		sessionManager := new(serviceSessionManagerStub)
+		loginCodePromptManager := &loginCodePromptManagerStub{userID: &userID}
+		repo := &serviceRepositoryStub{
+			user:              user,
+			loginCode:         loginCode,
+			username:          "testuser",
+			storeCode:         "teststore",
+			loginCodeDeleted:  false,
+			checkLoginCodeErr: errors.New("oh no!"),
+		}
+
+		s := auth.NewService(sessionManager, loginCodePromptManager, repo, testutil.PasswordHasherStub{})
+
+		err := s.LoginCodePrompt(requestCtx, &genapi.LoginCodePrompt{
+			LoginCode: "12345678",
+		})
+
+		testutil.AssertAPIStatusCode(t, http.StatusInternalServerError, err)
+
+		assert.Nil(t, sessionManager.userID)
+		assert.NotNil(t, loginCodePromptManager.userID)
+		assert.Equal(t, userID.String(), loginCodePromptManager.userID.String())
+		assert.False(t, repo.loginCodeDeleted)
 	})
 }
 
@@ -362,7 +416,7 @@ func TestLogout(t *testing.T) {
 			sessionManager,
 			new(loginCodePromptManagerStub),
 			new(serviceRepositoryStub),
-			new(passwordHasherStub),
+			new(testutil.PasswordHasherStub),
 		)
 
 		err := s.Logout(requestCtx)

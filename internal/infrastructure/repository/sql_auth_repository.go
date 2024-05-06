@@ -29,13 +29,15 @@ func (r *SQLAuthRepository) GetUserByUsernameAndStoreCode(
 	username string,
 	storeCode string,
 ) (readmodel.User, error) {
+	var emptyUser readmodel.User
+
 	user, err := r.queries.GetUserByUsernameAndStoreCode(ctx, gensql.GetUserByUsernameAndStoreCodeParams{
 		Username:  username,
 		StoreCode: storeCode,
 	})
-
-	var emptyUser readmodel.User
-	if err != nil {
+	if errors.Is(err, pgx.ErrNoRows) {
+		return emptyUser, apperror.ErrUserNotFound
+	} else if err != nil {
 		return emptyUser, fmt.Errorf("failed to get user by username and store code: %w", err)
 	}
 
@@ -60,12 +62,9 @@ func (r *SQLAuthRepository) CheckAndDeleteUserLoginCode(
 		UserID:    typemapper.UUIDToPgtypeUUID(userID),
 		LoginCode: loginCode,
 	})
-
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return apperror.ErrLoginCodeMismatch
-		}
-
+	if errors.Is(err, pgx.ErrNoRows) {
+		return apperror.ErrLoginCodeMismatch
+	} else if err != nil {
 		return fmt.Errorf("failed to get login code by user ID and code: %w", err)
 	}
 
@@ -75,4 +74,45 @@ func (r *SQLAuthRepository) CheckAndDeleteUserLoginCode(
 	}
 
 	return nil
+}
+
+func (r *SQLAuthRepository) GetUserDetailsByID(ctx context.Context, userID uuid.UUID) (readmodel.UserDetails, error) {
+	var emptyUser readmodel.UserDetails
+
+	user, err := r.queries.GetUserDetailsByID(ctx, typemapper.UUIDToPgtypeUUID(userID))
+	if errors.Is(err, pgx.ErrNoRows) {
+		return emptyUser, apperror.ErrUserNotFound
+	} else if err != nil {
+		return emptyUser, fmt.Errorf("failed to get user details by ID: %w", err)
+	}
+
+	userID, err = typemapper.PgtypeUUIDToUUID(user.UserID)
+	if err != nil {
+		return emptyUser, fmt.Errorf("failed to parse user ID from bytes: %w", err)
+	}
+
+	roleID, err := typemapper.PgtypeUUIDToUUID(user.RoleID)
+	if err != nil {
+		return emptyUser, fmt.Errorf("failed to parse role ID from bytes: %w", err)
+	}
+
+	storeID, err := typemapper.PgtypeUUIDToUUID(user.StoreID)
+	if err != nil {
+		return emptyUser, fmt.Errorf("failed to parse store ID from bytes: %w", err)
+	}
+
+	return readmodel.UserDetails{
+		ID:       userID,
+		Username: user.Username,
+		Role: readmodel.UserDetailsRole{
+			ID:           roleID,
+			Name:         user.RoleName.String,
+			IsStoreAdmin: user.IsStoreAdmin.Bool,
+		},
+		Store: readmodel.UserDetailsStore{
+			ID:   storeID,
+			Name: user.StoreName.String,
+			Code: user.StoreCode.String,
+		},
+	}, nil
 }

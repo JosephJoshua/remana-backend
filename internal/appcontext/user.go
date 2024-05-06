@@ -3,7 +3,7 @@ package appcontext
 import (
 	"context"
 
-	"github.com/JosephJoshua/remana-backend/internal/modules/user/readmodel"
+	"github.com/JosephJoshua/remana-backend/internal/modules/auth/readmodel"
 )
 
 type userCtxKey struct{}

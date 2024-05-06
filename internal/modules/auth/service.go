@@ -58,10 +58,12 @@ func NewService(
 func (s *Service) Login(ctx context.Context, req *genapi.LoginCredentials) (*genapi.LoginResponse, error) {
 	l := zerolog.Ctx(ctx)
 
+	const randomHash = "$2a$14$7IotmYZSWWVoGd.D5xaMLOi2W0bBbHZfNZ0NxX.BpphGmNd9IbC/u"
+
 	user, err := s.repo.GetUserByUsernameAndStoreCode(ctx, req.Username, req.StoreCode)
-	if err != nil {
+	if errors.Is(err, apperror.ErrUserNotFound) {
 		// Security measure to prevent timing attacks.
-		_ = s.hasher.Check("$2a$14$7IotmYZSWWVoGd.D5xaMLOi2W0bBbHZfNZ0NxX.BpphGmNd9IbC/u", req.Password)
+		_ = s.hasher.Check(randomHash, req.Password)
 
 		l.
 			Info().
@@ -70,6 +72,12 @@ func (s *Service) Login(ctx context.Context, req *genapi.LoginCredentials) (*gen
 			Msg("wrong username or store code")
 
 		return nil, apierror.ToAPIError(http.StatusUnauthorized, "invalid credentials")
+	} else if err != nil {
+		// Security measure to prevent timing attacks.
+		_ = s.hasher.Check(randomHash, req.Password)
+
+		l.Error().Err(err).Msg("failed to get user by username and store code")
+		return nil, apierror.ToAPIError(http.StatusInternalServerError, "failed to get user")
 	}
 
 	err = s.hasher.Check(user.Password, req.Password)
@@ -122,12 +130,10 @@ func (s *Service) LoginCodePrompt(ctx context.Context, req *genapi.LoginCodeProm
 	}
 
 	err = s.repo.CheckAndDeleteUserLoginCode(ctx, userID, req.GetLoginCode())
-	if err != nil {
-		if errors.Is(err, apperror.ErrLoginCodeMismatch) {
-			l.Info().Str("user_id", userID.String()).Msg("wrong login code")
-			return apierror.ToAPIError(http.StatusBadRequest, "wrong login code")
-		}
-
+	if errors.Is(err, apperror.ErrLoginCodeMismatch) {
+		l.Info().Str("user_id", userID.String()).Msg("wrong login code")
+		return apierror.ToAPIError(http.StatusBadRequest, "wrong login code")
+	} else if err != nil {
 		l.Error().Err(err).Msg("Repository.CheckUserLoginCode(); failed to check and delete login code")
 		return apierror.ToAPIError(http.StatusInternalServerError, "failed to check and delete login code")
 	}
