@@ -8,15 +8,17 @@ import (
 )
 
 type ResourceLocationProviderStub struct {
-	repairOrderLocation url.URL
-	technicianLocation  url.URL
-	salesPersonLocation url.URL
-	damageTypeLocation  url.URL
+	repairOrderLocation    url.URL
+	technicianLocation     url.URL
+	salesPersonLocation    url.URL
+	damageTypeLocation     url.URL
+	phoneConditionLocation url.URL
 
-	RepairOrderID optional.Optional[uuid.UUID]
-	TechnicianID  optional.Optional[uuid.UUID]
-	SalesPersonID optional.Optional[uuid.UUID]
-	DamageTypeID  optional.Optional[uuid.UUID]
+	RepairOrderID    optional.Optional[uuid.UUID]
+	TechnicianID     optional.Optional[uuid.UUID]
+	SalesPersonID    optional.Optional[uuid.UUID]
+	DamageTypeID     optional.Optional[uuid.UUID]
+	PhoneConditionID optional.Optional[uuid.UUID]
 }
 
 func NewResourceLocationProviderStubForRepairOrder(location url.URL) *ResourceLocationProviderStub {
@@ -47,22 +49,34 @@ func NewResourceLocationProviderStubForDamageType(location url.URL) *ResourceLoc
 	}
 }
 
-func (r *ResourceLocationProviderStub) RepairOrder(orderID uuid.UUID) url.URL {
-	r.RepairOrderID = optional.Some(orderID)
+func NewResourceLocationProviderStubForPhoneCondition(location url.URL) *ResourceLocationProviderStub {
+	return &ResourceLocationProviderStub{
+		phoneConditionLocation: location,
+		PhoneConditionID:       optional.None[uuid.UUID](),
+	}
+}
+
+func (r *ResourceLocationProviderStub) RepairOrder(id uuid.UUID) url.URL {
+	r.RepairOrderID = optional.Some(id)
 	return r.repairOrderLocation
 }
 
-func (r *ResourceLocationProviderStub) Technician(technicianID uuid.UUID) url.URL {
-	r.TechnicianID = optional.Some(technicianID)
+func (r *ResourceLocationProviderStub) Technician(id uuid.UUID) url.URL {
+	r.TechnicianID = optional.Some(id)
 	return r.technicianLocation
 }
 
-func (r *ResourceLocationProviderStub) SalesPerson(salesPersonID uuid.UUID) url.URL {
-	r.SalesPersonID = optional.Some(salesPersonID)
+func (r *ResourceLocationProviderStub) SalesPerson(id uuid.UUID) url.URL {
+	r.SalesPersonID = optional.Some(id)
 	return r.salesPersonLocation
 }
 
-func (r *ResourceLocationProviderStub) DamageType(damageTypeID uuid.UUID) url.URL {
-	r.DamageTypeID = optional.Some(damageTypeID)
+func (r *ResourceLocationProviderStub) DamageType(id uuid.UUID) url.URL {
+	r.DamageTypeID = optional.Some(id)
 	return r.damageTypeLocation
+}
+
+func (r *ResourceLocationProviderStub) PhoneCondition(id uuid.UUID) url.URL {
+	r.PhoneConditionID = optional.Some(id)
+	return r.phoneConditionLocation
 }

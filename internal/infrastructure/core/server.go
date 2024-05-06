@@ -12,6 +12,7 @@ import (
 	"github.com/JosephJoshua/remana-backend/internal/modules/auth"
 	"github.com/JosephJoshua/remana-backend/internal/modules/damagetype"
 	"github.com/JosephJoshua/remana-backend/internal/modules/misc"
+	"github.com/JosephJoshua/remana-backend/internal/modules/phonecondition"
 	"github.com/JosephJoshua/remana-backend/internal/modules/repairorder"
 	"github.com/JosephJoshua/remana-backend/internal/modules/salesperson"
 	"github.com/JosephJoshua/remana-backend/internal/modules/technician"
@@ -29,6 +30,7 @@ type userService = user.Service
 type technicianService = technician.Service
 type salesPersonService = salesperson.Service
 type damageTypeService = damagetype.Service
+type phoneConditionService = phonecondition.Service
 type repairOrderService = repairorder.Service
 type miscService = misc.Service
 
@@ -38,6 +40,7 @@ type server struct {
 	*technicianService
 	*salesPersonService
 	*damageTypeService
+	*phoneConditionService
 	*repairOrderService
 	*miscService
 }
@@ -79,17 +82,23 @@ func NewAPIServer(db *pgxpool.Pool) (*genapi.Server, []Middleware, error) {
 		repository.NewSQLDamageTypeRepository(db),
 	)
 
+	phoneConditionService := phonecondition.NewService(
+		resourceLocationProvider{},
+		repository.NewSQLPhoneConditionRepository(db),
+	)
+
 	userService := user.NewService()
 	miscService := misc.NewService()
 
 	srv := server{
-		authService:        authService,
-		userService:        userService,
-		technicianService:  technicianService,
-		salesPersonService: salesPersonService,
-		damageTypeService:  damageTypeService,
-		repairOrderService: repairOrderService,
-		miscService:        miscService,
+		authService:           authService,
+		userService:           userService,
+		technicianService:     technicianService,
+		salesPersonService:    salesPersonService,
+		damageTypeService:     damageTypeService,
+		phoneConditionService: phoneConditionService,
+		repairOrderService:    repairOrderService,
+		miscService:           miscService,
 	}
 
 	securityHandler := auth.NewSecurityHandler(sm, repository.NewSQLAuthRepository(db))

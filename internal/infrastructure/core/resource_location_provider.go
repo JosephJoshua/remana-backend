@@ -40,3 +40,11 @@ func (r resourceLocationProvider) DamageType(id uuid.UUID) url.URL {
 
 	return url
 }
+
+func (r resourceLocationProvider) PhoneCondition(id uuid.UUID) url.URL {
+	url := url.URL{
+		Path: fmt.Sprintf("/phone-conditions/%s", id.String()),
+	}
+
+	return url
+}

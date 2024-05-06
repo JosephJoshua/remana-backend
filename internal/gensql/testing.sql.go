@@ -26,6 +26,21 @@ func (q *Queries) GetDamageTypeForTesting(ctx context.Context, damageTypeID pgty
 	return i, err
 }
 
+const getPhoneConditionForTesting = `-- name: GetPhoneConditionForTesting :one
+SELECT
+  phone_conditions.phone_condition_id, phone_conditions.store_id, phone_conditions.phone_condition_name
+FROM phone_conditions
+WHERE phone_conditions.phone_condition_id = $1
+LIMIT 1
+`
+
+func (q *Queries) GetPhoneConditionForTesting(ctx context.Context, phoneConditionID pgtype.UUID) (PhoneCondition, error) {
+	row := q.db.QueryRow(ctx, getPhoneConditionForTesting, phoneConditionID)
+	var i PhoneCondition
+	err := row.Scan(&i.PhoneConditionID, &i.StoreID, &i.PhoneConditionName)
+	return i, err
+}
+
 const getRepairOrderCostsForTesting = `-- name: GetRepairOrderCostsForTesting :many
 SELECT
   repair_order_costs.repair_order_cost_id, repair_order_costs.repair_order_id, repair_order_costs.amount, repair_order_costs.reason, repair_order_costs.creation_time

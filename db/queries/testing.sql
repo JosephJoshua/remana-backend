@@ -69,6 +69,13 @@ FROM damage_types
 WHERE damage_types.damage_type_id = $1
 LIMIT 1;
 
+-- name: GetPhoneConditionForTesting :one
+SELECT
+  phone_conditions.*
+FROM phone_conditions
+WHERE phone_conditions.phone_condition_id = $1
+LIMIT 1;
+
 -- name: GetRepairOrderForTesting :one
 SELECT
   repair_orders.*

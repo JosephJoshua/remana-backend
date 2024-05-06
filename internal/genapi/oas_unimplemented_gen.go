@@ -22,6 +22,15 @@ func (UnimplementedHandler) CreateDamageType(ctx context.Context, req *CreateDam
 	return r, ht.ErrNotImplemented
 }
 
+// CreatePhoneCondition implements createPhoneCondition operation.
+//
+// Creates a new phone condition.
+//
+// POST /phone-conditions
+func (UnimplementedHandler) CreatePhoneCondition(ctx context.Context, req *CreatePhoneConditionRequest) (r *CreatePhoneConditionCreated, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // CreateRepairOrder implements createRepairOrder operation.
 //
 // Creates a new repair order.

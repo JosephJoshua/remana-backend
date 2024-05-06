@@ -1,0 +1,28 @@
+tags:
+  - phone_conditions
+summary: Creates a new phone condition
+description: Creates a new phone condition
+operationId: createPhoneCondition
+requestBody:
+  description: Phone condition details
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: ../../components/schemas/CreatePhoneConditionRequest.yaml
+responses:
+  "201":
+    description: Phone condition created
+    headers:
+      Location:
+        description: The location of the created phone condition
+        required: true
+        schema:
+          type: string
+          format: uri
+        example: /phone-conditions/90b79dd6-17eb-4e95-b2df-86f0fc4617ce
+  default:
+    content:
+      application/json:
+        schema:
+          $ref: ../../components/schemas/Error.yaml

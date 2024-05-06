@@ -14,6 +14,12 @@ type Handler interface {
 	//
 	// POST /damage-types
 	CreateDamageType(ctx context.Context, req *CreateDamageTypeRequest) (*CreateDamageTypeCreated, error)
+	// CreatePhoneCondition implements createPhoneCondition operation.
+	//
+	// Creates a new phone condition.
+	//
+	// POST /phone-conditions
+	CreatePhoneCondition(ctx context.Context, req *CreatePhoneConditionRequest) (*CreatePhoneConditionCreated, error)
 	// CreateRepairOrder implements createRepairOrder operation.
 	//
 	// Creates a new repair order.
