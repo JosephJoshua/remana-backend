@@ -17,7 +17,7 @@ type orderPayment struct {
 	paymentMethodID uuid.UUID
 }
 
-func newOrderPayment(amount uint, paymentMethodID uuid.UUID) (OrderPayment, error) {
+func NewOrderPayment(amount uint, paymentMethodID uuid.UUID) (OrderPayment, error) {
 	if amount == 0 {
 		return nil, fmt.Errorf("%w: amount is zero", apperror.ErrInvalidInput)
 	}

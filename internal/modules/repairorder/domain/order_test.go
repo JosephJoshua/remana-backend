@@ -8,239 +8,189 @@ import (
 	"testing"
 	"time"
 
+	"github.com/JosephJoshua/remana-backend/internal/apperror"
 	"github.com/JosephJoshua/remana-backend/internal/modules/repairorder/domain"
 	shareddomain "github.com/JosephJoshua/remana-backend/internal/modules/shared/domain"
+	"github.com/JosephJoshua/remana-backend/internal/optional"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestNewOrder(t *testing.T) {
-	dummyURL := url.URL{}
-	dummyTime := time.Now()
-	dummyID := uuid.New()
-	dummyContactNumber, initErr := shareddomain.NewPhoneNumber("081234567890")
+	t.Run("returns new order", func(t *testing.T) {
+		theContactNumber, initErr := shareddomain.NewPhoneNumber("081234567890")
+		require.NoError(t, initErr)
 
-	require.NoError(t, initErr)
+		params := domain.NewOrderParams{
+			CreationTime:    time.Now(),
+			Slug:            "slug",
+			StoreID:         uuid.New(),
+			CustomerName:    "John Doe",
+			ContactNumber:   theContactNumber,
+			PhoneType:       "Advan G5",
+			Color:           "White",
+			InitialCost:     100,
+			PhoneConditions: []string{"condition 1"},
+			PhoneEquipments: []string{"equipment 1"},
+			Damages:         []string{"damage 1"},
+			Photos:          []url.URL{{Host: "example.com"}},
+			SalesPersonID:   uuid.New(),
+			TechnicianID:    uuid.New(),
+		}
 
-	var invalidDownPaymentAmount uint
-	var invalidIMEI string
-	var invalidPartsNotCheckedYet string
+		got, err := domain.NewOrder(params)
+		require.NoError(t, err)
 
-	testCases := []struct {
-		testName           string
-		slug               string
-		customerName       string
-		phoneType          string
-		color              string
-		initialCost        uint
-		damages            []string
-		photos             []url.URL
-		downPaymentAmount  *uint
-		imei               *string
-		partsNotCheckedYet *string
-		valid              bool
-	}{
-		{
-			"empty slug",
-			"",
-			"customer 1",
-			"phone type",
-			"white",
-			100,
-			[]string{"damage 1"},
-			[]url.URL{dummyURL},
-			nil,
-			nil,
-			nil,
-			false,
-		},
-		{
-			"empty customerName",
-			"slug",
-			"",
-			"phone type",
-			"white",
-			100,
-			[]string{"damage 1"},
-			[]url.URL{dummyURL},
-			nil,
-			nil,
-			nil,
-			false,
-		},
-		{
-			"empty phoneType",
-			"slug",
-			"customer 1",
-			"",
-			"white",
-			100,
-			[]string{"damage 1"},
-			[]url.URL{dummyURL},
-			nil,
-			nil,
-			nil,
-			false,
-		},
-		{
-			"empty color",
-			"slug",
-			"customer 1",
-			"phone type",
-			"",
-			100,
-			[]string{"damage 1"},
-			[]url.URL{dummyURL},
-			nil,
-			nil,
-			nil,
-			false,
-		},
-		{
-			"empty initialCost",
-			"slug",
-			"customer 1",
-			"phone type",
-			"white",
-			0,
-			[]string{"damage 1"},
-			[]url.URL{dummyURL},
-			nil,
-			nil,
-			nil,
-			false,
-		},
-		{
-			"empty damages",
-			"slug",
-			"customer 1",
-			"phone type",
-			"white",
-			100,
-			[]string{},
-			[]url.URL{dummyURL},
-			nil,
-			nil,
-			nil,
-			false,
-		},
-		{
-			"empty photos",
-			"slug",
-			"customer 1",
-			"phone type",
-			"white",
-			100,
-			[]string{"damage 1"},
-			[]url.URL{},
-			nil,
-			nil,
-			nil,
-			false,
-		},
-		{
-			"empty downPaymentAmount",
-			"slug",
-			"customer 1",
-			"phone type",
-			"white",
-			100,
-			[]string{"damage 1"},
-			[]url.URL{dummyURL},
-			&invalidDownPaymentAmount,
-			nil,
-			nil,
-			false,
-		},
-		{
-			"empty imei",
-			"slug",
-			"customer 1",
-			"phone type",
-			"white",
-			100,
-			[]string{"damage 1"},
-			[]url.URL{dummyURL},
-			nil,
-			&invalidIMEI,
-			nil,
-			false,
-		},
-		{
-			"empty partsNotCheckedYet",
-			"slug",
-			"customer 1",
-			"phone type",
-			"white",
-			100,
-			[]string{"damage 1"},
-			[]url.URL{dummyURL},
-			nil,
-			nil,
-			&invalidPartsNotCheckedYet,
-			false,
-		},
-		{
-			"valid",
-			"slug",
-			"customer 1",
-			"phone type",
-			"white",
-			100,
-			[]string{"damage 1"},
-			[]url.URL{dummyURL},
-			nil,
-			nil,
-			nil,
-			true,
-		},
-	}
+		assert.Equal(t, params.CreationTime, got.CreationTime())
+		assert.Equal(t, params.Slug, got.Slug())
+		assert.Equal(t, params.StoreID, got.StoreID())
+		assert.Equal(t, params.CustomerName, got.CustomerName())
+		assert.Equal(t, params.ContactNumber.Value(), got.ContactNumber().Value())
+		assert.Equal(t, params.PhoneType, got.PhoneType())
+		assert.Equal(t, params.Color, got.Color())
+		assert.Equal(t, params.SalesPersonID, got.SalesPersonID())
+		assert.Equal(t, params.TechnicianID, got.TechnicianID())
 
-	for _, tc := range testCases {
-		tc := tc
+		require.NotEmpty(t, got.Costs())
+		assert.Equal(t, int(params.InitialCost), got.Costs()[0].Amount())
 
-		t.Run(tc.testName, func(t *testing.T) {
-			t.Parallel()
+		require.NotEmpty(t, got.PhoneConditions())
+		assert.Equal(t, params.PhoneConditions[0], got.PhoneConditions()[0].Name())
 
-			opts := []domain.OrderOption{}
+		require.NotEmpty(t, got.Damages())
+		assert.Equal(t, params.Damages[0], got.Damages()[0].Name())
 
-			if tc.downPaymentAmount != nil {
-				opts = append(opts, domain.WithDownPayment(*tc.downPaymentAmount, dummyID))
-			}
+		require.NotEmpty(t, got.PhoneEquipments())
+		assert.Equal(t, params.PhoneEquipments[0], got.PhoneEquipments()[0].Name())
 
-			if tc.imei != nil {
-				opts = append(opts, domain.WithIMEI(*tc.imei))
-			}
+		require.NotEmpty(t, got.Photos())
+		assert.Equal(t, params.Photos[0], got.Photos()[0].URL())
+	})
 
-			if tc.partsNotCheckedYet != nil {
-				opts = append(opts, domain.WithPartsNotCheckedYet(*tc.partsNotCheckedYet))
-			}
+	t.Run("returns invalid input error", func(t *testing.T) {
+		dummyURL := url.URL{Host: "example.com"}
+		dummyTime := time.Now()
+		dummyID := uuid.New()
 
-			got, err := domain.NewOrder(
-				dummyTime,
-				tc.slug,
-				dummyID,
-				tc.customerName,
-				dummyContactNumber,
-				tc.phoneType,
-				tc.color,
-				tc.initialCost,
-				[]string{},
-				[]string{},
-				tc.damages,
-				tc.photos,
-				dummyID,
-				dummyID,
-				opts...,
-			)
+		dummyContactNumber, initErr := shareddomain.NewPhoneNumber("081234567890")
+		require.NoError(t, initErr)
 
-			if tc.valid {
-				require.NoError(t, err)
-				assert.NotNil(t, got)
-			} else {
-				require.Error(t, err)
-			}
-		})
-	}
+		testCases := []struct {
+			name  string
+			setup func(params *domain.NewOrderParams)
+		}{
+			{
+				name: "empty slug",
+				setup: func(params *domain.NewOrderParams) {
+					params.Slug = ""
+				},
+			},
+			{
+				name: "empty customer name",
+				setup: func(params *domain.NewOrderParams) {
+					params.CustomerName = ""
+				},
+			},
+			{
+				name: "empty phone type",
+				setup: func(params *domain.NewOrderParams) {
+					params.PhoneType = ""
+				},
+			},
+			{
+				name: "empty color",
+				setup: func(params *domain.NewOrderParams) {
+					params.Color = ""
+				},
+			},
+			{
+				name: "zero initial cost",
+				setup: func(params *domain.NewOrderParams) {
+					params.InitialCost = 0
+				},
+			},
+			{
+				name: "down payment greater than initial cost",
+				setup: func(params *domain.NewOrderParams) {
+					payment, err := domain.NewOrderPayment(500, dummyID)
+					require.NoError(t, err)
+
+					params.InitialCost = 100
+					params.DownPayment = optional.Some(payment)
+				},
+			},
+			{
+				name: "empty damages",
+				setup: func(params *domain.NewOrderParams) {
+					params.Damages = []string{}
+				},
+			},
+			{
+				name: "damages set, but is empty string",
+				setup: func(params *domain.NewOrderParams) {
+					params.Damages = []string{""}
+				},
+			},
+			{
+				name: "phone equipments set, but is empty string",
+				setup: func(params *domain.NewOrderParams) {
+					params.PhoneEquipments = []string{""}
+				},
+			},
+			{
+				name: "phone conditions set, but is empty string",
+				setup: func(params *domain.NewOrderParams) {
+					params.PhoneConditions = []string{""}
+				},
+			},
+			{
+				name: "empty photos",
+				setup: func(params *domain.NewOrderParams) {
+					params.Photos = []url.URL{}
+				},
+			},
+			{
+				name: "imei set, but empty",
+				setup: func(params *domain.NewOrderParams) {
+					params.Imei = optional.Some("")
+				},
+			},
+			{
+				name: "parts not checked yet set, but empty",
+				setup: func(params *domain.NewOrderParams) {
+					params.PartsNotCheckedYet = optional.Some("")
+				},
+			},
+		}
+
+		for _, tc := range testCases {
+			tc := tc
+
+			t.Run(tc.name, func(t *testing.T) {
+				t.Parallel()
+
+				params := domain.NewOrderParams{
+					CreationTime:  dummyTime,
+					Slug:          "slug",
+					StoreID:       dummyID,
+					CustomerName:  "John Doe",
+					ContactNumber: dummyContactNumber,
+					PhoneType:     "Advan G5",
+					Color:         "White",
+					InitialCost:   100,
+					Damages:       []string{"damage 1"},
+					Photos:        []url.URL{dummyURL},
+					SalesPersonID: dummyID,
+					TechnicianID:  dummyID,
+				}
+
+				tc.setup(&params)
+
+				_, err := domain.NewOrder(params)
+				require.ErrorIs(t, err, apperror.ErrInvalidInput)
+			})
+		}
+	})
+
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/JosephJoshua/remana-backend/internal/genapi"
 	"github.com/JosephJoshua/remana-backend/internal/modules/repairorder/domain"
 	shareddomain "github.com/JosephJoshua/remana-backend/internal/modules/shared/domain"
+	"github.com/JosephJoshua/remana-backend/internal/optional"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 )
@@ -90,9 +91,34 @@ func (s *Service) CreateRepairOrder(
 		return nil, apierror.ToAPIError(http.StatusInternalServerError, "failed to generate repair order slug")
 	}
 
-	opts, err := s.buildOrderOptions(req)
-	if err != nil {
-		return nil, err
+	var phoneSecurityDetails optional.Optional[domain.PhoneSecurityDetails]
+
+	if req.Passcode.IsSet() {
+		if req.Passcode.Value.IsPatternLocked {
+			tmp, securityErr := domain.NewPatternSecurity(req.Passcode.Value.Value)
+			if securityErr != nil {
+				return nil, apierror.ToAPIError(http.StatusBadRequest, securityErr.Error())
+			}
+
+			phoneSecurityDetails = optional.Some(tmp)
+		} else {
+			phoneSecurityDetails = optional.Some(domain.NewPasscodeSecurity(req.Passcode.Value.Value))
+		}
+	}
+
+	var downPayment optional.Optional[domain.OrderPayment]
+
+	if req.DownPayment.IsSet() {
+		if req.DownPayment.Value.Amount <= 0 {
+			return nil, apierror.ToAPIError(http.StatusBadRequest, "down payment amount must be greater than 0")
+		}
+
+		tmp, paymentErr := domain.NewOrderPayment(uint(req.DownPayment.Value.Amount), req.DownPayment.Value.Method)
+		if paymentErr != nil {
+			return nil, apierror.ToAPIError(http.StatusBadRequest, paymentErr.Error())
+		}
+
+		downPayment = optional.Some(tmp)
 	}
 
 	if err = s.checkReferentialIntegrity(ctx, l, storeID, req); err != nil {
@@ -129,23 +155,38 @@ func (s *Service) CreateRepairOrder(
 		return nil, apierror.ToAPIError(http.StatusInternalServerError, "failed to get phone equipment names by IDs")
 	}
 
-	repairOrder, err := domain.NewOrder(
-		creationTime,
-		slug,
-		storeID,
-		req.CustomerName,
-		contactNumber,
-		req.PhoneType,
-		req.Color,
-		uint(req.InitialCost),
-		phoneConditions,
-		phoneEquipments,
-		damages,
-		req.Photos,
-		req.SalesPersonID,
-		req.TechnicianID,
-		opts...,
-	)
+	var imei optional.Optional[string]
+	if req.Imei.IsSet() {
+		imei = optional.Some(req.Imei.Value)
+	}
+
+	var partsNotCheckedYet optional.Optional[string]
+	if req.PartsNotCheckedYet.IsSet() {
+		partsNotCheckedYet = optional.Some(req.PartsNotCheckedYet.Value)
+	}
+
+	params := domain.NewOrderParams{
+		CreationTime:         creationTime,
+		Slug:                 slug,
+		StoreID:              storeID,
+		CustomerName:         req.CustomerName,
+		ContactNumber:        contactNumber,
+		PhoneType:            req.PhoneType,
+		Color:                req.Color,
+		InitialCost:          uint(req.InitialCost),
+		PhoneConditions:      phoneConditions,
+		PhoneEquipments:      phoneEquipments,
+		Damages:              damages,
+		Photos:               req.Photos,
+		SalesPersonID:        req.SalesPersonID,
+		TechnicianID:         req.TechnicianID,
+		Imei:                 imei,
+		PartsNotCheckedYet:   partsNotCheckedYet,
+		DownPayment:          downPayment,
+		PhoneSecurityDetails: phoneSecurityDetails,
+	}
+
+	repairOrder, err := domain.NewOrder(params)
 
 	if err != nil {
 		return nil, apierror.ToAPIError(http.StatusBadRequest, err.Error())
@@ -204,43 +245,4 @@ func (s *Service) checkReferentialIntegrity(
 	}
 
 	return nil
-}
-
-func (s *Service) buildOrderOptions(req *genapi.CreateRepairOrderRequest) ([]domain.OrderOption, error) {
-	opts := []domain.OrderOption{}
-
-	if req.Imei.IsSet() {
-		opts = append(opts, domain.WithIMEI(req.Imei.Value))
-	}
-
-	if req.PartsNotCheckedYet.IsSet() {
-		opts = append(opts, domain.WithPartsNotCheckedYet(req.PartsNotCheckedYet.Value))
-	}
-
-	if req.Passcode.IsSet() {
-		var securityDetails domain.PhoneSecurityDetails
-
-		if req.Passcode.Value.IsPatternLocked {
-			patternSecurity, err := domain.NewPatternSecurity(req.Passcode.Value.Value)
-			if err != nil {
-				return nil, apierror.ToAPIError(http.StatusBadRequest, err.Error())
-			}
-
-			securityDetails = patternSecurity
-		} else {
-			securityDetails = domain.NewPasscodeSecurity(req.Passcode.Value.Value)
-		}
-
-		opts = append(opts, domain.WithPhoneSecurityDetails(securityDetails))
-	}
-
-	if req.DownPayment.IsSet() {
-		if req.DownPayment.Value.Amount <= 0 {
-			return nil, apierror.ToAPIError(http.StatusBadRequest, "down payment amount must be greater than 0")
-		}
-
-		opts = append(opts, domain.WithDownPayment(uint(req.DownPayment.Value.Amount), req.DownPayment.Value.Method))
-	}
-
-	return opts, nil
 }

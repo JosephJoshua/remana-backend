@@ -51,14 +51,7 @@ type Order interface {
 	CancellationReason() optional.Optional[string]
 	DownPayment() optional.Optional[OrderPayment]
 	Repayment() optional.Optional[OrderPayment]
-
-	setDownPayment(amount uint, paymentMethodID uuid.UUID) error
-	setPhoneSecurityDetails(details PhoneSecurityDetails) error
-	setPartsNotCheckedYet(parts string) error
-	setIMEI(imei string) error
 }
-
-type OrderOption func(Order) error
 
 type order struct {
 	id                   uuid.UUID
@@ -89,46 +82,41 @@ type order struct {
 	repayment            optional.Optional[OrderPayment]
 }
 
+type NewOrderParams struct {
+	CreationTime         time.Time
+	Slug                 string
+	StoreID              uuid.UUID
+	CustomerName         string
+	ContactNumber        shareddomain.PhoneNumber
+	PhoneType            string
+	Color                string
+	InitialCost          uint
+	PhoneConditions      []string
+	PhoneEquipments      []string
+	Damages              []string
+	Photos               []url.URL
+	SalesPersonID        uuid.UUID
+	TechnicianID         uuid.UUID
+	Imei                 optional.Optional[string]
+	PartsNotCheckedYet   optional.Optional[string]
+	DownPayment          optional.Optional[OrderPayment]
+	PhoneSecurityDetails optional.Optional[PhoneSecurityDetails]
+}
+
 func NewOrder(
-	creationTime time.Time,
-	slug string,
-	storeID uuid.UUID,
-	customerName string,
-	contactNumber shareddomain.PhoneNumber,
-	phoneType string,
-	color string,
-	initialCost uint,
-	phoneConditions []string,
-	phoneEquipments []string,
-	damages []string,
-	photos []url.URL,
-	salesPersonID uuid.UUID,
-	technicianID uuid.UUID,
-	options ...OrderOption,
+	params NewOrderParams,
 ) (Order, error) {
-	if slug == "" {
-		return nil, fmt.Errorf("%w: slug is empty", apperror.ErrInvalidInput)
+	if err := validateNewOrderParams(params); err != nil {
+		return nil, fmt.Errorf("failed to validate new order params: %w", err)
 	}
 
-	if customerName == "" {
-		return nil, fmt.Errorf("%w: customerName is empty", apperror.ErrInvalidInput)
-	}
-
-	if phoneType == "" {
-		return nil, fmt.Errorf("%w: phoneType is empty", apperror.ErrInvalidInput)
-	}
-
-	if color == "" {
-		return nil, fmt.Errorf("%w: color is empty", apperror.ErrInvalidInput)
-	}
-
-	cost, costErr := newInitialOrderCost(uuid.New(), initialCost, creationTime)
+	cost, costErr := newInitialOrderCost(uuid.New(), params.InitialCost, params.CreationTime)
 	if costErr != nil {
 		return nil, fmt.Errorf("failed to create initial order cost: %w", costErr)
 	}
 
-	phoneConditionVOs := make([]PhoneCondition, 0, len(phoneConditions))
-	for _, condition := range phoneConditions {
+	phoneConditionVOs := make([]PhoneCondition, 0, len(params.PhoneConditions))
+	for _, condition := range params.PhoneConditions {
 		phoneCondition, err := newPhoneCondition(uuid.New(), condition)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create phone condition: %w", err)
@@ -137,8 +125,8 @@ func NewOrder(
 		phoneConditionVOs = append(phoneConditionVOs, phoneCondition)
 	}
 
-	phoneEquipmentVOs := make([]PhoneEquipment, 0, len(phoneEquipments))
-	for _, equipment := range phoneEquipments {
+	phoneEquipmentVOs := make([]PhoneEquipment, 0, len(params.PhoneEquipments))
+	for _, equipment := range params.PhoneEquipments {
 		phoneEquipment, err := newPhoneEquipment(uuid.New(), equipment)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create phone equipment: %w", err)
@@ -147,12 +135,8 @@ func NewOrder(
 		phoneEquipmentVOs = append(phoneEquipmentVOs, phoneEquipment)
 	}
 
-	if len(damages) == 0 {
-		return nil, fmt.Errorf("%w: damages is empty", apperror.ErrInvalidInput)
-	}
-
-	damageVOs := make([]Damage, 0, len(damages))
-	for _, damage := range damages {
+	damageVOs := make([]Damage, 0, len(params.Damages))
+	for _, damage := range params.Damages {
 		damageVO, err := newDamage(uuid.New(), damage)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create damage: %w", err)
@@ -161,92 +145,42 @@ func NewOrder(
 		damageVOs = append(damageVOs, damageVO)
 	}
 
-	if len(photos) == 0 {
-		return nil, fmt.Errorf("%w: photos is empty", apperror.ErrInvalidInput)
-	}
-
-	photoVOs := make([]OrderPhoto, 0, len(photos))
-	for _, photo := range photos {
+	photoVOs := make([]OrderPhoto, 0, len(params.Photos))
+	for _, photo := range params.Photos {
 		photoVO := newOrderPhoto(uuid.New(), photo)
 		photoVOs = append(photoVOs, photoVO)
 	}
 
 	o := &order{
 		id:                   uuid.New(),
-		creationTime:         creationTime,
-		slug:                 slug,
-		storeID:              storeID,
-		customerName:         customerName,
-		contactNumber:        contactNumber,
-		phoneType:            phoneType,
-		color:                color,
+		creationTime:         params.CreationTime,
+		slug:                 params.Slug,
+		storeID:              params.StoreID,
+		customerName:         params.CustomerName,
+		contactNumber:        params.ContactNumber,
+		phoneType:            params.PhoneType,
+		color:                params.Color,
 		costs:                []OrderCost{cost},
 		phoneConditions:      phoneConditionVOs,
 		phoneEquipments:      phoneEquipmentVOs,
 		damages:              damageVOs,
 		photos:               photoVOs,
-		salesPersonID:        salesPersonID,
-		technicianID:         technicianID,
-		imei:                 optional.None[string](),
-		partsNotCheckedYet:   optional.None[string](),
-		phoneSecurityDetails: optional.None[PhoneSecurityDetails](),
+		salesPersonID:        params.SalesPersonID,
+		technicianID:         params.TechnicianID,
+		imei:                 params.Imei,
+		partsNotCheckedYet:   params.PartsNotCheckedYet,
+		phoneSecurityDetails: params.PhoneSecurityDetails,
+		downPayment:          params.DownPayment,
 		confirmationTime:     optional.None[time.Time](),
 		confirmationContents: optional.None[string](),
 		pickUpTime:           optional.None[time.Time](),
 		completionTime:       optional.None[time.Time](),
 		cancellationTime:     optional.None[time.Time](),
 		cancellationReason:   optional.None[string](),
-		downPayment:          optional.None[OrderPayment](),
 		repayment:            optional.None[OrderPayment](),
 	}
 
-	for _, option := range options {
-		if err := option(o); err != nil {
-			return nil, fmt.Errorf("failed to apply option: %w", err)
-		}
-	}
-
 	return o, nil
-}
-
-func WithDownPayment(amount uint, paymentMethodID uuid.UUID) OrderOption {
-	return func(o Order) error {
-		if err := o.setDownPayment(amount, paymentMethodID); err != nil {
-			return fmt.Errorf("failed to set down payment: %w", err)
-		}
-
-		return nil
-	}
-}
-
-func WithPhoneSecurityDetails(details PhoneSecurityDetails) OrderOption {
-	return func(o Order) error {
-		if err := o.setPhoneSecurityDetails(details); err != nil {
-			return fmt.Errorf("failed to set phone security details: %w", err)
-		}
-
-		return nil
-	}
-}
-
-func WithPartsNotCheckedYet(parts string) OrderOption {
-	return func(o Order) error {
-		if err := o.setPartsNotCheckedYet(parts); err != nil {
-			return fmt.Errorf("failed to set parts not checked yet: %w", err)
-		}
-
-		return nil
-	}
-}
-
-func WithIMEI(imei string) OrderOption {
-	return func(o Order) error {
-		if err := o.setIMEI(imei); err != nil {
-			return fmt.Errorf("failed to set imei: %w", err)
-		}
-
-		return nil
-	}
 }
 
 func (o *order) ID() uuid.UUID {
@@ -353,51 +287,42 @@ func (o *order) Repayment() optional.Optional[OrderPayment] {
 	return o.repayment
 }
 
-func (o *order) setDownPayment(amount uint, paymentMethodID uuid.UUID) error {
-	if o.downPayment.IsSet() {
-		return apperror.ErrValueAlreadySet
+func validateNewOrderParams(params NewOrderParams) error {
+	if params.Slug == "" {
+		return fmt.Errorf("%w: slug is empty", apperror.ErrInvalidInput)
 	}
 
-	op, err := newOrderPayment(amount, paymentMethodID)
-	if err != nil {
-		return fmt.Errorf("failed to create order payment: %w", err)
+	if params.CustomerName == "" {
+		return fmt.Errorf("%w: customerName is empty", apperror.ErrInvalidInput)
 	}
 
-	o.downPayment = optional.Some(op)
-	return nil
-}
-
-func (o *order) setPhoneSecurityDetails(details PhoneSecurityDetails) error {
-	if o.phoneSecurityDetails.IsSet() {
-		return apperror.ErrValueAlreadySet
+	if params.PhoneType == "" {
+		return fmt.Errorf("%w: phoneType is empty", apperror.ErrInvalidInput)
 	}
 
-	o.phoneSecurityDetails = optional.Some(details)
-	return nil
-}
-
-func (o *order) setPartsNotCheckedYet(parts string) error {
-	if o.partsNotCheckedYet.IsSet() {
-		return apperror.ErrValueAlreadySet
+	if params.Color == "" {
+		return fmt.Errorf("%w: color is empty", apperror.ErrInvalidInput)
 	}
 
-	if parts == "" {
-		return fmt.Errorf("%w: parts is empty", apperror.ErrInvalidInput)
-	}
-
-	o.partsNotCheckedYet = optional.Some(parts)
-	return nil
-}
-
-func (o *order) setIMEI(imei string) error {
-	if o.imei.IsSet() {
-		return apperror.ErrValueAlreadySet
-	}
-
-	if imei == "" {
+	if params.Imei.IsSet() && params.Imei.MustGet() == "" {
 		return fmt.Errorf("%w: imei is empty", apperror.ErrInvalidInput)
 	}
 
-	o.imei = optional.Some(imei)
+	if params.PartsNotCheckedYet.IsSet() && params.PartsNotCheckedYet.MustGet() == "" {
+		return fmt.Errorf("%w: imei is empty", apperror.ErrInvalidInput)
+	}
+
+	if params.DownPayment.IsSet() && params.DownPayment.MustGet().Amount() > params.InitialCost {
+		return fmt.Errorf("%w: down payment amount is greater than initial cost", apperror.ErrInvalidInput)
+	}
+
+	if len(params.Damages) == 0 {
+		return fmt.Errorf("%w: damages is empty", apperror.ErrInvalidInput)
+	}
+
+	if len(params.Photos) == 0 {
+		return fmt.Errorf("%w: photos is empty", apperror.ErrInvalidInput)
+	}
+
 	return nil
 }

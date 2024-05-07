@@ -54,7 +54,7 @@ dQd9qZZanIpKpI4L2tIuldtWX1B4yTg=
 -----END EC PRIVATE KEY-----`
 )
 
-func setupTest(t testing.TB) (*pgxpool.Pool, func() error) {
+func setupTest(t testing.TB) *pgxpool.Pool {
 	t.Helper()
 
 	pool, err := testutil.StartDockerPool()
@@ -68,9 +68,16 @@ func setupTest(t testing.TB) (*pgxpool.Pool, func() error) {
 
 	resources := []*dockertest.Resource{postgresResource}
 
-	return db, func() error {
-		return testutil.PurgeDockerResources(pool, resources)
-	}
+	t.Cleanup(func() {
+		db.Close()
+		err = testutil.PurgeDockerResources(pool, resources)
+
+		if err != nil {
+			t.Fatalf("error purging docker resources: %v", err)
+		}
+	})
+
+	return db
 }
 
 func waitForReady(ctx context.Context, t testing.TB, client http.Client, baseAddr string, timeout time.Duration) {
