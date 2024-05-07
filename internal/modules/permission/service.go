@@ -1,4 +1,4 @@
-package phoneequipment
+package permission
 
 import (
 	"context"
@@ -13,12 +13,12 @@ import (
 )
 
 type Repository interface {
-	CreatePhoneEquipment(ctx context.Context, id uuid.UUID, storeID uuid.UUID, name string) error
-	IsNameTaken(ctx context.Context, storeID uuid.UUID, name string) (bool, error)
+	CreateRole(ctx context.Context, id uuid.UUID, storeID uuid.UUID, name string, isStoreAdmin bool) error
+	IsRoleNameTaken(ctx context.Context, storeID uuid.UUID, name string) (bool, error)
 }
 
 type ResourceLocationProvider interface {
-	PhoneEquipment(phoneEquipmentID uuid.UUID) url.URL
+	Role(roleID uuid.UUID) url.URL
 }
 
 type Service struct {
@@ -33,10 +33,10 @@ func NewService(resourceLocationProvider ResourceLocationProvider, repo Reposito
 	}
 }
 
-func (s *Service) CreatePhoneEquipment(
+func (s *Service) CreateRole(
 	ctx context.Context,
-	req *genapi.CreatePhoneEquipmentRequest,
-) (*genapi.CreatePhoneEquipmentCreated, error) {
+	req *genapi.CreateRoleRequest,
+) (*genapi.CreateRoleCreated, error) {
 	l := zerolog.Ctx(ctx)
 
 	user, ok := appcontext.GetUserFromContext(ctx)
@@ -49,22 +49,22 @@ func (s *Service) CreatePhoneEquipment(
 		return nil, apierror.ToAPIError(http.StatusBadRequest, "name is required and cannot be empty")
 	}
 
-	if taken, err := s.repo.IsNameTaken(ctx, user.Store.ID, req.Name); taken {
+	if taken, err := s.repo.IsRoleNameTaken(ctx, user.Store.ID, req.Name); taken {
 		return nil, apierror.ToAPIError(http.StatusConflict, "name is taken")
 	} else if err != nil {
-		l.Error().Err(err).Msg("failed to check if name is taken")
-		return nil, apierror.ToAPIError(http.StatusInternalServerError, "failed to check if name is taken")
+		l.Error().Err(err).Msg("failed to check if role name is taken")
+		return nil, apierror.ToAPIError(http.StatusInternalServerError, "failed to check if role name is taken")
 	}
 
 	id := uuid.New()
 
-	if err := s.repo.CreatePhoneEquipment(ctx, id, user.Store.ID, req.Name); err != nil {
-		l.Error().Err(err).Msg("failed to create phone equipment")
-		return nil, apierror.ToAPIError(http.StatusInternalServerError, "failed to create phone equipment")
+	if err := s.repo.CreateRole(ctx, id, user.Store.ID, req.Name, req.IsStoreAdmin); err != nil {
+		l.Error().Err(err).Msg("failed to create role")
+		return nil, apierror.ToAPIError(http.StatusInternalServerError, "failed to create role")
 	}
 
-	location := s.resourceLocationProvider.PhoneEquipment(id)
-	return &genapi.CreatePhoneEquipmentCreated{
+	location := s.resourceLocationProvider.Role(id)
+	return &genapi.CreateRoleCreated{
 		Location: location,
 	}, nil
 }

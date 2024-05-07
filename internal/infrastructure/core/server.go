@@ -13,6 +13,7 @@ import (
 	"github.com/JosephJoshua/remana-backend/internal/modules/damagetype"
 	"github.com/JosephJoshua/remana-backend/internal/modules/misc"
 	"github.com/JosephJoshua/remana-backend/internal/modules/paymentmethod"
+	"github.com/JosephJoshua/remana-backend/internal/modules/permission"
 	"github.com/JosephJoshua/remana-backend/internal/modules/phonecondition"
 	"github.com/JosephJoshua/remana-backend/internal/modules/phoneequipment"
 	"github.com/JosephJoshua/remana-backend/internal/modules/repairorder"
@@ -29,6 +30,7 @@ import (
 
 type authService = auth.Service
 type userService = user.Service
+type permissionService = permission.Service
 type technicianService = technician.Service
 type salesPersonService = salesperson.Service
 type damageTypeService = damagetype.Service
@@ -41,6 +43,7 @@ type miscService = misc.Service
 type server struct {
 	*authService
 	*userService
+	*permissionService
 	*technicianService
 	*salesPersonService
 	*damageTypeService
@@ -64,6 +67,11 @@ func NewAPIServer(db *pgxpool.Pool) (*genapi.Server, []Middleware, error) {
 		pm,
 		repository.NewSQLAuthRepository(db),
 		&PasswordHasher{},
+	)
+
+	permissionService := permission.NewService(
+		resourceLocationProvider{},
+		repository.NewSQLPermissionRepository(db),
 	)
 
 	repairOrderService := repairorder.NewService(
@@ -109,6 +117,7 @@ func NewAPIServer(db *pgxpool.Pool) (*genapi.Server, []Middleware, error) {
 	srv := server{
 		authService:           authService,
 		userService:           userService,
+		permissionService:     permissionService,
 		technicianService:     technicianService,
 		salesPersonService:    salesPersonService,
 		damageTypeService:     damageTypeService,

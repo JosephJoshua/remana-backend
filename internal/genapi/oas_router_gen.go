@@ -274,24 +274,60 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				}
 
 				elem = origElem
-			case 'r': // Prefix: "repair-orders"
+			case 'r': // Prefix: "r"
 				origElem := elem
-				if l := len("repair-orders"); len(elem) >= l && elem[0:l] == "repair-orders" {
+				if l := len("r"); len(elem) >= l && elem[0:l] == "r" {
 					elem = elem[l:]
 				} else {
 					break
 				}
 
 				if len(elem) == 0 {
-					// Leaf node.
-					switch r.Method {
-					case "POST":
-						s.handleCreateRepairOrderRequest([0]string{}, elemIsEscaped, w, r)
-					default:
-						s.notAllowed(w, r, "POST")
+					break
+				}
+				switch elem[0] {
+				case 'e': // Prefix: "epair-orders"
+					origElem := elem
+					if l := len("epair-orders"); len(elem) >= l && elem[0:l] == "epair-orders" {
+						elem = elem[l:]
+					} else {
+						break
 					}
 
-					return
+					if len(elem) == 0 {
+						// Leaf node.
+						switch r.Method {
+						case "POST":
+							s.handleCreateRepairOrderRequest([0]string{}, elemIsEscaped, w, r)
+						default:
+							s.notAllowed(w, r, "POST")
+						}
+
+						return
+					}
+
+					elem = origElem
+				case 'o': // Prefix: "oles"
+					origElem := elem
+					if l := len("oles"); len(elem) >= l && elem[0:l] == "oles" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						// Leaf node.
+						switch r.Method {
+						case "POST":
+							s.handleCreateRoleRequest([0]string{}, elemIsEscaped, w, r)
+						default:
+							s.notAllowed(w, r, "POST")
+						}
+
+						return
+					}
+
+					elem = origElem
 				}
 
 				elem = origElem
@@ -699,28 +735,68 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 				}
 
 				elem = origElem
-			case 'r': // Prefix: "repair-orders"
+			case 'r': // Prefix: "r"
 				origElem := elem
-				if l := len("repair-orders"); len(elem) >= l && elem[0:l] == "repair-orders" {
+				if l := len("r"); len(elem) >= l && elem[0:l] == "r" {
 					elem = elem[l:]
 				} else {
 					break
 				}
 
 				if len(elem) == 0 {
-					switch method {
-					case "POST":
-						// Leaf: CreateRepairOrder
-						r.name = "CreateRepairOrder"
-						r.summary = "Creates a new repair order"
-						r.operationID = "createRepairOrder"
-						r.pathPattern = "/repair-orders"
-						r.args = args
-						r.count = 0
-						return r, true
-					default:
-						return
+					break
+				}
+				switch elem[0] {
+				case 'e': // Prefix: "epair-orders"
+					origElem := elem
+					if l := len("epair-orders"); len(elem) >= l && elem[0:l] == "epair-orders" {
+						elem = elem[l:]
+					} else {
+						break
 					}
+
+					if len(elem) == 0 {
+						switch method {
+						case "POST":
+							// Leaf: CreateRepairOrder
+							r.name = "CreateRepairOrder"
+							r.summary = "Creates a new repair order"
+							r.operationID = "createRepairOrder"
+							r.pathPattern = "/repair-orders"
+							r.args = args
+							r.count = 0
+							return r, true
+						default:
+							return
+						}
+					}
+
+					elem = origElem
+				case 'o': // Prefix: "oles"
+					origElem := elem
+					if l := len("oles"); len(elem) >= l && elem[0:l] == "oles" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						switch method {
+						case "POST":
+							// Leaf: CreateRole
+							r.name = "CreateRole"
+							r.summary = "Creates a role"
+							r.operationID = "createRole"
+							r.pathPattern = "/roles"
+							r.args = args
+							r.count = 0
+							return r, true
+						default:
+							return
+						}
+					}
+
+					elem = origElem
 				}
 
 				elem = origElem

@@ -1,0 +1,28 @@
+tags:
+  - permissions
+summary: Creates a role
+description: Creates a role
+operationId: createRole
+requestBody:
+  description: Role details
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: ../../components/schemas/CreateRoleRequest.yaml
+responses:
+  "201":
+    description: Role created
+    headers:
+      Location:
+        description: The location of the created role
+        required: true
+        schema:
+          type: string
+          format: uri
+        example: /roles/90b79dd6-17eb-4e95-b2df-86f0fc4617ce
+  default:
+    content:
+      application/json:
+        schema:
+          $ref: ../../components/schemas/Error.yaml

@@ -1,0 +1,13 @@
+x-ogen-name: CreateRoleRequest
+type: object
+required:
+  - name
+  - is_store_admin
+properties:
+  name:
+    type: string
+    minLength: 1
+    example: Store Admin
+  is_store_admin:
+    type: boolean
+    example: false

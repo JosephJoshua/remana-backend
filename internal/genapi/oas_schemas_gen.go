@@ -363,6 +363,46 @@ func (s *CreateRepairOrderRequestPasscode) SetValue(val string) {
 	s.Value = val
 }
 
+// CreateRoleCreated is response for CreateRole operation.
+type CreateRoleCreated struct {
+	Location url.URL
+}
+
+// GetLocation returns the value of Location.
+func (s *CreateRoleCreated) GetLocation() url.URL {
+	return s.Location
+}
+
+// SetLocation sets the value of Location.
+func (s *CreateRoleCreated) SetLocation(val url.URL) {
+	s.Location = val
+}
+
+type CreateRoleRequest struct {
+	Name         string `json:"name"`
+	IsStoreAdmin bool   `json:"is_store_admin"`
+}
+
+// GetName returns the value of Name.
+func (s *CreateRoleRequest) GetName() string {
+	return s.Name
+}
+
+// GetIsStoreAdmin returns the value of IsStoreAdmin.
+func (s *CreateRoleRequest) GetIsStoreAdmin() bool {
+	return s.IsStoreAdmin
+}
+
+// SetName sets the value of Name.
+func (s *CreateRoleRequest) SetName(val string) {
+	s.Name = val
+}
+
+// SetIsStoreAdmin sets the value of IsStoreAdmin.
+func (s *CreateRoleRequest) SetIsStoreAdmin(val bool) {
+	s.IsStoreAdmin = val
+}
+
 // CreateSalesPersonCreated is response for CreateSalesPerson operation.
 type CreateSalesPersonCreated struct {
 	Location url.URL

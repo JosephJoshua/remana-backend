@@ -9,6 +9,14 @@ import (
 
 type resourceLocationProvider struct{}
 
+func (r resourceLocationProvider) Role(id uuid.UUID) url.URL {
+	url := url.URL{
+		Path: fmt.Sprintf("/roles/%s", id.String()),
+	}
+
+	return url
+}
+
 func (r resourceLocationProvider) RepairOrder(id uuid.UUID) url.URL {
 	url := url.URL{
 		Path: fmt.Sprintf("/repair-orders/%s", id.String()),

@@ -18,7 +18,7 @@ import (
 	"github.com/JosephJoshua/remana-backend/internal/infrastructure/repository"
 	"github.com/JosephJoshua/remana-backend/internal/logger"
 	"github.com/JosephJoshua/remana-backend/internal/modules/auth/readmodel"
-	"github.com/JosephJoshua/remana-backend/internal/modules/phoneequipment"
+	"github.com/JosephJoshua/remana-backend/internal/modules/permission"
 	"github.com/JosephJoshua/remana-backend/internal/testutil"
 	"github.com/JosephJoshua/remana-backend/internal/typemapper"
 	"github.com/google/uuid"
@@ -29,7 +29,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCreatePhoneEquipment(t *testing.T) {
+func TestCreateRole(t *testing.T) {
 	logger.Init(zerolog.ErrorLevel, appconstant.AppEnvDev)
 
 	pool, initErr := testutil.StartDockerPool()
@@ -53,7 +53,7 @@ func TestCreatePhoneEquipment(t *testing.T) {
 		theLocation = url.URL{
 			Scheme: "http",
 			Host:   "example.com",
-			Path:   "/phone-conditions/bc80e136-12cb-46f3-8b4f-5ec2b00802d3",
+			Path:   "/roles/bc80e136-12cb-46f3-8b4f-5ec2b00802d3",
 		}
 	)
 
@@ -66,107 +66,113 @@ func TestCreatePhoneEquipment(t *testing.T) {
 
 	queries := gensql.New(db)
 
-	seedCreatePhoneEquipment(
+	seedCreateRole(
 		context.Background(),
 		t,
 		queries,
 		theStoreID,
 	)
 
-	t.Run("creates phone equipment in db", func(t *testing.T) {
-		locationProvider := testutil.NewResourceLocationProviderStubForPhoneEquipment(theLocation)
-		repo := repository.NewSQLPhoneEquipmentRepository(db)
+	t.Run("creates role in db", func(t *testing.T) {
+		locationProvider := testutil.NewResourceLocationProviderStubForPhoneCondition(theLocation)
+		repo := repository.NewSQLPermissionRepository(db)
 
-		s := phoneequipment.NewService(
+		s := permission.NewService(
 			locationProvider,
 			repo,
 		)
 
-		req := &genapi.CreatePhoneEquipmentRequest{
-			Name: "phone equipment 1",
+		req := &genapi.CreateRoleRequest{
+			Name:         "Admin",
+			IsStoreAdmin: true,
 		}
 
-		_, err := s.CreatePhoneEquipment(requestCtx, req)
+		_, err := s.CreateRole(requestCtx, req)
 
 		require.NoError(t, err)
-		require.True(t, locationProvider.PhoneEquipmentID.IsSet(), "location provider not called with phone equipment id")
+		require.True(t, locationProvider.RoleID.IsSet(), "location provider not called with role id")
 
-		phoneEquipmentID := locationProvider.PhoneEquipmentID.MustGet()
-		phoneEquipment, err := queries.GetPhoneEquipmentForTesting(
+		roleID := locationProvider.RoleID.MustGet()
+		role, err := queries.GetRoleForTesting(
 			context.Background(),
-			typemapper.UUIDToPgtypeUUID(phoneEquipmentID),
+			typemapper.UUIDToPgtypeUUID(roleID),
 		)
 
 		if errors.Is(err, pgx.ErrNoRows) {
-			t.Fatalf("phone equipment with ID %s not found in db", phoneEquipmentID.String())
+			t.Fatalf("role with ID %s not found in db", roleID.String())
 		}
 
 		require.NoError(t, err)
 
-		assert.Equal(t, phoneEquipmentID, typemapper.MustPgtypeUUIDToUUID(phoneEquipment.PhoneEquipmentID))
-		assert.Equal(t, theStoreID, typemapper.MustPgtypeUUIDToUUID(phoneEquipment.StoreID))
-		assert.Equal(t, req.Name, phoneEquipment.PhoneEquipmentName)
+		assert.Equal(t, roleID, typemapper.MustPgtypeUUIDToUUID(role.RoleID))
+		assert.Equal(t, theStoreID, typemapper.MustPgtypeUUIDToUUID(role.StoreID))
+		assert.Equal(t, req.Name, role.RoleName)
+		assert.Equal(t, req.IsStoreAdmin, role.IsStoreAdmin)
 	})
 
 	t.Run("returns bad request when name is taken", func(t *testing.T) {
 		const (
-			theName = "phone equipment 1"
+			theName = "admin"
 		)
 
-		_, err := queries.SeedPhoneEquipment(context.Background(), gensql.SeedPhoneEquipmentParams{
-			PhoneEquipmentID:   typemapper.UUIDToPgtypeUUID(uuid.New()),
-			PhoneEquipmentName: theName,
-			StoreID:            typemapper.UUIDToPgtypeUUID(theStoreID),
+		_, err := queries.SeedRole(context.Background(), gensql.SeedRoleParams{
+			RoleID:       typemapper.UUIDToPgtypeUUID(uuid.New()),
+			RoleName:     theName,
+			IsStoreAdmin: false,
+			StoreID:      typemapper.UUIDToPgtypeUUID(theStoreID),
 		})
 		require.NoError(t, err)
 
-		locationProvider := testutil.NewResourceLocationProviderStubForPhoneEquipment(theLocation)
-		repo := repository.NewSQLPhoneEquipmentRepository(db)
+		locationProvider := testutil.NewResourceLocationProviderStubForRole(theLocation)
+		repo := repository.NewSQLPermissionRepository(db)
 
-		s := phoneequipment.NewService(
+		s := permission.NewService(
 			locationProvider,
 			repo,
 		)
 
-		req := &genapi.CreatePhoneEquipmentRequest{
-			Name: theName,
+		req := &genapi.CreateRoleRequest{
+			Name:         theName,
+			IsStoreAdmin: true,
 		}
 
-		_, err = s.CreatePhoneEquipment(requestCtx, req)
+		_, err = s.CreateRole(requestCtx, req)
 		testutil.AssertAPIStatusCode(t, http.StatusConflict, err)
 	})
 
 	t.Run("returns bad request when name is taken (case insensitive)", func(t *testing.T) {
 		const (
-			theNameInDB = "phone equipment 1"
-			theNewName  = "Phone Equipment 1"
+			theNameInDB = "admin"
+			theNewName  = "ADMIN"
 		)
 
-		_, err := queries.SeedPhoneEquipment(context.Background(), gensql.SeedPhoneEquipmentParams{
-			PhoneEquipmentID:   typemapper.UUIDToPgtypeUUID(uuid.New()),
-			PhoneEquipmentName: theNameInDB,
-			StoreID:            typemapper.UUIDToPgtypeUUID(theStoreID),
+		_, err := queries.SeedRole(context.Background(), gensql.SeedRoleParams{
+			RoleID:       typemapper.UUIDToPgtypeUUID(uuid.New()),
+			RoleName:     theNameInDB,
+			IsStoreAdmin: false,
+			StoreID:      typemapper.UUIDToPgtypeUUID(theStoreID),
 		})
 		require.NoError(t, err)
 
-		locationProvider := testutil.NewResourceLocationProviderStubForPhoneEquipment(theLocation)
-		repo := repository.NewSQLPhoneEquipmentRepository(db)
+		locationProvider := testutil.NewResourceLocationProviderStubForRole(theLocation)
+		repo := repository.NewSQLPermissionRepository(db)
 
-		s := phoneequipment.NewService(
+		s := permission.NewService(
 			locationProvider,
 			repo,
 		)
 
-		req := &genapi.CreatePhoneEquipmentRequest{
-			Name: theNewName,
+		req := &genapi.CreateRoleRequest{
+			Name:         theNewName,
+			IsStoreAdmin: true,
 		}
 
-		_, err = s.CreatePhoneEquipment(requestCtx, req)
+		_, err = s.CreateRole(requestCtx, req)
 		testutil.AssertAPIStatusCode(t, http.StatusConflict, err)
 	})
 }
 
-func seedCreatePhoneEquipment(
+func seedCreateRole(
 	ctx context.Context,
 	t *testing.T,
 	queries *gensql.Queries,

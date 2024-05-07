@@ -18,7 +18,7 @@ type Repository interface {
 }
 
 type ResourceLocationProvider interface {
-	PaymentMethod(PaymentMethodID uuid.UUID) url.URL
+	PaymentMethod(paymentMethodID uuid.UUID) url.URL
 }
 
 type Service struct {

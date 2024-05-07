@@ -65,20 +65,9 @@ func TestCreateSalesPerson(t *testing.T) {
 	logger.Init(zerolog.ErrorLevel, appconstant.AppEnvDev)
 	requestCtx := appcontext.NewContextWithUser(
 		testutil.RequestContextWithLogger(context.Background()),
-		&readmodel.UserDetails{
-			ID:       uuid.New(),
-			Username: "not important",
-			Role: readmodel.UserDetailsRole{
-				ID:           uuid.New(),
-				Name:         "not important",
-				IsStoreAdmin: true,
-			},
-			Store: readmodel.UserDetailsStore{
-				ID:   theStoreID,
-				Name: "not important",
-				Code: "not-important",
-			},
-		},
+		testutil.ModifiedUserDetails(func(details *readmodel.UserDetails) {
+			details.Store.ID = theStoreID
+		}),
 	)
 
 	t.Run("tries to create sales person when request is valid", func(t *testing.T) {

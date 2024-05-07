@@ -59,20 +59,9 @@ func TestCreateDamageType(t *testing.T) {
 
 	requestCtx := appcontext.NewContextWithUser(
 		testutil.RequestContextWithLogger(context.Background()),
-		&readmodel.UserDetails{
-			ID:       uuid.New(),
-			Username: "not important",
-			Role: readmodel.UserDetailsRole{
-				ID:           uuid.New(),
-				Name:         "not important",
-				IsStoreAdmin: true,
-			},
-			Store: readmodel.UserDetailsStore{
-				ID:   theStoreID,
-				Name: "not important",
-				Code: "not-important",
-			},
-		},
+		testutil.ModifiedUserDetails(func(details *readmodel.UserDetails) {
+			details.Store.ID = theStoreID
+		}),
 	)
 
 	queries := gensql.New(db)

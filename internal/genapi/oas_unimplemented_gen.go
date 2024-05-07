@@ -58,6 +58,15 @@ func (UnimplementedHandler) CreateRepairOrder(ctx context.Context, req *CreateRe
 	return r, ht.ErrNotImplemented
 }
 
+// CreateRole implements createRole operation.
+//
+// Creates a role.
+//
+// POST /roles
+func (UnimplementedHandler) CreateRole(ctx context.Context, req *CreateRoleRequest) (r *CreateRoleCreated, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // CreateSalesPerson implements createSalesPerson operation.
 //
 // Creates a new sales person.

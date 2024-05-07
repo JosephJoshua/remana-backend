@@ -18,7 +18,7 @@ type Repository interface {
 }
 
 type ResourceLocationProvider interface {
-	PhoneCondition(PhoneConditionID uuid.UUID) url.URL
+	PhoneCondition(phoneConditionID uuid.UUID) url.URL
 }
 
 type Service struct {

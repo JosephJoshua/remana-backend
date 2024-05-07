@@ -100,6 +100,18 @@ func TestCreateRepairOrderRequestPasscode_EncodeDecode(t *testing.T) {
 	var typ2 CreateRepairOrderRequestPasscode
 	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
 }
+func TestCreateRoleRequest_EncodeDecode(t *testing.T) {
+	var typ CreateRoleRequest
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 CreateRoleRequest
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
 func TestCreateSalesPersonRequest_EncodeDecode(t *testing.T) {
 	var typ CreateSalesPersonRequest
 	typ.SetFake()

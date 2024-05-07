@@ -48,6 +48,13 @@ INSERT INTO payment_methods (payment_method_id, payment_method_name, store_id)
 VALUES ($1, $2, $3)
 RETURNING payment_method_id;
 
+-- name: GetRoleForTesting :one
+SELECT
+  roles.*
+FROM roles
+WHERE roles.role_id = $1
+LIMIT 1;
+
 -- name: GetTechnicianForTesting :one
 SELECT
   technicians.*

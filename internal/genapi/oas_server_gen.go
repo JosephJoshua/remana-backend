@@ -38,6 +38,12 @@ type Handler interface {
 	//
 	// POST /repair-orders
 	CreateRepairOrder(ctx context.Context, req *CreateRepairOrderRequest) (*CreateRepairOrderCreated, error)
+	// CreateRole implements createRole operation.
+	//
+	// Creates a role.
+	//
+	// POST /roles
+	CreateRole(ctx context.Context, req *CreateRoleRequest) (*CreateRoleCreated, error)
 	// CreateSalesPerson implements createSalesPerson operation.
 	//
 	// Creates a new sales person.

@@ -15,6 +15,8 @@ tags:
     description: Authentication into the API
   - name: user
     description: User details
+  - name: permissions
+    description: Access control
   - name: repair_order
     description: Repair order management
   - name: technicians
@@ -23,6 +25,12 @@ tags:
     description: Sales person management
   - name: damage_types
     description: Damage type management
+  - name: phone_conditions
+    description: Phone condition management
+  - name: phone_equipments
+    description: Phone equipment management
+  - name: payment_methods
+    description: Payment method management
   - name: misc
     description: Miscellaneous endpoints
 components:
@@ -68,3 +76,6 @@ paths:
   /payment-methods:
     post:
       $ref: paths/payment_methods/createPaymentMethod.yaml
+  /roles:
+    post:
+      $ref: paths/permissions/createRole.yaml

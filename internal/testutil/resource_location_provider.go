@@ -15,6 +15,7 @@ type ResourceLocationProviderStub struct {
 	phoneConditionLocation url.URL
 	phoneEquipmentLocation url.URL
 	paymentMethodLocation  url.URL
+	roleLocation           url.URL
 
 	RepairOrderID    optional.Optional[uuid.UUID]
 	TechnicianID     optional.Optional[uuid.UUID]
@@ -23,6 +24,7 @@ type ResourceLocationProviderStub struct {
 	PhoneConditionID optional.Optional[uuid.UUID]
 	PhoneEquipmentID optional.Optional[uuid.UUID]
 	PaymentMethodID  optional.Optional[uuid.UUID]
+	RoleID           optional.Optional[uuid.UUID]
 }
 
 func NewResourceLocationProviderStubForRepairOrder(location url.URL) *ResourceLocationProviderStub {
@@ -74,6 +76,13 @@ func NewResourceLocationProviderStubForPaymentMethod(location url.URL) *Resource
 	}
 }
 
+func NewResourceLocationProviderStubForRole(location url.URL) *ResourceLocationProviderStub {
+	return &ResourceLocationProviderStub{
+		roleLocation: location,
+		RoleID:       optional.None[uuid.UUID](),
+	}
+}
+
 func (r *ResourceLocationProviderStub) RepairOrder(id uuid.UUID) url.URL {
 	r.RepairOrderID = optional.Some(id)
 	return r.repairOrderLocation
@@ -107,4 +116,9 @@ func (r *ResourceLocationProviderStub) PhoneEquipment(id uuid.UUID) url.URL {
 func (r *ResourceLocationProviderStub) PaymentMethod(id uuid.UUID) url.URL {
 	r.PaymentMethodID = optional.Some(id)
 	return r.paymentMethodLocation
+}
+
+func (r *ResourceLocationProviderStub) Role(id uuid.UUID) url.URL {
+	r.RoleID = optional.Some(id)
+	return r.roleLocation
 }

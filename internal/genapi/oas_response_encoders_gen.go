@@ -123,6 +123,28 @@ func encodeCreateRepairOrderResponse(response *CreateRepairOrderCreated, w http.
 	return nil
 }
 
+func encodeCreateRoleResponse(response *CreateRoleCreated, w http.ResponseWriter) error {
+	// Encoding response headers.
+	{
+		h := uri.NewHeaderEncoder(w.Header())
+		// Encode "Location" header.
+		{
+			cfg := uri.HeaderParameterEncodingConfig{
+				Name:    "Location",
+				Explode: false,
+			}
+			if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+				return e.EncodeValue(conv.URLToString(response.Location))
+			}); err != nil {
+				return errors.Wrap(err, "encode Location header")
+			}
+		}
+	}
+	w.WriteHeader(201)
+
+	return nil
+}
+
 func encodeCreateSalesPersonResponse(response *CreateSalesPersonCreated, w http.ResponseWriter) error {
 	// Encoding response headers.
 	{
