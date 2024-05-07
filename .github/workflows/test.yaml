@@ -12,7 +12,7 @@ jobs:
       - name: Install dependencies
         run: go get .
       - name: Test with Go
-        run: go test -json > test-results.json
+        run: go test -json -count=1 -tags unit,integration,e2e ./... > test-results.json
       - name: Upload Go test results
         uses: actions/upload-artifact@v4
         with:
