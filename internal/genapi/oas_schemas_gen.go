@@ -43,6 +43,35 @@ func (s *CreateDamageTypeRequest) SetName(val string) {
 	s.Name = val
 }
 
+// CreatePaymentMethodCreated is response for CreatePaymentMethod operation.
+type CreatePaymentMethodCreated struct {
+	Location url.URL
+}
+
+// GetLocation returns the value of Location.
+func (s *CreatePaymentMethodCreated) GetLocation() url.URL {
+	return s.Location
+}
+
+// SetLocation sets the value of Location.
+func (s *CreatePaymentMethodCreated) SetLocation(val url.URL) {
+	s.Location = val
+}
+
+type CreatePaymentMethodRequest struct {
+	Name string `json:"name"`
+}
+
+// GetName returns the value of Name.
+func (s *CreatePaymentMethodRequest) GetName() string {
+	return s.Name
+}
+
+// SetName sets the value of Name.
+func (s *CreatePaymentMethodRequest) SetName(val string) {
+	s.Name = val
+}
+
 // CreatePhoneConditionCreated is response for CreatePhoneCondition operation.
 type CreatePhoneConditionCreated struct {
 	Location url.URL

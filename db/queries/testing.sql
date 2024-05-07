@@ -83,6 +83,13 @@ FROM phone_equipments
 WHERE phone_equipments.phone_equipment_id = $1
 LIMIT 1;
 
+-- name: GetPaymentMethodForTesting :one
+SELECT
+  payment_methods.*
+FROM payment_methods
+WHERE payment_methods.payment_method_id = $1
+LIMIT 1;
+
 -- name: GetRepairOrderForTesting :one
 SELECT
   repair_orders.*

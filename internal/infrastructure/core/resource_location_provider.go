@@ -56,3 +56,11 @@ func (r resourceLocationProvider) PhoneEquipment(id uuid.UUID) url.URL {
 
 	return url
 }
+
+func (r resourceLocationProvider) PaymentMethod(id uuid.UUID) url.URL {
+	url := url.URL{
+		Path: fmt.Sprintf("/payment-methods/%s", id.String()),
+	}
+
+	return url
+}

@@ -65,3 +65,6 @@ paths:
   /phone-equipments:
     post:
       $ref: paths/phone_equipments/createPhoneEquipment.yaml
+  /payment-methods:
+    post:
+      $ref: paths/payment_methods/createPaymentMethod.yaml

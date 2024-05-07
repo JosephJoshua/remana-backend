@@ -35,6 +35,28 @@ func encodeCreateDamageTypeResponse(response *CreateDamageTypeCreated, w http.Re
 	return nil
 }
 
+func encodeCreatePaymentMethodResponse(response *CreatePaymentMethodCreated, w http.ResponseWriter) error {
+	// Encoding response headers.
+	{
+		h := uri.NewHeaderEncoder(w.Header())
+		// Encode "Location" header.
+		{
+			cfg := uri.HeaderParameterEncodingConfig{
+				Name:    "Location",
+				Explode: false,
+			}
+			if err := h.EncodeParam(cfg, func(e uri.Encoder) error {
+				return e.EncodeValue(conv.URLToString(response.Location))
+			}); err != nil {
+				return errors.Wrap(err, "encode Location header")
+			}
+		}
+	}
+	w.WriteHeader(201)
+
+	return nil
+}
+
 func encodeCreatePhoneConditionResponse(response *CreatePhoneConditionCreated, w http.ResponseWriter) error {
 	// Encoding response headers.
 	{

@@ -26,6 +26,21 @@ func (q *Queries) GetDamageTypeForTesting(ctx context.Context, damageTypeID pgty
 	return i, err
 }
 
+const getPaymentMethodForTesting = `-- name: GetPaymentMethodForTesting :one
+SELECT
+  payment_methods.payment_method_id, payment_methods.store_id, payment_methods.payment_method_name
+FROM payment_methods
+WHERE payment_methods.payment_method_id = $1
+LIMIT 1
+`
+
+func (q *Queries) GetPaymentMethodForTesting(ctx context.Context, paymentMethodID pgtype.UUID) (PaymentMethod, error) {
+	row := q.db.QueryRow(ctx, getPaymentMethodForTesting, paymentMethodID)
+	var i PaymentMethod
+	err := row.Scan(&i.PaymentMethodID, &i.StoreID, &i.PaymentMethodName)
+	return i, err
+}
+
 const getPhoneConditionForTesting = `-- name: GetPhoneConditionForTesting :one
 SELECT
   phone_conditions.phone_condition_id, phone_conditions.store_id, phone_conditions.phone_condition_name

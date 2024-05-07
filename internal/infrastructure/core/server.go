@@ -12,6 +12,7 @@ import (
 	"github.com/JosephJoshua/remana-backend/internal/modules/auth"
 	"github.com/JosephJoshua/remana-backend/internal/modules/damagetype"
 	"github.com/JosephJoshua/remana-backend/internal/modules/misc"
+	"github.com/JosephJoshua/remana-backend/internal/modules/paymentmethod"
 	"github.com/JosephJoshua/remana-backend/internal/modules/phonecondition"
 	"github.com/JosephJoshua/remana-backend/internal/modules/phoneequipment"
 	"github.com/JosephJoshua/remana-backend/internal/modules/repairorder"
@@ -33,6 +34,7 @@ type salesPersonService = salesperson.Service
 type damageTypeService = damagetype.Service
 type phoneConditionService = phonecondition.Service
 type phoneEquipmentService = phoneequipment.Service
+type paymentMethodService = paymentmethod.Service
 type repairOrderService = repairorder.Service
 type miscService = misc.Service
 
@@ -44,6 +46,7 @@ type server struct {
 	*damageTypeService
 	*phoneConditionService
 	*phoneEquipmentService
+	*paymentMethodService
 	*repairOrderService
 	*miscService
 }
@@ -95,6 +98,11 @@ func NewAPIServer(db *pgxpool.Pool) (*genapi.Server, []Middleware, error) {
 		repository.NewSQLPhoneEquipmentRepository(db),
 	)
 
+	paymentMethodService := paymentmethod.NewService(
+		resourceLocationProvider{},
+		repository.NewSQLPaymentMethodRepository(db),
+	)
+
 	userService := user.NewService()
 	miscService := misc.NewService()
 
@@ -106,6 +114,7 @@ func NewAPIServer(db *pgxpool.Pool) (*genapi.Server, []Middleware, error) {
 		damageTypeService:     damageTypeService,
 		phoneConditionService: phoneConditionService,
 		phoneEquipmentService: phoneEquipmentService,
+		paymentMethodService:  paymentMethodService,
 		repairOrderService:    repairOrderService,
 		miscService:           miscService,
 	}

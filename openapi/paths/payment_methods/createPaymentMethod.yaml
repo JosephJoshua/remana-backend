@@ -1,0 +1,28 @@
+tags:
+  - payment_methods
+summary: Creates a new payment method
+description: Creates a new payment method
+operationId: createPaymentMethod
+requestBody:
+  description: Payment method details
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: ../../components/schemas/CreatePaymentMethodRequest.yaml
+responses:
+  "201":
+    description: Payment method created
+    headers:
+      Location:
+        description: The location of the created payment method
+        required: true
+        schema:
+          type: string
+          format: uri
+        example: /payment-methods/90b79dd6-17eb-4e95-b2df-86f0fc4617ce
+  default:
+    content:
+      application/json:
+        schema:
+          $ref: ../../components/schemas/Error.yaml

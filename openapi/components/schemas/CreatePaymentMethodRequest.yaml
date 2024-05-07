@@ -1,0 +1,10 @@
+
+x-ogen-name: CreatePaymentMethodRequest
+type: object
+required:
+  - name
+properties:
+  name:
+    type: string
+    minLength: 1
+    example: Cash

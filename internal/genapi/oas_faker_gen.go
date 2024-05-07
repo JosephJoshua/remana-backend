@@ -18,6 +18,15 @@ func (s *CreateDamageTypeRequest) SetFake() {
 }
 
 // SetFake set fake values.
+func (s *CreatePaymentMethodRequest) SetFake() {
+	{
+		{
+			s.Name = "string"
+		}
+	}
+}
+
+// SetFake set fake values.
 func (s *CreatePhoneConditionRequest) SetFake() {
 	{
 		{

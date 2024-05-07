@@ -22,6 +22,15 @@ func (UnimplementedHandler) CreateDamageType(ctx context.Context, req *CreateDam
 	return r, ht.ErrNotImplemented
 }
 
+// CreatePaymentMethod implements createPaymentMethod operation.
+//
+// Creates a new payment method.
+//
+// POST /payment-methods
+func (UnimplementedHandler) CreatePaymentMethod(ctx context.Context, req *CreatePaymentMethodRequest) (r *CreatePaymentMethodCreated, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // CreatePhoneCondition implements createPhoneCondition operation.
 //
 // Creates a new phone condition.
