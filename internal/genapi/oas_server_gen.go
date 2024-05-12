@@ -8,6 +8,12 @@ import (
 
 // Handler handles operations described by OpenAPI v3 specification.
 type Handler interface {
+	// AssignPermissionsToRole implements assignPermissionsToRole operation.
+	//
+	// Assigns permissions to a role.
+	//
+	// POST /roles/{roleId}/permissions
+	AssignPermissionsToRole(ctx context.Context, req *AssignPermissionsToRoleRequest, params AssignPermissionsToRoleParams) error
 	// CreateDamageType implements createDamageType operation.
 	//
 	// Creates a new damage type.

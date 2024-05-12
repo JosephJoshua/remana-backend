@@ -7,7 +7,6 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"net/url"
 	"testing"
 	"time"
 
@@ -49,12 +48,6 @@ func TestCreatePaymentMethod(t *testing.T) {
 
 	var (
 		theStoreID = uuid.New()
-
-		theLocation = url.URL{
-			Scheme: "http",
-			Host:   "example.com",
-			Path:   "/damage-types/bc80e136-12cb-46f3-8b4f-5ec2b00802d3",
-		}
 	)
 
 	requestCtx := appcontext.NewContextWithUser(
@@ -74,7 +67,7 @@ func TestCreatePaymentMethod(t *testing.T) {
 	)
 
 	t.Run("creates payment method in db", func(t *testing.T) {
-		locationProvider := testutil.NewResourceLocationProviderStubForPaymentMethod(theLocation)
+		locationProvider := &testutil.ResourceLocationProviderStub{}
 		repo := repository.NewSQLPaymentMethodRepository(db)
 
 		s := paymentmethod.NewService(
@@ -120,7 +113,7 @@ func TestCreatePaymentMethod(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		locationProvider := testutil.NewResourceLocationProviderStubForPaymentMethod(theLocation)
+		locationProvider := &testutil.ResourceLocationProviderStub{}
 		repo := repository.NewSQLPaymentMethodRepository(db)
 
 		s := paymentmethod.NewService(
@@ -149,7 +142,7 @@ func TestCreatePaymentMethod(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		locationProvider := testutil.NewResourceLocationProviderStubForPaymentMethod(theLocation)
+		locationProvider := &testutil.ResourceLocationProviderStub{}
 		repo := repository.NewSQLPaymentMethodRepository(db)
 
 		s := paymentmethod.NewService(

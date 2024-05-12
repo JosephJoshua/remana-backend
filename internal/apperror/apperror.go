@@ -17,5 +17,6 @@ const (
 	ErrDamageNotFound         appError = appError("damage not found")
 	ErrPhoneConditionNotFound appError = appError("phone condition not found")
 	ErrPhoneEquipmentNotFound appError = appError("phone equipment not found")
+	ErrPermissionNotFound     appError = appError("permission not found")
 	ErrLoginCodeMismatch      appError = appError("login code mismatch")
 )

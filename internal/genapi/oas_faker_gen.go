@@ -9,6 +9,36 @@ import (
 )
 
 // SetFake set fake values.
+func (s *AssignPermissionsToRoleRequest) SetFake() {
+	{
+		{
+			s.Permissions = nil
+			for i := 0; i < 1; i++ {
+				var elem AssignPermissionsToRoleRequestPermissionsItem
+				{
+					elem.SetFake()
+				}
+				s.Permissions = append(s.Permissions, elem)
+			}
+		}
+	}
+}
+
+// SetFake set fake values.
+func (s *AssignPermissionsToRoleRequestPermissionsItem) SetFake() {
+	{
+		{
+			s.GroupName = "string"
+		}
+	}
+	{
+		{
+			s.Name = "string"
+		}
+	}
+}
+
+// SetFake set fake values.
 func (s *CreateDamageTypeRequest) SetFake() {
 	{
 		{

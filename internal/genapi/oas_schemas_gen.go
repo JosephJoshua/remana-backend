@@ -14,6 +14,48 @@ func (s *ErrorStatusCode) Error() string {
 	return fmt.Sprintf("code %d: %+v", s.StatusCode, s.Response)
 }
 
+// AssignPermissionsToRoleNoContent is response for AssignPermissionsToRole operation.
+type AssignPermissionsToRoleNoContent struct{}
+
+type AssignPermissionsToRoleRequest struct {
+	Permissions []AssignPermissionsToRoleRequestPermissionsItem `json:"permissions"`
+}
+
+// GetPermissions returns the value of Permissions.
+func (s *AssignPermissionsToRoleRequest) GetPermissions() []AssignPermissionsToRoleRequestPermissionsItem {
+	return s.Permissions
+}
+
+// SetPermissions sets the value of Permissions.
+func (s *AssignPermissionsToRoleRequest) SetPermissions(val []AssignPermissionsToRoleRequestPermissionsItem) {
+	s.Permissions = val
+}
+
+type AssignPermissionsToRoleRequestPermissionsItem struct {
+	GroupName string `json:"group_name"`
+	Name      string `json:"name"`
+}
+
+// GetGroupName returns the value of GroupName.
+func (s *AssignPermissionsToRoleRequestPermissionsItem) GetGroupName() string {
+	return s.GroupName
+}
+
+// GetName returns the value of Name.
+func (s *AssignPermissionsToRoleRequestPermissionsItem) GetName() string {
+	return s.Name
+}
+
+// SetGroupName sets the value of GroupName.
+func (s *AssignPermissionsToRoleRequestPermissionsItem) SetGroupName(val string) {
+	s.GroupName = val
+}
+
+// SetName sets the value of Name.
+func (s *AssignPermissionsToRoleRequestPermissionsItem) SetName(val string) {
+	s.Name = val
+}
+
 // CreateDamageTypeCreated is response for CreateDamageType operation.
 type CreateDamageTypeCreated struct {
 	Location url.URL

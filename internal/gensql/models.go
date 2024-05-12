@@ -26,6 +26,18 @@ type PaymentMethod struct {
 	PaymentMethodName string
 }
 
+type Permission struct {
+	PermissionID          pgtype.UUID
+	PermissionGroupID     pgtype.UUID
+	PermissionName        string
+	PermissionDisplayName string
+}
+
+type PermissionGroup struct {
+	PermissionGroupID   pgtype.UUID
+	PermissionGroupName string
+}
+
 type PhoneCondition struct {
 	PhoneConditionID   pgtype.UUID
 	StoreID            pgtype.UUID
@@ -103,6 +115,11 @@ type Role struct {
 	RoleName     string
 	StoreID      pgtype.UUID
 	IsStoreAdmin bool
+}
+
+type RolePermission struct {
+	RoleID       pgtype.UUID
+	PermissionID pgtype.UUID
 }
 
 type SalesPerson struct {

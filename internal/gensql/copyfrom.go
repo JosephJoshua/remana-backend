@@ -180,3 +180,36 @@ func (r iteratorForAddPhotosToRepairOrder) Err() error {
 func (q *Queries) AddPhotosToRepairOrder(ctx context.Context, arg []AddPhotosToRepairOrderParams) (int64, error) {
 	return q.db.CopyFrom(ctx, []string{"repair_order_photos"}, []string{"repair_order_photo_id", "repair_order_id", "photo_url"}, &iteratorForAddPhotosToRepairOrder{rows: arg})
 }
+
+// iteratorForAssignPermissionsToRole implements pgx.CopyFromSource.
+type iteratorForAssignPermissionsToRole struct {
+	rows                 []AssignPermissionsToRoleParams
+	skippedFirstNextCall bool
+}
+
+func (r *iteratorForAssignPermissionsToRole) Next() bool {
+	if len(r.rows) == 0 {
+		return false
+	}
+	if !r.skippedFirstNextCall {
+		r.skippedFirstNextCall = true
+		return true
+	}
+	r.rows = r.rows[1:]
+	return len(r.rows) > 0
+}
+
+func (r iteratorForAssignPermissionsToRole) Values() ([]interface{}, error) {
+	return []interface{}{
+		r.rows[0].RoleID,
+		r.rows[0].PermissionID,
+	}, nil
+}
+
+func (r iteratorForAssignPermissionsToRole) Err() error {
+	return nil
+}
+
+func (q *Queries) AssignPermissionsToRole(ctx context.Context, arg []AssignPermissionsToRoleParams) (int64, error) {
+	return q.db.CopyFrom(ctx, []string{"role_permissions"}, []string{"role_id", "permission_id"}, &iteratorForAssignPermissionsToRole{rows: arg})
+}

@@ -13,6 +13,12 @@ import (
 	"github.com/ogen-go/ogen/uri"
 )
 
+func encodeAssignPermissionsToRoleResponse(response *AssignPermissionsToRoleNoContent, w http.ResponseWriter) error {
+	w.WriteHeader(204)
+
+	return nil
+}
+
 func encodeCreateDamageTypeResponse(response *CreateDamageTypeCreated, w http.ResponseWriter) error {
 	// Encoding response headers.
 	{

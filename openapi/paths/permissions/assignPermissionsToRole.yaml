@@ -1,0 +1,29 @@
+tags:
+  - permissions
+summary: Assigns permissions to a role
+description: Assigns permissions to a role
+operationId: assignPermissionsToRole
+parameters:
+  - in: path
+    name: roleId
+    description: ID of the role to assign permissions to
+    required: true
+    schema:
+      type: string
+      format: uuid
+      example: d0e1587b-5636-4ffc-8301-3f1325b07276
+requestBody:
+  description: Permissions to assign
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: ../../components/schemas/AssignPermissionsToRoleRequest.yaml
+responses:
+  "204":
+    description: Permissions assigned
+  default:
+    content:
+      application/json:
+        schema:
+          $ref: ../../components/schemas/Error.yaml

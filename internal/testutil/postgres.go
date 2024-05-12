@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/JosephJoshua/remana-backend/internal/infrastructure/core"
+	"github.com/JosephJoshua/remana-backend/internal/logger"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/ory/dockertest/v3"
@@ -52,7 +53,16 @@ func StartPostgresContainer(pool *dockertest.Pool) (*dockertest.Resource, *pgxpo
 	var db *pgxpool.Pool
 
 	if err = pool.Retry(func() error {
-		db, err = pgxpool.New(context.Background(), databaseURL)
+		config, configErr := pgxpool.ParseConfig(databaseURL)
+		if configErr != nil {
+			return fmt.Errorf("error parsing database URL: %w", err)
+		}
+
+		if _, ok := logger.Get(); ok {
+			config.ConnConfig.Tracer = &logger.PgxLogTracer{}
+		}
+
+		db, err = pgxpool.NewWithConfig(context.Background(), config)
 		if err != nil {
 			return err
 		}

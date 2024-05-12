@@ -11,6 +11,27 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const doesRoleHavePermissions = `-- name: DoesRoleHavePermissions :one
+SELECT COUNT(*)
+FROM role_permissions
+WHERE
+  role_permissions.role_id = $1 AND
+  role_permissions.permission_id = ANY($2::UUID[])
+LIMIT 1
+`
+
+type DoesRoleHavePermissionsParams struct {
+	RoleID        pgtype.UUID
+	PermissionIds []pgtype.UUID
+}
+
+func (q *Queries) DoesRoleHavePermissions(ctx context.Context, arg DoesRoleHavePermissionsParams) (int64, error) {
+	row := q.db.QueryRow(ctx, doesRoleHavePermissions, arg.RoleID, arg.PermissionIds)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const getDamageTypeForTesting = `-- name: GetDamageTypeForTesting :one
 SELECT
   damage_types.damage_type_id, damage_types.store_id, damage_types.damage_type_name
@@ -358,6 +379,49 @@ func (q *Queries) SeedPaymentMethod(ctx context.Context, arg SeedPaymentMethodPa
 	var payment_method_id pgtype.UUID
 	err := row.Scan(&payment_method_id)
 	return payment_method_id, err
+}
+
+const seedPermission = `-- name: SeedPermission :one
+INSERT INTO permissions (permission_id, permission_name, permission_display_name, permission_group_id)
+VALUES ($1, $2, $3, $4)
+RETURNING permission_id
+`
+
+type SeedPermissionParams struct {
+	PermissionID          pgtype.UUID
+	PermissionName        string
+	PermissionDisplayName string
+	PermissionGroupID     pgtype.UUID
+}
+
+func (q *Queries) SeedPermission(ctx context.Context, arg SeedPermissionParams) (pgtype.UUID, error) {
+	row := q.db.QueryRow(ctx, seedPermission,
+		arg.PermissionID,
+		arg.PermissionName,
+		arg.PermissionDisplayName,
+		arg.PermissionGroupID,
+	)
+	var permission_id pgtype.UUID
+	err := row.Scan(&permission_id)
+	return permission_id, err
+}
+
+const seedPermissionGroup = `-- name: SeedPermissionGroup :one
+INSERT INTO permission_groups (permission_group_id, permission_group_name)
+VALUES ($1, $2)
+RETURNING permission_group_id
+`
+
+type SeedPermissionGroupParams struct {
+	PermissionGroupID   pgtype.UUID
+	PermissionGroupName string
+}
+
+func (q *Queries) SeedPermissionGroup(ctx context.Context, arg SeedPermissionGroupParams) (pgtype.UUID, error) {
+	row := q.db.QueryRow(ctx, seedPermissionGroup, arg.PermissionGroupID, arg.PermissionGroupName)
+	var permission_group_id pgtype.UUID
+	err := row.Scan(&permission_group_id)
+	return permission_group_id, err
 }
 
 const seedPhoneCondition = `-- name: SeedPhoneCondition :one

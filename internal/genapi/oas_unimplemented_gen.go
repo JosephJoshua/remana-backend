@@ -13,6 +13,15 @@ type UnimplementedHandler struct{}
 
 var _ Handler = UnimplementedHandler{}
 
+// AssignPermissionsToRole implements assignPermissionsToRole operation.
+//
+// Assigns permissions to a role.
+//
+// POST /roles/{roleId}/permissions
+func (UnimplementedHandler) AssignPermissionsToRole(ctx context.Context, req *AssignPermissionsToRoleRequest, params AssignPermissionsToRoleParams) error {
+	return ht.ErrNotImplemented
+}
+
 // CreateDamageType implements createDamageType operation.
 //
 // Creates a new damage type.

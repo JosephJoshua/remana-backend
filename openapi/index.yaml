@@ -79,3 +79,6 @@ paths:
   /roles:
     post:
       $ref: paths/permissions/createRole.yaml
+  /roles/{roleId}/permissions:
+    post:
+      $ref: paths/permissions/assignPermissionsToRole.yaml

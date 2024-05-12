@@ -16,6 +16,30 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestAssignPermissionsToRoleRequest_EncodeDecode(t *testing.T) {
+	var typ AssignPermissionsToRoleRequest
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 AssignPermissionsToRoleRequest
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
+func TestAssignPermissionsToRoleRequestPermissionsItem_EncodeDecode(t *testing.T) {
+	var typ AssignPermissionsToRoleRequestPermissionsItem
+	typ.SetFake()
+
+	e := jx.Encoder{}
+	typ.Encode(&e)
+	data := e.Bytes()
+	require.True(t, std.Valid(data), "Encoded: %s", data)
+
+	var typ2 AssignPermissionsToRoleRequestPermissionsItem
+	require.NoError(t, typ2.Decode(jx.DecodeBytes(data)))
+}
 func TestCreateDamageTypeRequest_EncodeDecode(t *testing.T) {
 	var typ CreateDamageTypeRequest
 	typ.SetFake()

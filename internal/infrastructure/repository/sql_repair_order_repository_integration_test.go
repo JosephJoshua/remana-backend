@@ -64,11 +64,6 @@ func TestCreateRepairOrder(t *testing.T) {
 
 	var (
 		theCreationTime = time.Unix(1713917762, 0)
-		theLocation     = url.URL{
-			Scheme: "http",
-			Host:   "example.com",
-			Path:   "/repair-orders/61821d3a-dbdd-4f41-a2c6-14faf7b57c67",
-		}
 
 		theStoreID         = uuid.New()
 		theSalesPersonID   = uuid.New()
@@ -178,7 +173,7 @@ func TestCreateRepairOrder(t *testing.T) {
 
 	t.Run("creates repair order in db", func(t *testing.T) {
 		timeProvider := testutil.NewTimeProviderStub(theCreationTime)
-		locationProvider := testutil.NewResourceLocationProviderStubForRepairOrder(theLocation)
+		locationProvider := &testutil.ResourceLocationProviderStub{}
 		slugProvider := testutil.NewRepairOrderSlugProviderStub("some-slug", nil)
 
 		repo := repository.NewSQLRepairOrderRepository(db)
@@ -378,7 +373,7 @@ func TestCreateRepairOrder(t *testing.T) {
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
 				timeProvider := testutil.NewTimeProviderStub(theCreationTime)
-				locationProvider := testutil.NewResourceLocationProviderStubForRepairOrder(theLocation)
+				locationProvider := &testutil.ResourceLocationProviderStub{}
 				slugProvider := testutil.NewRepairOrderSlugProviderStub("some-slug", nil)
 				repo := repository.NewSQLRepairOrderRepository(db)
 

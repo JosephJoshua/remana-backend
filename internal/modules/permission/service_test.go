@@ -12,6 +12,7 @@ import (
 
 	"github.com/JosephJoshua/remana-backend/internal/appconstant"
 	"github.com/JosephJoshua/remana-backend/internal/appcontext"
+	"github.com/JosephJoshua/remana-backend/internal/apperror"
 	"github.com/JosephJoshua/remana-backend/internal/genapi"
 	"github.com/JosephJoshua/remana-backend/internal/logger"
 	"github.com/JosephJoshua/remana-backend/internal/modules/auth/readmodel"
@@ -23,17 +24,32 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type repositoryPermission struct {
+	id        uuid.UUID
+	groupName string
+	name      string
+}
+
 type repositoryStub struct {
-	createCalledWith struct {
+	createRoleCalledWith struct {
 		id           uuid.UUID
 		storeID      uuid.UUID
 		name         string
 		isStoreAdmin bool
 	}
-	storeID      uuid.UUID
-	existingName string
-	createErr    error
-	nameTakenErr error
+	assignPermissionsCalledWith struct {
+		roleID        uuid.UUID
+		permissionIDs []uuid.UUID
+	}
+	storeID              uuid.UUID
+	roleID               uuid.UUID
+	permissions          []repositoryPermission
+	existingName         string
+	createRoleErr        error
+	assignPermissionsErr error
+	nameTakenErr         error
+	roleExistsErr        error
+	getPermissionIDsErr  error
 }
 
 func (r *repositoryStub) CreateRole(
@@ -43,14 +59,14 @@ func (r *repositoryStub) CreateRole(
 	name string,
 	isStoreAdmin bool,
 ) error {
-	if r.createErr != nil {
-		return r.createErr
+	if r.createRoleErr != nil {
+		return r.createRoleErr
 	}
 
-	r.createCalledWith.id = id
-	r.createCalledWith.storeID = storeID
-	r.createCalledWith.name = name
-	r.createCalledWith.isStoreAdmin = isStoreAdmin
+	r.createRoleCalledWith.id = id
+	r.createRoleCalledWith.storeID = storeID
+	r.createRoleCalledWith.name = name
+	r.createRoleCalledWith.isStoreAdmin = isStoreAdmin
 
 	return nil
 }
@@ -61,6 +77,54 @@ func (r *repositoryStub) IsRoleNameTaken(_ context.Context, storeID uuid.UUID, n
 	}
 
 	return r.storeID == storeID && r.existingName == name, nil
+}
+
+func (r *repositoryStub) GetPermissionIDs(
+	_ context.Context,
+	permissions []permission.GetPermissionIDDetail,
+) ([]uuid.UUID, error) {
+	if r.getPermissionIDsErr != nil {
+		return []uuid.UUID{}, r.getPermissionIDsErr
+	}
+
+	ids := make([]uuid.UUID, 0, len(permissions))
+	for _, toFind := range permissions {
+		var found bool
+
+		for _, p := range r.permissions {
+			if p.groupName == toFind.GroupName && p.name == toFind.Name {
+				ids = append(ids, p.id)
+				found = true
+
+				break
+			}
+		}
+
+		if !found {
+			return []uuid.UUID{}, apperror.ErrPermissionNotFound
+		}
+	}
+
+	return ids, nil
+}
+
+func (r *repositoryStub) DoesRoleExist(_ context.Context, roleID uuid.UUID) (bool, error) {
+	if r.roleExistsErr != nil {
+		return false, r.roleExistsErr
+	}
+
+	return roleID == r.roleID, nil
+}
+
+func (r *repositoryStub) AssignPermissionsToRole(_ context.Context, roleID uuid.UUID, permissionIDs []uuid.UUID) error {
+	if r.assignPermissionsErr != nil {
+		return r.assignPermissionsErr
+	}
+
+	r.assignPermissionsCalledWith.roleID = roleID
+	r.assignPermissionsCalledWith.permissionIDs = permissionIDs
+
+	return nil
 }
 
 func TestCreateRole(t *testing.T) {
@@ -98,11 +162,11 @@ func TestCreateRole(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, got)
 
-		require.NotNil(t, repo.createCalledWith)
+		require.NotNil(t, repo.createRoleCalledWith)
 
-		assert.Equal(t, req.Name, repo.createCalledWith.name)
-		assert.Equal(t, req.IsStoreAdmin, repo.createCalledWith.isStoreAdmin)
-		assert.Equal(t, theStoreID, repo.createCalledWith.storeID)
+		assert.Equal(t, req.Name, repo.createRoleCalledWith.name)
+		assert.Equal(t, req.IsStoreAdmin, repo.createRoleCalledWith.isStoreAdmin)
+		assert.Equal(t, theStoreID, repo.createRoleCalledWith.storeID)
 	})
 
 	t.Run("returns resource location when role is created", func(t *testing.T) {
@@ -132,9 +196,9 @@ func TestCreateRole(t *testing.T) {
 		assert.Equal(t, theLocation, got.Location)
 
 		require.True(t, resourceLocationProvider.RoleID.IsSet())
-		require.NotNil(t, repo.createCalledWith)
+		require.NotNil(t, repo.createRoleCalledWith)
 
-		assert.Equal(t, repo.createCalledWith.id, resourceLocationProvider.RoleID.MustGet())
+		assert.Equal(t, repo.createRoleCalledWith.id, resourceLocationProvider.RoleID.MustGet())
 	})
 
 	t.Run("returns unauthorized when user is missing from context", func(t *testing.T) {
@@ -213,7 +277,7 @@ func TestCreateRole(t *testing.T) {
 
 		s := permission.NewService(
 			testutil.NewResourceLocationProviderStubForRole(url.URL{}),
-			&repositoryStub{createErr: errors.New("oh no!"), storeID: theStoreID},
+			&repositoryStub{createRoleErr: errors.New("oh no!"), storeID: theStoreID},
 		)
 
 		_, err := s.CreateRole(requestCtx, &genapi.CreateRoleRequest{
@@ -221,6 +285,207 @@ func TestCreateRole(t *testing.T) {
 			IsStoreAdmin: false,
 		})
 
+		testutil.AssertAPIStatusCode(t, http.StatusInternalServerError, err)
+	})
+}
+
+func TestAssignPermissionsToRole(t *testing.T) {
+	t.Parallel()
+
+	var (
+		theStoreID     = uuid.New()
+		theRoleID      = uuid.New()
+		thePermissions = []genapi.AssignPermissionsToRoleRequestPermissionsItem{
+			{GroupName: "permission", Name: "test"},
+			{GroupName: "permission_two", Name: "test_two"},
+		}
+		theRepoPermissions = []repositoryPermission{
+			{id: uuid.New(), groupName: "permission", name: "test"},
+			{id: uuid.New(), groupName: "permission_two", name: "test_two"},
+		}
+	)
+
+	logger.Init(zerolog.ErrorLevel, appconstant.AppEnvDev)
+
+	requestCtx := appcontext.NewContextWithUser(
+		testutil.RequestContextWithLogger(context.Background()),
+		testutil.ModifiedUserDetails(func(details *readmodel.UserDetails) {
+			details.Store.ID = theStoreID
+		}),
+	)
+
+	baseRepo := func() *repositoryStub {
+		return &repositoryStub{storeID: theStoreID, roleID: theRoleID, permissions: theRepoPermissions}
+	}
+
+	t.Run("tries to assign permissions when request is valid", func(t *testing.T) {
+		t.Parallel()
+
+		repo := baseRepo()
+		s := permission.NewService(
+			testutil.NewResourceLocationProviderStubForRole(url.URL{}),
+			repo,
+		)
+
+		req := &genapi.AssignPermissionsToRoleRequest{
+			Permissions: thePermissions,
+		}
+
+		params := genapi.AssignPermissionsToRoleParams{RoleId: theRoleID}
+
+		err := s.AssignPermissionsToRole(requestCtx, req, params)
+		require.NoError(t, err)
+
+		assert.Equal(t, theRoleID, repo.assignPermissionsCalledWith.roleID)
+
+		permissionIDs := make([]uuid.UUID, 0, len(theRepoPermissions))
+		for _, p := range theRepoPermissions {
+			permissionIDs = append(permissionIDs, p.id)
+		}
+
+		assert.ElementsMatch(t, permissionIDs, repo.assignPermissionsCalledWith.permissionIDs)
+	})
+
+	t.Run("returns no error when request is valid", func(t *testing.T) {
+		t.Parallel()
+
+		s := permission.NewService(
+			testutil.NewResourceLocationProviderStubForRole(url.URL{}),
+			baseRepo(),
+		)
+
+		req := &genapi.AssignPermissionsToRoleRequest{
+			Permissions: thePermissions,
+		}
+
+		params := genapi.AssignPermissionsToRoleParams{RoleId: theRoleID}
+
+		err := s.AssignPermissionsToRole(requestCtx, req, params)
+		require.NoError(t, err)
+	})
+
+	t.Run("returns unauthorized when user is missing from context", func(t *testing.T) {
+		t.Parallel()
+
+		s := permission.NewService(
+			testutil.NewResourceLocationProviderStubForRole(url.URL{}),
+			baseRepo(),
+		)
+
+		req := &genapi.AssignPermissionsToRoleRequest{
+			Permissions: thePermissions,
+		}
+
+		params := genapi.AssignPermissionsToRoleParams{RoleId: theRoleID}
+		emptyCtx := testutil.RequestContextWithLogger(context.Background())
+
+		err := s.AssignPermissionsToRole(emptyCtx, req, params)
+		testutil.AssertAPIStatusCode(t, http.StatusUnauthorized, err)
+	})
+
+	t.Run("returns bad request when a permission doesn't exist", func(t *testing.T) {
+		t.Parallel()
+
+		s := permission.NewService(
+			testutil.NewResourceLocationProviderStubForRole(url.URL{}),
+			baseRepo(),
+		)
+
+		req := &genapi.AssignPermissionsToRoleRequest{
+			Permissions: []genapi.AssignPermissionsToRoleRequestPermissionsItem{
+				thePermissions[0],
+				{GroupName: "some_random_group", Name: "some_random_permission"},
+			},
+		}
+
+		params := genapi.AssignPermissionsToRoleParams{RoleId: theRoleID}
+
+		err := s.AssignPermissionsToRole(requestCtx, req, params)
+		testutil.AssertAPIStatusCode(t, http.StatusBadRequest, err)
+	})
+
+	t.Run("returns bad request when the role doesn't exist", func(t *testing.T) {
+		t.Parallel()
+
+		var (
+			someRandomID = uuid.New()
+		)
+
+		s := permission.NewService(
+			testutil.NewResourceLocationProviderStubForRole(url.URL{}),
+			baseRepo(),
+		)
+
+		req := &genapi.AssignPermissionsToRoleRequest{
+			Permissions: thePermissions,
+		}
+
+		params := genapi.AssignPermissionsToRoleParams{RoleId: someRandomID}
+
+		err := s.AssignPermissionsToRole(requestCtx, req, params)
+		testutil.AssertAPIStatusCode(t, http.StatusBadRequest, err)
+	})
+
+	t.Run("returns internal server error when repository.GetPermissionIDs() errors", func(t *testing.T) {
+		t.Parallel()
+
+		repo := baseRepo()
+		repo.getPermissionIDsErr = errors.New("oh no!")
+
+		s := permission.NewService(
+			testutil.NewResourceLocationProviderStubForRole(url.URL{}),
+			repo,
+		)
+
+		req := &genapi.AssignPermissionsToRoleRequest{
+			Permissions: thePermissions,
+		}
+
+		params := genapi.AssignPermissionsToRoleParams{RoleId: theRoleID}
+
+		err := s.AssignPermissionsToRole(requestCtx, req, params)
+		testutil.AssertAPIStatusCode(t, http.StatusInternalServerError, err)
+	})
+
+	t.Run("returns internal server error when repository.DoesRoleExist() errors", func(t *testing.T) {
+		t.Parallel()
+
+		repo := baseRepo()
+		repo.roleExistsErr = errors.New("oh no!")
+
+		s := permission.NewService(
+			testutil.NewResourceLocationProviderStubForRole(url.URL{}),
+			repo,
+		)
+
+		req := &genapi.AssignPermissionsToRoleRequest{
+			Permissions: thePermissions,
+		}
+
+		params := genapi.AssignPermissionsToRoleParams{RoleId: theRoleID}
+
+		err := s.AssignPermissionsToRole(requestCtx, req, params)
+		testutil.AssertAPIStatusCode(t, http.StatusInternalServerError, err)
+	})
+
+	t.Run("returns internal server error when repository.AssignPermissionsToRole() errors", func(t *testing.T) {
+		t.Parallel()
+
+		repo := baseRepo()
+		repo.assignPermissionsErr = errors.New("oh no!")
+
+		s := permission.NewService(
+			testutil.NewResourceLocationProviderStubForRole(url.URL{}),
+			repo,
+		)
+
+		req := &genapi.AssignPermissionsToRoleRequest{
+			Permissions: thePermissions,
+		}
+
+		params := genapi.AssignPermissionsToRoleParams{RoleId: theRoleID}
+
+		err := s.AssignPermissionsToRole(requestCtx, req, params)
 		testutil.AssertAPIStatusCode(t, http.StatusInternalServerError, err)
 	})
 }

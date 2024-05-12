@@ -7,7 +7,6 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"net/url"
 	"testing"
 	"time"
 
@@ -49,12 +48,6 @@ func TestCreateSalesPerson(t *testing.T) {
 
 	var (
 		theStoreID = uuid.New()
-
-		theLocation = url.URL{
-			Scheme: "http",
-			Host:   "example.com",
-			Path:   "/sales-persons/bc80e136-12cb-46f3-8b4f-5ec2b00802d3",
-		}
 	)
 
 	requestCtx := appcontext.NewContextWithUser(
@@ -74,7 +67,7 @@ func TestCreateSalesPerson(t *testing.T) {
 	)
 
 	t.Run("creates sales person in db", func(t *testing.T) {
-		locationProvider := testutil.NewResourceLocationProviderStubForSalesPerson(theLocation)
+		locationProvider := &testutil.ResourceLocationProviderStub{}
 		repo := repository.NewSQLSalesPersonRepository(db)
 
 		s := salesperson.NewService(
@@ -120,7 +113,7 @@ func TestCreateSalesPerson(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		locationProvider := testutil.NewResourceLocationProviderStubForSalesPerson(theLocation)
+		locationProvider := &testutil.ResourceLocationProviderStub{}
 		repo := repository.NewSQLSalesPersonRepository(db)
 
 		s := salesperson.NewService(
@@ -149,7 +142,7 @@ func TestCreateSalesPerson(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		locationProvider := testutil.NewResourceLocationProviderStubForSalesPerson(theLocation)
+		locationProvider := &testutil.ResourceLocationProviderStub{}
 		repo := repository.NewSQLSalesPersonRepository(db)
 
 		s := salesperson.NewService(

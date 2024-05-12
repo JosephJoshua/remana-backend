@@ -76,6 +76,15 @@ func PgtypeUUIDToUUID(id pgtype.UUID) (uuid.UUID, error) {
 	return uuid.FromBytes(id.Bytes[:])
 }
 
+func MustPgtypeUUIDsToUUIDs(ids []pgtype.UUID) []uuid.UUID {
+	uuids, err := PgtypeUUIDsToUUIDs(ids)
+	if err != nil {
+		panic(fmt.Sprintf("failed to convert pgtype UUIDs to google UUIDs: %v", err))
+	}
+
+	return uuids
+}
+
 func PgtypeUUIDsToUUIDs(ids []pgtype.UUID) ([]uuid.UUID, error) {
 	googleUUIDs := make([]uuid.UUID, len(ids))
 

@@ -11,16 +11,6 @@ import (
 	"github.com/rs/zerolog"
 )
 
-type loggerError string
-
-func (err loggerError) Error() string {
-	return string(err)
-}
-
-const (
-	ErrLoggerNotInitialized = loggerError("logger not initialized")
-)
-
 var log *zerolog.Logger
 
 func Init(logLevel zerolog.Level, appEnv appconstant.AppEnv) {
@@ -86,18 +76,18 @@ func Init(logLevel zerolog.Level, appEnv appconstant.AppEnv) {
 	log = &l
 }
 
-func Get() (zerolog.Logger, error) {
+func Get() (zerolog.Logger, bool) {
 	if log == nil {
-		return zerolog.Logger{}, ErrLoggerNotInitialized
+		return zerolog.Logger{}, false
 	}
 
-	return *log, nil
+	return *log, true
 }
 
 func MustGet() zerolog.Logger {
-	l, err := Get()
-	if err != nil {
-		stdlog.Fatalf("logger.MustGet(); error getting logger: %s", err)
+	l, ok := Get()
+	if !ok {
+		stdlog.Fatalf("logger not initialized")
 	}
 
 	return l

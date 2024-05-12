@@ -1,0 +1,20 @@
+x-ogen-name: AssignPermissionsToRoleRequest
+type: object
+required:
+  - permissions
+properties:
+  permissions:
+    type: array
+    minItems: 1
+    items:
+      type: object
+      required:
+        - group_name
+        - name
+      properties:
+        group_name:
+          type: string
+          example: user
+        name:
+          type: string
+          example: read

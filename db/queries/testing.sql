@@ -3,6 +3,16 @@ INSERT INTO stores (store_id, store_name, store_code, store_address, phone_numbe
 VALUES ($1, $2, $3, $4, $5)
 RETURNING store_id;
 
+-- name: SeedPermissionGroup :one
+INSERT INTO permission_groups (permission_group_id, permission_group_name)
+VALUES ($1, $2)
+RETURNING permission_group_id;
+
+-- name: SeedPermission :one
+INSERT INTO permissions (permission_id, permission_name, permission_display_name, permission_group_id)
+VALUES ($1, $2, $3, $4)
+RETURNING permission_id;
+
 -- name: SeedRole :one
 INSERT INTO roles (role_id, role_name, store_id, is_store_admin)
 VALUES ($1, $2, $3, $4)
@@ -53,6 +63,14 @@ SELECT
   roles.*
 FROM roles
 WHERE roles.role_id = $1
+LIMIT 1;
+
+-- name: DoesRoleHavePermissions :one
+SELECT COUNT(*)
+FROM role_permissions
+WHERE
+  role_permissions.role_id = $1 AND
+  role_permissions.permission_id = ANY(sqlc.arg('permission_ids')::UUID[])
 LIMIT 1;
 
 -- name: GetTechnicianForTesting :one

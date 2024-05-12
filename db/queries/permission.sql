@@ -16,3 +16,17 @@ VALUES (
 SELECT 1
 FROM roles
 WHERE roles.store_id = $1 AND LOWER(roles.role_name) = LOWER(sqlc.arg('role_name'));
+
+-- name: DoesRoleExist :one
+SELECT 1
+FROM roles
+WHERE roles.role_id = $1;
+
+-- name: AssignPermissionsToRole :copyfrom
+INSERT INTO role_permissions (
+  role_id,
+  permission_id
+) VALUES (
+  $1,
+  $2
+);

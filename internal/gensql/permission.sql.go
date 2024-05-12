@@ -11,6 +11,11 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type AssignPermissionsToRoleParams struct {
+	RoleID       pgtype.UUID
+	PermissionID pgtype.UUID
+}
+
 const createRole = `-- name: CreateRole :exec
 INSERT INTO roles (
   role_id,
@@ -41,6 +46,19 @@ func (q *Queries) CreateRole(ctx context.Context, arg CreateRoleParams) error {
 		arg.IsStoreAdmin,
 	)
 	return err
+}
+
+const doesRoleExist = `-- name: DoesRoleExist :one
+SELECT 1
+FROM roles
+WHERE roles.role_id = $1
+`
+
+func (q *Queries) DoesRoleExist(ctx context.Context, roleID pgtype.UUID) (int32, error) {
+	row := q.db.QueryRow(ctx, doesRoleExist, roleID)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
 }
 
 const isRoleNameTaken = `-- name: IsRoleNameTaken :one

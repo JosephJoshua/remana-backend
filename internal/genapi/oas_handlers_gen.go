@@ -15,6 +15,157 @@ import (
 
 func recordError(string, error) {}
 
+// handleAssignPermissionsToRoleRequest handles assignPermissionsToRole operation.
+//
+// Assigns permissions to a role.
+//
+// POST /roles/{roleId}/permissions
+func (s *Server) handleAssignPermissionsToRoleRequest(args [1]string, argsEscaped bool, w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var (
+		err          error
+		opErrContext = ogenerrors.OperationContext{
+			Name: "AssignPermissionsToRole",
+			ID:   "assignPermissionsToRole",
+		}
+	)
+	{
+		type bitset = [1]uint8
+		var satisfied bitset
+		{
+			sctx, ok, err := s.securitySessionCookie(ctx, "AssignPermissionsToRole", r)
+			if err != nil {
+				err = &ogenerrors.SecurityError{
+					OperationContext: opErrContext,
+					Security:         "SessionCookie",
+					Err:              err,
+				}
+				if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w); encodeErr != nil {
+					recordError("Security:SessionCookie", err)
+				}
+				return
+			}
+			if ok {
+				satisfied[0] |= 1 << 0
+				ctx = sctx
+			}
+		}
+
+		if ok := func() bool {
+		nextRequirement:
+			for _, requirement := range []bitset{
+				{0b00000001},
+			} {
+				for i, mask := range requirement {
+					if satisfied[i]&mask != mask {
+						continue nextRequirement
+					}
+				}
+				return true
+			}
+			return false
+		}(); !ok {
+			err = &ogenerrors.SecurityError{
+				OperationContext: opErrContext,
+				Err:              ogenerrors.ErrSecurityRequirementIsNotSatisfied,
+			}
+			if encodeErr := encodeErrorResponse(s.h.NewError(ctx, err), w); encodeErr != nil {
+				recordError("Security", err)
+			}
+			return
+		}
+	}
+	params, err := decodeAssignPermissionsToRoleParams(args, argsEscaped, r)
+	if err != nil {
+		err = &ogenerrors.DecodeParamsError{
+			OperationContext: opErrContext,
+			Err:              err,
+		}
+		recordError("DecodeParams", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+	request, close, err := s.decodeAssignPermissionsToRoleRequest(r)
+	if err != nil {
+		err = &ogenerrors.DecodeRequestError{
+			OperationContext: opErrContext,
+			Err:              err,
+		}
+		recordError("DecodeRequest", err)
+		s.cfg.ErrorHandler(ctx, w, r, err)
+		return
+	}
+	defer func() {
+		if err := close(); err != nil {
+			recordError("CloseRequest", err)
+		}
+	}()
+
+	var response *AssignPermissionsToRoleNoContent
+	if m := s.cfg.Middleware; m != nil {
+		mreq := middleware.Request{
+			Context:          ctx,
+			OperationName:    "AssignPermissionsToRole",
+			OperationSummary: "Assigns permissions to a role",
+			OperationID:      "assignPermissionsToRole",
+			Body:             request,
+			Params: middleware.Parameters{
+				{
+					Name: "roleId",
+					In:   "path",
+				}: params.RoleId,
+			},
+			Raw: r,
+		}
+
+		type (
+			Request  = *AssignPermissionsToRoleRequest
+			Params   = AssignPermissionsToRoleParams
+			Response = *AssignPermissionsToRoleNoContent
+		)
+		response, err = middleware.HookMiddleware[
+			Request,
+			Params,
+			Response,
+		](
+			m,
+			mreq,
+			unpackAssignPermissionsToRoleParams,
+			func(ctx context.Context, request Request, params Params) (response Response, err error) {
+				err = s.h.AssignPermissionsToRole(ctx, request, params)
+				return response, err
+			},
+		)
+	} else {
+		err = s.h.AssignPermissionsToRole(ctx, request, params)
+	}
+	if err != nil {
+		if errRes, ok := errors.Into[*ErrorStatusCode](err); ok {
+			if err := encodeErrorResponse(errRes, w); err != nil {
+				recordError("Internal", err)
+			}
+			return
+		}
+		if errors.Is(err, ht.ErrNotImplemented) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+			return
+		}
+		if err := encodeErrorResponse(s.h.NewError(ctx, err), w); err != nil {
+			recordError("Internal", err)
+		}
+		return
+	}
+
+	if err := encodeAssignPermissionsToRoleResponse(response, w); err != nil {
+		recordError("EncodeResponse", err)
+		if !errors.Is(err, ht.ErrInternalServerErrorResponse) {
+			s.cfg.ErrorHandler(ctx, w, r, err)
+		}
+		return
+	}
+}
+
 // handleCreateDamageTypeRequest handles createDamageType operation.
 //
 // Creates a new damage type.
