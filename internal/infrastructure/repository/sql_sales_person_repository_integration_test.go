@@ -72,6 +72,7 @@ func TestCreateSalesPerson(t *testing.T) {
 
 		s := salesperson.NewService(
 			locationProvider,
+			permissionProviderStub{},
 			repo,
 		)
 
@@ -118,6 +119,7 @@ func TestCreateSalesPerson(t *testing.T) {
 
 		s := salesperson.NewService(
 			locationProvider,
+			permissionProviderStub{},
 			repo,
 		)
 
@@ -147,6 +149,7 @@ func TestCreateSalesPerson(t *testing.T) {
 
 		s := salesperson.NewService(
 			locationProvider,
+			permissionProviderStub{},
 			repo,
 		)
 

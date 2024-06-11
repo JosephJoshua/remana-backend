@@ -7,8 +7,8 @@ CREATE TABLE permission_groups (
 CREATE TABLE permissions (
   permission_id UUID NOT NULL PRIMARY KEY,
   permission_group_id UUID NOT NULL REFERENCES permission_groups (permission_group_id),
-  permission_name TEXT NOT NULL UNIQUE,
-  permission_display_name TEXT NOT NULL UNIQUE
+  permission_name TEXT NOT NULL,
+  permission_display_name TEXT NOT NULL
 );
 
 CREATE TABLE role_permissions (

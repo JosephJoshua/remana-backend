@@ -69,45 +69,55 @@ func NewAPIServer(db *pgxpool.Pool) (*genapi.Server, []Middleware, error) {
 		&PasswordHasher{},
 	)
 
+	permissionProvider := permission.NewProvider(repository.NewSQLPermissionRepository(db))
+
 	permissionService := permission.NewService(
 		resourceLocationProvider{},
 		repository.NewSQLPermissionRepository(db),
+		permissionProvider,
 	)
 
 	repairOrderService := repairorder.NewService(
 		timeProvider{},
 		resourceLocationProvider{},
 		repository.NewSQLRepairOrderRepository(db),
+		permissionProvider,
 		newRepairOrderSlugProvider(db),
 	)
 
 	technicianService := technician.NewService(
 		resourceLocationProvider{},
+		permissionProvider,
 		repository.NewSQLTechnicianRepository(db),
 	)
 
 	salesPersonService := salesperson.NewService(
 		resourceLocationProvider{},
+		permissionProvider,
 		repository.NewSQLSalesPersonRepository(db),
 	)
 
 	damageTypeService := damagetype.NewService(
 		resourceLocationProvider{},
+		permissionProvider,
 		repository.NewSQLDamageTypeRepository(db),
 	)
 
 	phoneConditionService := phonecondition.NewService(
 		resourceLocationProvider{},
+		permissionProvider,
 		repository.NewSQLPhoneConditionRepository(db),
 	)
 
 	phoneEquipmentService := phoneequipment.NewService(
 		resourceLocationProvider{},
+		permissionProvider,
 		repository.NewSQLPhoneEquipmentRepository(db),
 	)
 
 	paymentMethodService := paymentmethod.NewService(
 		resourceLocationProvider{},
+		permissionProvider,
 		repository.NewSQLPaymentMethodRepository(db),
 	)
 

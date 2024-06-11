@@ -11,6 +11,7 @@ import (
 	"github.com/JosephJoshua/remana-backend/internal/appcontext"
 	"github.com/JosephJoshua/remana-backend/internal/apperror"
 	"github.com/JosephJoshua/remana-backend/internal/genapi"
+	"github.com/JosephJoshua/remana-backend/internal/modules/permission"
 	"github.com/JosephJoshua/remana-backend/internal/modules/repairorder/domain"
 	shareddomain "github.com/JosephJoshua/remana-backend/internal/modules/shared/domain"
 	"github.com/JosephJoshua/remana-backend/internal/optional"
@@ -41,23 +42,26 @@ type ResourceLocationProvider interface {
 }
 
 type Service struct {
-	timeProvider      TimeProvider
-	locationProvider  ResourceLocationProvider
-	repo              Repository
-	orderSlugProvider OrderSlugProvider
+	timeProvider       TimeProvider
+	locationProvider   ResourceLocationProvider
+	repo               Repository
+	orderSlugProvider  OrderSlugProvider
+	permissionProvider permission.Provider
 }
 
 func NewService(
 	timeProvider TimeProvider,
 	locationProvider ResourceLocationProvider,
 	repo Repository,
+	permissionProvider permission.Provider,
 	orderSlugProvider OrderSlugProvider,
 ) *Service {
 	return &Service{
-		timeProvider:      timeProvider,
-		locationProvider:  locationProvider,
-		repo:              repo,
-		orderSlugProvider: orderSlugProvider,
+		timeProvider:       timeProvider,
+		locationProvider:   locationProvider,
+		repo:               repo,
+		permissionProvider: permissionProvider,
+		orderSlugProvider:  orderSlugProvider,
 	}
 }
 
@@ -72,6 +76,13 @@ func (s *Service) CreateRepairOrder(
 	if !ok {
 		l.Error().Msg("user is missing from context")
 		return nil, apierror.ToAPIError(http.StatusUnauthorized, "unauthorized")
+	}
+
+	if can, err := s.permissionProvider.Can(ctx, user.Role.ID, permission.CreateRepairOrder()); err != nil {
+		l.Error().Err(err).Msg("failed to check permission")
+		return nil, apierror.ToAPIError(http.StatusInternalServerError, "failed to check permission")
+	} else if !can {
+		return nil, apierror.ToAPIError(http.StatusForbidden, "insufficient permissions")
 	}
 
 	storeID := user.Store.ID

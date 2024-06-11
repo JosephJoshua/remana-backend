@@ -17,6 +17,7 @@ import (
 	"github.com/JosephJoshua/remana-backend/internal/genapi"
 	"github.com/JosephJoshua/remana-backend/internal/logger"
 	"github.com/JosephJoshua/remana-backend/internal/modules/auth/readmodel"
+	"github.com/JosephJoshua/remana-backend/internal/modules/permission"
 	"github.com/JosephJoshua/remana-backend/internal/modules/repairorder"
 	"github.com/JosephJoshua/remana-backend/internal/modules/repairorder/domain"
 	"github.com/JosephJoshua/remana-backend/internal/testutil"
@@ -26,157 +27,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type damage struct {
-	id   uuid.UUID
-	name string
-}
-
-type phoneCondition struct {
-	id   uuid.UUID
-	name string
-}
-
-type phoneEquipment struct {
-	id   uuid.UUID
-	name string
-}
-
-type repositoryStub struct {
-	damages                []damage
-	phoneConditions        []phoneCondition
-	phoneEquipments        []phoneEquipment
-	technicianID           uuid.UUID
-	salesPersonID          uuid.UUID
-	paymentMethodID        uuid.UUID
-	calledWithOrder        domain.Order
-	createErr              error
-	damageNameErr          error
-	phoneConditionNameErr  error
-	phoneEquipmentNameErr  error
-	storeExistsErr         error
-	technicianExistsErr    error
-	salesPersonExistsErr   error
-	paymentMethodExistsErr error
-}
-
-func (r *repositoryStub) CreateRepairOrder(_ context.Context, order domain.Order) error {
-	if r.createErr != nil {
-		return r.createErr
-	}
-
-	r.calledWithOrder = order
-	return nil
-}
-
-func (r *repositoryStub) GetDamageNamesByIDs(_ context.Context, storeID uuid.UUID, ids []uuid.UUID) ([]string, error) {
-	if r.damageNameErr != nil {
-		return []string{}, r.damageNameErr
-	}
-
-	names := []string{}
-
-	for _, id := range ids {
-		found := false
-
-		for _, damage := range r.damages {
-			if damage.id == id {
-				names = append(names, damage.name)
-				found = true
-
-				break
-			}
-		}
-
-		if !found {
-			return []string{}, apperror.ErrDamageNotFound
-		}
-	}
-
-	return names, nil
-}
-
-func (r *repositoryStub) GetPhoneConditionNamesByIDs(_ context.Context, storeID uuid.UUID, ids []uuid.UUID) ([]string, error) {
-	if r.phoneConditionNameErr != nil {
-		return []string{}, r.phoneConditionNameErr
-	}
-
-	names := []string{}
-
-	for _, id := range ids {
-		found := false
-
-		for _, phoneCondition := range r.phoneConditions {
-			if phoneCondition.id == id {
-				names = append(names, phoneCondition.name)
-				found = true
-
-				break
-			}
-		}
-
-		if !found {
-			return []string{}, apperror.ErrPhoneConditionNotFound
-		}
-	}
-
-	return names, nil
-}
-
-func (r *repositoryStub) GetPhoneEquipmentNamesByIDs(_ context.Context, storeID uuid.UUID, ids []uuid.UUID) ([]string, error) {
-	if r.phoneEquipmentNameErr != nil {
-		return []string{}, r.phoneEquipmentNameErr
-	}
-
-	names := []string{}
-
-	for _, id := range ids {
-		found := false
-
-		for _, equipment := range r.phoneEquipments {
-			if equipment.id == id {
-				names = append(names, equipment.name)
-				found = true
-
-				break
-			}
-		}
-
-		if !found {
-			return []string{}, apperror.ErrPhoneEquipmentNotFound
-		}
-	}
-
-	return names, nil
-}
-
-func (r *repositoryStub) DoesTechnicianExist(_ context.Context, storeID uuid.UUID, technicianID uuid.UUID) (bool, error) {
-	if r.technicianExistsErr != nil {
-		return false, r.technicianExistsErr
-	}
-
-	return technicianID == r.technicianID, nil
-}
-
-func (r *repositoryStub) DoesSalesPersonExist(_ context.Context, storeID uuid.UUID, salesPersonID uuid.UUID) (bool, error) {
-	if r.salesPersonExistsErr != nil {
-		return false, r.salesPersonExistsErr
-	}
-
-	return salesPersonID == r.salesPersonID, nil
-}
-
-func (r *repositoryStub) DoesPaymentMethodExist(_ context.Context, storeID uuid.UUID, paymentMethodID uuid.UUID) (bool, error) {
-	if r.paymentMethodExistsErr != nil {
-		return false, r.paymentMethodExistsErr
-	}
-
-	return paymentMethodID == r.paymentMethodID, nil
-}
-
 func TestCreateRepairOrder(t *testing.T) {
 	t.Parallel()
 
 	var (
+		theRoleID          = uuid.New()
 		theStoreID         = uuid.New()
 		theTechnicianID    = uuid.New()
 		theSalesPersonID   = uuid.New()
@@ -201,8 +56,13 @@ func TestCreateRepairOrder(t *testing.T) {
 		testutil.RequestContextWithLogger(context.Background()),
 		testutil.ModifiedUserDetails(func(details *readmodel.UserDetails) {
 			details.Store.ID = theStoreID
+			details.Role.ID = theRoleID
 		}),
 	)
+
+	qualifyingPermissionProvider := testutil.NewPermissionProviderStub(theRoleID, []permission.Permission{
+		permission.CreateRepairOrder(),
+	}, nil)
 
 	baseRepo := func() *repositoryStub {
 		return &repositoryStub{
@@ -367,7 +227,13 @@ func TestCreateRepairOrder(t *testing.T) {
 				t.Parallel()
 
 				repo := baseRepo()
-				s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}), repo, testutil.NewRepairOrderSlugProviderStub("random-slug", nil))
+				s := repairorder.NewService(
+					testutil.NewTimeProviderStub(time.Now()),
+					testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}),
+					repo,
+					qualifyingPermissionProvider,
+					testutil.NewRepairOrderSlugProviderStub("random-slug", nil),
+				)
 
 				_, err := s.CreateRepairOrder(requestCtx, tc.req)
 
@@ -433,7 +299,13 @@ func TestCreateRepairOrder(t *testing.T) {
 		slugProvider := testutil.NewRepairOrderSlugProviderStub(theSlug, nil)
 		repo := baseRepo()
 
-		s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}), repo, slugProvider)
+		s := repairorder.NewService(
+			testutil.NewTimeProviderStub(time.Now()),
+			testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}),
+			repo,
+			qualifyingPermissionProvider,
+			slugProvider,
+		)
 
 		req := validRequest()
 		_, err := s.CreateRepairOrder(requestCtx, &req)
@@ -450,7 +322,13 @@ func TestCreateRepairOrder(t *testing.T) {
 		now := time.Unix(1713917762, 0)
 		repo := baseRepo()
 
-		s := repairorder.NewService(testutil.NewTimeProviderStub(now), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}), repo, testutil.NewRepairOrderSlugProviderStub("random-slug", nil))
+		s := repairorder.NewService(
+			testutil.NewTimeProviderStub(now),
+			testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}),
+			repo,
+			qualifyingPermissionProvider,
+			testutil.NewRepairOrderSlugProviderStub("random-slug", nil),
+		)
 
 		req := validRequest()
 		_, err := s.CreateRepairOrder(requestCtx, &req)
@@ -473,7 +351,13 @@ func TestCreateRepairOrder(t *testing.T) {
 		repo := baseRepo()
 		repo.damages = damages
 
-		s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}), repo, testutil.NewRepairOrderSlugProviderStub("random-slug", nil))
+		s := repairorder.NewService(
+			testutil.NewTimeProviderStub(time.Now()),
+			testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}),
+			repo,
+			qualifyingPermissionProvider,
+			testutil.NewRepairOrderSlugProviderStub("random-slug", nil),
+		)
 
 		req := validRequest()
 		req.DamageTypes = []uuid.UUID{damages[0].id, damages[1].id}
@@ -512,7 +396,13 @@ func TestCreateRepairOrder(t *testing.T) {
 		repo := baseRepo()
 		repo.damages = damages
 
-		s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}), repo, testutil.NewRepairOrderSlugProviderStub("random-slug", nil))
+		s := repairorder.NewService(
+			testutil.NewTimeProviderStub(time.Now()),
+			testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}),
+			repo,
+			qualifyingPermissionProvider,
+			testutil.NewRepairOrderSlugProviderStub("random-slug", nil),
+		)
 
 		req := validRequest()
 		req.DamageTypes = []uuid.UUID{damages[0].id, randomID}
@@ -532,7 +422,13 @@ func TestCreateRepairOrder(t *testing.T) {
 		repo := baseRepo()
 		repo.phoneConditions = phoneConditions
 
-		s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}), repo, testutil.NewRepairOrderSlugProviderStub("random-slug", nil))
+		s := repairorder.NewService(
+			testutil.NewTimeProviderStub(time.Now()),
+			testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}),
+			repo,
+			qualifyingPermissionProvider,
+			testutil.NewRepairOrderSlugProviderStub("random-slug", nil),
+		)
 
 		req := validRequest()
 		req.PhoneConditions = []uuid.UUID{phoneConditions[0].id, phoneConditions[1].id}
@@ -570,7 +466,13 @@ func TestCreateRepairOrder(t *testing.T) {
 		repo := baseRepo()
 		repo.phoneConditions = phoneConditions
 
-		s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}), repo, testutil.NewRepairOrderSlugProviderStub("random-slug", nil))
+		s := repairorder.NewService(
+			testutil.NewTimeProviderStub(time.Now()),
+			testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}),
+			repo,
+			qualifyingPermissionProvider,
+			testutil.NewRepairOrderSlugProviderStub("random-slug", nil),
+		)
 
 		req := validRequest()
 		req.PhoneConditions = []uuid.UUID{phoneConditions[0].id, randomID}
@@ -590,7 +492,13 @@ func TestCreateRepairOrder(t *testing.T) {
 		repo := baseRepo()
 		repo.phoneEquipments = equipments
 
-		s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}), repo, testutil.NewRepairOrderSlugProviderStub("random-slug", nil))
+		s := repairorder.NewService(
+			testutil.NewTimeProviderStub(time.Now()),
+			testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}),
+			repo,
+			qualifyingPermissionProvider,
+			testutil.NewRepairOrderSlugProviderStub("random-slug", nil),
+		)
 
 		req := validRequest()
 		req.PhoneEquipments = []uuid.UUID{equipments[0].id, equipments[1].id}
@@ -628,7 +536,13 @@ func TestCreateRepairOrder(t *testing.T) {
 		repo := baseRepo()
 		repo.phoneEquipments = equipments
 
-		s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}), repo, testutil.NewRepairOrderSlugProviderStub("random-slug", nil))
+		s := repairorder.NewService(
+			testutil.NewTimeProviderStub(time.Now()),
+			testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}),
+			repo,
+			qualifyingPermissionProvider,
+			testutil.NewRepairOrderSlugProviderStub("random-slug", nil),
+		)
 
 		req := validRequest()
 		req.PhoneEquipments = []uuid.UUID{equipments[0].id, randomID}
@@ -645,7 +559,12 @@ func TestCreateRepairOrder(t *testing.T) {
 		locationProvider := testutil.NewResourceLocationProviderStubForRepairOrder(theLocation)
 		repo := baseRepo()
 
-		s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), locationProvider, repo, testutil.NewRepairOrderSlugProviderStub("random-slug", nil))
+		s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()),
+			locationProvider,
+			repo,
+			qualifyingPermissionProvider,
+			testutil.NewRepairOrderSlugProviderStub("random-slug", nil),
+		)
 
 		req := validRequest()
 		got, err := s.CreateRepairOrder(requestCtx, &req)
@@ -670,7 +589,13 @@ func TestCreateRepairOrder(t *testing.T) {
 		repo := baseRepo()
 		repo.technicianID = technicianID
 
-		s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}), repo, testutil.NewRepairOrderSlugProviderStub("random-slug", nil))
+		s := repairorder.NewService(
+			testutil.NewTimeProviderStub(time.Now()),
+			testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}),
+			repo,
+			qualifyingPermissionProvider,
+			testutil.NewRepairOrderSlugProviderStub("random-slug", nil),
+		)
 
 		req := validRequest()
 		req.TechnicianID = randomID
@@ -688,7 +613,13 @@ func TestCreateRepairOrder(t *testing.T) {
 		repo := baseRepo()
 		repo.salesPersonID = salesPersonID
 
-		s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}), repo, testutil.NewRepairOrderSlugProviderStub("random-slug", nil))
+		s := repairorder.NewService(
+			testutil.NewTimeProviderStub(time.Now()),
+			testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}),
+			repo,
+			qualifyingPermissionProvider,
+			testutil.NewRepairOrderSlugProviderStub("random-slug", nil),
+		)
 
 		req := validRequest()
 		req.SalesPersonID = randomID
@@ -706,7 +637,13 @@ func TestCreateRepairOrder(t *testing.T) {
 		repo := baseRepo()
 		repo.paymentMethodID = thePaymentMethodID
 
-		s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}), repo, testutil.NewRepairOrderSlugProviderStub("random-slug", nil))
+		s := repairorder.NewService(
+			testutil.NewTimeProviderStub(time.Now()),
+			testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}),
+			repo,
+			qualifyingPermissionProvider,
+			testutil.NewRepairOrderSlugProviderStub("random-slug", nil),
+		)
 
 		req := validRequest()
 		req.DownPayment = genapi.NewOptCreateRepairOrderRequestDownPayment(genapi.CreateRepairOrderRequestDownPayment{
@@ -746,7 +683,13 @@ func TestCreateRepairOrder(t *testing.T) {
 				t.Parallel()
 
 				repo := baseRepo()
-				s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}), repo, testutil.NewRepairOrderSlugProviderStub("random-slug", nil))
+				s := repairorder.NewService(
+					testutil.NewTimeProviderStub(time.Now()),
+					testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}),
+					repo,
+					qualifyingPermissionProvider,
+					testutil.NewRepairOrderSlugProviderStub("random-slug", nil),
+				)
 
 				req := validRequest()
 				req.ContactPhoneNumber = tc.contactNumber
@@ -761,7 +704,13 @@ func TestCreateRepairOrder(t *testing.T) {
 		t.Parallel()
 
 		repo := baseRepo()
-		s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}), repo, testutil.NewRepairOrderSlugProviderStub("random-slug", nil))
+		s := repairorder.NewService(
+			testutil.NewTimeProviderStub(time.Now()),
+			testutil.NewResourceLocationProviderStubForRepairOrder(url.URL{}),
+			repo,
+			qualifyingPermissionProvider,
+			testutil.NewRepairOrderSlugProviderStub("random-slug", nil),
+		)
 
 		req := validRequest()
 		emptyCtx := testutil.RequestContextWithLogger(context.Background())
@@ -774,60 +723,101 @@ func TestCreateRepairOrder(t *testing.T) {
 	t.Run("returns internal server error", func(t *testing.T) {
 		testCases := []struct {
 			name  string
-			setup func(repo *repositoryStub, locationProvider *testutil.ResourceLocationProviderStub, slugProvider *testutil.OrderSlugProviderStub)
+			setup func(
+				repo *repositoryStub,
+				locationProvider *testutil.ResourceLocationProviderStub,
+				permissionProvider *testutil.PermissionProviderStub,
+				slugProvider *testutil.OrderSlugProviderStub,
+			)
 		}{
 			{
 				name: "when repository.DoesTechnicianExist() errors",
-				setup: func(repo *repositoryStub, _ *testutil.ResourceLocationProviderStub, _ *testutil.OrderSlugProviderStub) {
+				setup: func(repo *repositoryStub,
+					_ *testutil.ResourceLocationProviderStub,
+					_ *testutil.PermissionProviderStub,
+					_ *testutil.OrderSlugProviderStub) {
 					repo.technicianExistsErr = errors.New("oh no!")
 				},
 			},
 			{
 				name: "when repository.DoesSalesPersonIDExist() errors",
-				setup: func(repo *repositoryStub, _ *testutil.ResourceLocationProviderStub, _ *testutil.OrderSlugProviderStub) {
+				setup: func(repo *repositoryStub,
+					_ *testutil.ResourceLocationProviderStub,
+					_ *testutil.PermissionProviderStub,
+					_ *testutil.OrderSlugProviderStub) {
 					repo.salesPersonExistsErr = errors.New("oh no!")
 				},
 			},
 			{
 				name: "when repository.DoesPaymentMethodExist() errors",
-				setup: func(repo *repositoryStub, _ *testutil.ResourceLocationProviderStub, _ *testutil.OrderSlugProviderStub) {
+				setup: func(repo *repositoryStub,
+					_ *testutil.ResourceLocationProviderStub,
+					_ *testutil.PermissionProviderStub,
+					_ *testutil.OrderSlugProviderStub) {
 					repo.paymentMethodExistsErr = errors.New("oh no!")
 				},
 			},
 			{
 				name: "when repository.CreateRepairOrder() errors",
-				setup: func(repo *repositoryStub, _ *testutil.ResourceLocationProviderStub, _ *testutil.OrderSlugProviderStub) {
+				setup: func(repo *repositoryStub,
+					_ *testutil.ResourceLocationProviderStub,
+					_ *testutil.PermissionProviderStub,
+					_ *testutil.OrderSlugProviderStub) {
 					repo.createErr = errors.New("oh no!")
 				},
 			},
 			{
 				name: "when repository.GetDamageNamesByID() errors",
-				setup: func(repo *repositoryStub, _ *testutil.ResourceLocationProviderStub, _ *testutil.OrderSlugProviderStub) {
+				setup: func(repo *repositoryStub,
+					_ *testutil.ResourceLocationProviderStub,
+					_ *testutil.PermissionProviderStub,
+					_ *testutil.OrderSlugProviderStub) {
 					repo.damageNameErr = errors.New("oh no!")
 				},
 			},
 			{
 				name: "when repository.GetPhoneConditionNamesByID() errors",
-				setup: func(repo *repositoryStub, _ *testutil.ResourceLocationProviderStub, _ *testutil.OrderSlugProviderStub) {
+				setup: func(repo *repositoryStub,
+					_ *testutil.ResourceLocationProviderStub,
+					_ *testutil.PermissionProviderStub,
+					_ *testutil.OrderSlugProviderStub) {
 					repo.phoneConditionNameErr = errors.New("oh no!")
 				},
 			},
 			{
 				name: "when repository.GetPhoneEquipmentNamesByID() errors",
-				setup: func(repo *repositoryStub, _ *testutil.ResourceLocationProviderStub, _ *testutil.OrderSlugProviderStub) {
+				setup: func(repo *repositoryStub,
+					_ *testutil.ResourceLocationProviderStub,
+					_ *testutil.PermissionProviderStub,
+					_ *testutil.OrderSlugProviderStub) {
 					repo.phoneEquipmentNameErr = errors.New("oh no!")
 				},
 			},
 			{
 				name: "when repository.GetPhoneEquipmentNamesByID() errors",
-				setup: func(repo *repositoryStub, _ *testutil.ResourceLocationProviderStub, _ *testutil.OrderSlugProviderStub) {
+				setup: func(repo *repositoryStub,
+					_ *testutil.ResourceLocationProviderStub,
+					_ *testutil.PermissionProviderStub,
+					_ *testutil.OrderSlugProviderStub) {
 					repo.phoneEquipmentNameErr = errors.New("oh no!")
 				},
 			},
 			{
 				name: "when order slug provider errors",
-				setup: func(_ *repositoryStub, _ *testutil.ResourceLocationProviderStub, slugProvider *testutil.OrderSlugProviderStub) {
+				setup: func(_ *repositoryStub,
+					_ *testutil.ResourceLocationProviderStub,
+					_ *testutil.PermissionProviderStub,
+					slugProvider *testutil.OrderSlugProviderStub) {
 					slugProvider.SetError(errors.New("oh no!"))
+				},
+			},
+			{
+				name: "when permissionProvider.Can() errors",
+				setup: func(repo *repositoryStub,
+					locationProvider *testutil.ResourceLocationProviderStub,
+					permissionProvider *testutil.PermissionProviderStub,
+					slugProvider *testutil.OrderSlugProviderStub) {
+					permissionProvider.SetError(errors.New("oh no!"))
 				},
 			},
 		}
@@ -843,10 +833,19 @@ func TestCreateRepairOrder(t *testing.T) {
 					url.URL{Scheme: "http", Host: "example.com", Path: "/repair-orders"},
 				)
 				slugProvider := testutil.NewRepairOrderSlugProviderStub("random-slug", nil)
+				permissionProvider := testutil.NewPermissionProviderStub(theRoleID, []permission.Permission{
+					permission.CreateRepairOrder(),
+				}, nil)
 
-				tc.setup(repo, locationProvider, slugProvider)
+				tc.setup(repo, locationProvider, permissionProvider, slugProvider)
 
-				s := repairorder.NewService(testutil.NewTimeProviderStub(time.Now()), locationProvider, repo, slugProvider)
+				s := repairorder.NewService(
+					testutil.NewTimeProviderStub(time.Now()),
+					locationProvider,
+					repo,
+					permissionProvider,
+					slugProvider,
+				)
 
 				req := validRequest()
 				_, err := s.CreateRepairOrder(requestCtx, &req)
@@ -855,4 +854,151 @@ func TestCreateRepairOrder(t *testing.T) {
 			})
 		}
 	})
+}
+
+type damage struct {
+	id   uuid.UUID
+	name string
+}
+
+type phoneCondition struct {
+	id   uuid.UUID
+	name string
+}
+
+type phoneEquipment struct {
+	id   uuid.UUID
+	name string
+}
+
+type repositoryStub struct {
+	damages                []damage
+	phoneConditions        []phoneCondition
+	phoneEquipments        []phoneEquipment
+	technicianID           uuid.UUID
+	salesPersonID          uuid.UUID
+	paymentMethodID        uuid.UUID
+	calledWithOrder        domain.Order
+	createErr              error
+	damageNameErr          error
+	phoneConditionNameErr  error
+	phoneEquipmentNameErr  error
+	storeExistsErr         error
+	technicianExistsErr    error
+	salesPersonExistsErr   error
+	paymentMethodExistsErr error
+}
+
+func (r *repositoryStub) CreateRepairOrder(_ context.Context, order domain.Order) error {
+	if r.createErr != nil {
+		return r.createErr
+	}
+
+	r.calledWithOrder = order
+	return nil
+}
+
+func (r *repositoryStub) GetDamageNamesByIDs(_ context.Context, storeID uuid.UUID, ids []uuid.UUID) ([]string, error) {
+	if r.damageNameErr != nil {
+		return []string{}, r.damageNameErr
+	}
+
+	names := []string{}
+
+	for _, id := range ids {
+		found := false
+
+		for _, damage := range r.damages {
+			if damage.id == id {
+				names = append(names, damage.name)
+				found = true
+
+				break
+			}
+		}
+
+		if !found {
+			return []string{}, apperror.ErrDamageNotFound
+		}
+	}
+
+	return names, nil
+}
+
+func (r *repositoryStub) GetPhoneConditionNamesByIDs(_ context.Context, storeID uuid.UUID, ids []uuid.UUID) ([]string, error) {
+	if r.phoneConditionNameErr != nil {
+		return []string{}, r.phoneConditionNameErr
+	}
+
+	names := []string{}
+
+	for _, id := range ids {
+		found := false
+
+		for _, phoneCondition := range r.phoneConditions {
+			if phoneCondition.id == id {
+				names = append(names, phoneCondition.name)
+				found = true
+
+				break
+			}
+		}
+
+		if !found {
+			return []string{}, apperror.ErrPhoneConditionNotFound
+		}
+	}
+
+	return names, nil
+}
+
+func (r *repositoryStub) GetPhoneEquipmentNamesByIDs(_ context.Context, storeID uuid.UUID, ids []uuid.UUID) ([]string, error) {
+	if r.phoneEquipmentNameErr != nil {
+		return []string{}, r.phoneEquipmentNameErr
+	}
+
+	names := []string{}
+
+	for _, id := range ids {
+		found := false
+
+		for _, equipment := range r.phoneEquipments {
+			if equipment.id == id {
+				names = append(names, equipment.name)
+				found = true
+
+				break
+			}
+		}
+
+		if !found {
+			return []string{}, apperror.ErrPhoneEquipmentNotFound
+		}
+	}
+
+	return names, nil
+}
+
+func (r *repositoryStub) DoesTechnicianExist(_ context.Context, storeID uuid.UUID, technicianID uuid.UUID) (bool, error) {
+	if r.technicianExistsErr != nil {
+		return false, r.technicianExistsErr
+	}
+
+	return technicianID == r.technicianID, nil
+}
+
+func (r *repositoryStub) DoesSalesPersonExist(_ context.Context, storeID uuid.UUID, salesPersonID uuid.UUID) (bool, error) {
+	if r.salesPersonExistsErr != nil {
+		return false, r.salesPersonExistsErr
+	}
+
+	return salesPersonID == r.salesPersonID, nil
+}
+
+func (r *repositoryStub) DoesPaymentMethodExist(_ context.Context, storeID uuid.UUID, paymentMethodID uuid.UUID) (bool, error) {
+	if r.paymentMethodExistsErr != nil {
+		return false, r.paymentMethodExistsErr
+	}
+
+	return paymentMethodID == r.paymentMethodID, nil
 }

@@ -16,6 +16,7 @@ import (
 	"github.com/JosephJoshua/remana-backend/internal/logger"
 	"github.com/JosephJoshua/remana-backend/internal/modules/auth/readmodel"
 	"github.com/JosephJoshua/remana-backend/internal/modules/damagetype"
+	"github.com/JosephJoshua/remana-backend/internal/modules/permission"
 	"github.com/JosephJoshua/remana-backend/internal/testutil"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
@@ -23,42 +24,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type repositoryStub struct {
-	createCalledWith struct {
-		id      uuid.UUID
-		storeID uuid.UUID
-		name    string
-	}
-	storeID      uuid.UUID
-	existingName string
-	createErr    error
-	nameTakenErr error
-}
-
-func (r *repositoryStub) CreateDamageType(_ context.Context, id uuid.UUID, storeID uuid.UUID, name string) error {
-	if r.createErr != nil {
-		return r.createErr
-	}
-
-	r.createCalledWith.id = id
-	r.createCalledWith.storeID = storeID
-	r.createCalledWith.name = name
-
-	return nil
-}
-
-func (r *repositoryStub) IsNameTaken(_ context.Context, storeID uuid.UUID, name string) (bool, error) {
-	if r.nameTakenErr != nil {
-		return false, r.nameTakenErr
-	}
-
-	return r.storeID == storeID && r.existingName == name, nil
-}
-
 func TestCreateDamageType(t *testing.T) {
 	t.Parallel()
 
 	var (
+		theRoleID  = uuid.New()
 		theStoreID = uuid.New()
 	)
 
@@ -67,7 +37,14 @@ func TestCreateDamageType(t *testing.T) {
 		testutil.RequestContextWithLogger(context.Background()),
 		testutil.ModifiedUserDetails(func(details *readmodel.UserDetails) {
 			details.Store.ID = theStoreID
+			details.Role.ID = theRoleID
 		}),
+	)
+
+	qualifyingPermissionProvider := testutil.NewPermissionProviderStub(
+		theRoleID,
+		[]permission.Permission{permission.CreateDamageType()},
+		nil,
 	)
 
 	t.Run("tries to create damage type when request is valid", func(t *testing.T) {
@@ -76,6 +53,7 @@ func TestCreateDamageType(t *testing.T) {
 		repo := &repositoryStub{storeID: theStoreID}
 		s := damagetype.NewService(
 			testutil.NewResourceLocationProviderStubForDamageType(url.URL{}),
+			qualifyingPermissionProvider,
 			repo,
 		)
 
@@ -108,7 +86,7 @@ func TestCreateDamageType(t *testing.T) {
 		resourceLocationProvider := testutil.NewResourceLocationProviderStubForDamageType(theLocation)
 		repo := &repositoryStub{storeID: theStoreID}
 
-		s := damagetype.NewService(resourceLocationProvider, repo)
+		s := damagetype.NewService(resourceLocationProvider, qualifyingPermissionProvider, repo)
 
 		got, err := s.CreateDamageType(requestCtx, &genapi.CreateDamageTypeRequest{
 			Name: "damage type 1",
@@ -130,6 +108,7 @@ func TestCreateDamageType(t *testing.T) {
 
 		s := damagetype.NewService(
 			testutil.NewResourceLocationProviderStubForDamageType(url.URL{}),
+			qualifyingPermissionProvider,
 			&repositoryStub{},
 		)
 
@@ -141,11 +120,28 @@ func TestCreateDamageType(t *testing.T) {
 		testutil.AssertAPIStatusCode(t, http.StatusUnauthorized, err)
 	})
 
+	t.Run("returns forbidden when user doesn't have permissions", func(t *testing.T) {
+		t.Parallel()
+
+		s := damagetype.NewService(
+			testutil.NewResourceLocationProviderStubForDamageType(url.URL{}),
+			testutil.NewPermissionProviderStub(theRoleID, []permission.Permission{}, nil),
+			&repositoryStub{},
+		)
+
+		_, err := s.CreateDamageType(requestCtx, &genapi.CreateDamageTypeRequest{
+			Name: "damage type 1",
+		})
+
+		testutil.AssertAPIStatusCode(t, http.StatusForbidden, err)
+	})
+
 	t.Run("returns bad request when name is empty", func(t *testing.T) {
 		t.Parallel()
 
 		s := damagetype.NewService(
 			testutil.NewResourceLocationProviderStubForDamageType(url.URL{}),
+			qualifyingPermissionProvider,
 			&repositoryStub{storeID: theStoreID},
 		)
 
@@ -166,6 +162,7 @@ func TestCreateDamageType(t *testing.T) {
 		repo := &repositoryStub{existingName: theName, storeID: theStoreID}
 		s := damagetype.NewService(
 			testutil.NewResourceLocationProviderStubForDamageType(url.URL{}),
+			qualifyingPermissionProvider,
 			repo,
 		)
 
@@ -182,6 +179,7 @@ func TestCreateDamageType(t *testing.T) {
 
 		s := damagetype.NewService(
 			testutil.NewResourceLocationProviderStubForDamageType(url.URL{}),
+			qualifyingPermissionProvider,
 			&repositoryStub{nameTakenErr: errors.New("oh no!"), storeID: theStoreID},
 		)
 
@@ -197,6 +195,7 @@ func TestCreateDamageType(t *testing.T) {
 
 		s := damagetype.NewService(
 			testutil.NewResourceLocationProviderStubForDamageType(url.URL{}),
+			qualifyingPermissionProvider,
 			&repositoryStub{createErr: errors.New("oh no!"), storeID: theStoreID},
 		)
 
@@ -206,4 +205,52 @@ func TestCreateDamageType(t *testing.T) {
 
 		testutil.AssertAPIStatusCode(t, http.StatusInternalServerError, err)
 	})
+
+	t.Run("returns internal server error when permissionProvider.Can() errors", func(t *testing.T) {
+		t.Parallel()
+
+		s := damagetype.NewService(
+			testutil.NewResourceLocationProviderStubForDamageType(url.URL{}),
+			testutil.NewPermissionProviderStub(theRoleID, []permission.Permission{}, errors.New("oh no!")),
+			&repositoryStub{createErr: errors.New("oh no!"), storeID: theStoreID},
+		)
+
+		_, err := s.CreateDamageType(requestCtx, &genapi.CreateDamageTypeRequest{
+			Name: "damage type 1",
+		})
+
+		testutil.AssertAPIStatusCode(t, http.StatusInternalServerError, err)
+	})
+}
+
+type repositoryStub struct {
+	createCalledWith struct {
+		id      uuid.UUID
+		storeID uuid.UUID
+		name    string
+	}
+	storeID      uuid.UUID
+	existingName string
+	createErr    error
+	nameTakenErr error
+}
+
+func (r *repositoryStub) CreateDamageType(_ context.Context, id uuid.UUID, storeID uuid.UUID, name string) error {
+	if r.createErr != nil {
+		return r.createErr
+	}
+
+	r.createCalledWith.id = id
+	r.createCalledWith.storeID = storeID
+	r.createCalledWith.name = name
+
+	return nil
+}
+
+func (r *repositoryStub) IsNameTaken(_ context.Context, storeID uuid.UUID, name string) (bool, error) {
+	if r.nameTakenErr != nil {
+		return false, r.nameTakenErr
+	}
+
+	return r.storeID == storeID && r.existingName == name, nil
 }

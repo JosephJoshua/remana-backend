@@ -16,6 +16,7 @@ import (
 	"github.com/JosephJoshua/remana-backend/internal/logger"
 	"github.com/JosephJoshua/remana-backend/internal/modules/auth/readmodel"
 	"github.com/JosephJoshua/remana-backend/internal/modules/paymentmethod"
+	"github.com/JosephJoshua/remana-backend/internal/modules/permission"
 	"github.com/JosephJoshua/remana-backend/internal/testutil"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
@@ -23,43 +24,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type repositoryStub struct {
-	createCalledWith struct {
-		id      uuid.UUID
-		storeID uuid.UUID
-		name    string
-	}
-	storeID      uuid.UUID
-	existingName string
-	createErr    error
-	nameTakenErr error
-}
-
-func (r *repositoryStub) CreatePaymentMethod(_ context.Context, id uuid.UUID, storeID uuid.UUID, name string) error {
-	if r.createErr != nil {
-		return r.createErr
-	}
-
-	r.createCalledWith.id = id
-	r.createCalledWith.storeID = storeID
-	r.createCalledWith.name = name
-
-	return nil
-}
-
-func (r *repositoryStub) IsNameTaken(_ context.Context, storeID uuid.UUID, name string) (bool, error) {
-	if r.nameTakenErr != nil {
-		return false, r.nameTakenErr
-	}
-
-	return r.storeID == storeID && r.existingName == name, nil
-}
-
 func TestCreatePaymentMethod(t *testing.T) {
 	t.Parallel()
 
 	var (
 		theStoreID = uuid.New()
+		theRoleID  = uuid.New()
 	)
 
 	logger.Init(zerolog.ErrorLevel, appconstant.AppEnvDev)
@@ -67,7 +37,14 @@ func TestCreatePaymentMethod(t *testing.T) {
 		testutil.RequestContextWithLogger(context.Background()),
 		testutil.ModifiedUserDetails(func(details *readmodel.UserDetails) {
 			details.Store.ID = theStoreID
+			details.Role.ID = theRoleID
 		}),
+	)
+
+	qualifyingPermissionProvider := testutil.NewPermissionProviderStub(
+		theRoleID,
+		[]permission.Permission{permission.CreatePaymentMethod()},
+		nil,
 	)
 
 	t.Run("tries to create payment method when request is valid", func(t *testing.T) {
@@ -76,6 +53,7 @@ func TestCreatePaymentMethod(t *testing.T) {
 		repo := &repositoryStub{storeID: theStoreID}
 		s := paymentmethod.NewService(
 			testutil.NewResourceLocationProviderStubForPaymentMethod(url.URL{}),
+			qualifyingPermissionProvider,
 			repo,
 		)
 
@@ -108,7 +86,7 @@ func TestCreatePaymentMethod(t *testing.T) {
 		resourceLocationProvider := testutil.NewResourceLocationProviderStubForPaymentMethod(theLocation)
 		repo := &repositoryStub{storeID: theStoreID}
 
-		s := paymentmethod.NewService(resourceLocationProvider, repo)
+		s := paymentmethod.NewService(resourceLocationProvider, qualifyingPermissionProvider, repo)
 
 		got, err := s.CreatePaymentMethod(requestCtx, &genapi.CreatePaymentMethodRequest{
 			Name: "payment method 1",
@@ -130,6 +108,7 @@ func TestCreatePaymentMethod(t *testing.T) {
 
 		s := paymentmethod.NewService(
 			testutil.NewResourceLocationProviderStubForPaymentMethod(url.URL{}),
+			qualifyingPermissionProvider,
 			&repositoryStub{},
 		)
 
@@ -141,11 +120,28 @@ func TestCreatePaymentMethod(t *testing.T) {
 		testutil.AssertAPIStatusCode(t, http.StatusUnauthorized, err)
 	})
 
+	t.Run("returns forbidden when role doesn't have permission", func(t *testing.T) {
+		t.Parallel()
+
+		s := paymentmethod.NewService(
+			testutil.NewResourceLocationProviderStubForPaymentMethod(url.URL{}),
+			testutil.NewPermissionProviderStub(theRoleID, []permission.Permission{}, nil),
+			&repositoryStub{},
+		)
+
+		_, err := s.CreatePaymentMethod(requestCtx, &genapi.CreatePaymentMethodRequest{
+			Name: "payment method 1",
+		})
+
+		testutil.AssertAPIStatusCode(t, http.StatusForbidden, err)
+	})
+
 	t.Run("returns bad request when name is empty", func(t *testing.T) {
 		t.Parallel()
 
 		s := paymentmethod.NewService(
 			testutil.NewResourceLocationProviderStubForPaymentMethod(url.URL{}),
+			qualifyingPermissionProvider,
 			&repositoryStub{storeID: theStoreID},
 		)
 
@@ -166,6 +162,7 @@ func TestCreatePaymentMethod(t *testing.T) {
 		repo := &repositoryStub{existingName: theName, storeID: theStoreID}
 		s := paymentmethod.NewService(
 			testutil.NewResourceLocationProviderStubForPaymentMethod(url.URL{}),
+			qualifyingPermissionProvider,
 			repo,
 		)
 
@@ -182,6 +179,7 @@ func TestCreatePaymentMethod(t *testing.T) {
 
 		s := paymentmethod.NewService(
 			testutil.NewResourceLocationProviderStubForPaymentMethod(url.URL{}),
+			qualifyingPermissionProvider,
 			&repositoryStub{nameTakenErr: errors.New("oh no!"), storeID: theStoreID},
 		)
 
@@ -197,6 +195,7 @@ func TestCreatePaymentMethod(t *testing.T) {
 
 		s := paymentmethod.NewService(
 			testutil.NewResourceLocationProviderStubForPaymentMethod(url.URL{}),
+			qualifyingPermissionProvider,
 			&repositoryStub{createErr: errors.New("oh no!"), storeID: theStoreID},
 		)
 
@@ -206,4 +205,52 @@ func TestCreatePaymentMethod(t *testing.T) {
 
 		testutil.AssertAPIStatusCode(t, http.StatusInternalServerError, err)
 	})
+
+	t.Run("returns internal server error when permissionProvider.Can() errors", func(t *testing.T) {
+		t.Parallel()
+
+		s := paymentmethod.NewService(
+			testutil.NewResourceLocationProviderStubForPaymentMethod(url.URL{}),
+			qualifyingPermissionProvider,
+			&repositoryStub{createErr: errors.New("oh no!"), storeID: theStoreID},
+		)
+
+		_, err := s.CreatePaymentMethod(requestCtx, &genapi.CreatePaymentMethodRequest{
+			Name: "payment method 1",
+		})
+
+		testutil.AssertAPIStatusCode(t, http.StatusInternalServerError, err)
+	})
+}
+
+type repositoryStub struct {
+	createCalledWith struct {
+		id      uuid.UUID
+		storeID uuid.UUID
+		name    string
+	}
+	storeID      uuid.UUID
+	existingName string
+	createErr    error
+	nameTakenErr error
+}
+
+func (r *repositoryStub) CreatePaymentMethod(_ context.Context, id uuid.UUID, storeID uuid.UUID, name string) error {
+	if r.createErr != nil {
+		return r.createErr
+	}
+
+	r.createCalledWith.id = id
+	r.createCalledWith.storeID = storeID
+	r.createCalledWith.name = name
+
+	return nil
+}
+
+func (r *repositoryStub) IsNameTaken(_ context.Context, storeID uuid.UUID, name string) (bool, error) {
+	if r.nameTakenErr != nil {
+		return false, r.nameTakenErr
+	}
+
+	return r.storeID == storeID && r.existingName == name, nil
 }

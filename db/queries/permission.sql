@@ -30,3 +30,20 @@ INSERT INTO role_permissions (
   $1,
   $2
 );
+
+-- name: HasPermission :one
+SELECT COUNT(*)
+FROM role_permissions
+LEFT JOIN
+  permissions ON permissions.permission_id = role_permissions.permission_id
+LEFT JOIN
+  permission_groups ON permission_groups.permission_group_id = permissions.permission_group_id
+WHERE
+  role_permissions.role_id = $1 AND
+  permissions.permission_name = $2 AND
+  permission_groups.permission_group_name = $3;
+
+-- name: IsStoreAdmin :one
+SELECT roles.is_store_admin
+FROM roles
+WHERE roles.role_id = $1;

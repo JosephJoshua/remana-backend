@@ -24,114 +24,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type repositoryPermission struct {
-	id        uuid.UUID
-	groupName string
-	name      string
-}
-
-type repositoryStub struct {
-	createRoleCalledWith struct {
-		id           uuid.UUID
-		storeID      uuid.UUID
-		name         string
-		isStoreAdmin bool
-	}
-	assignPermissionsCalledWith struct {
-		roleID        uuid.UUID
-		permissionIDs []uuid.UUID
-	}
-	storeID              uuid.UUID
-	roleID               uuid.UUID
-	permissions          []repositoryPermission
-	existingName         string
-	createRoleErr        error
-	assignPermissionsErr error
-	nameTakenErr         error
-	roleExistsErr        error
-	getPermissionIDsErr  error
-}
-
-func (r *repositoryStub) CreateRole(
-	_ context.Context,
-	id uuid.UUID,
-	storeID uuid.UUID,
-	name string,
-	isStoreAdmin bool,
-) error {
-	if r.createRoleErr != nil {
-		return r.createRoleErr
-	}
-
-	r.createRoleCalledWith.id = id
-	r.createRoleCalledWith.storeID = storeID
-	r.createRoleCalledWith.name = name
-	r.createRoleCalledWith.isStoreAdmin = isStoreAdmin
-
-	return nil
-}
-
-func (r *repositoryStub) IsRoleNameTaken(_ context.Context, storeID uuid.UUID, name string) (bool, error) {
-	if r.nameTakenErr != nil {
-		return false, r.nameTakenErr
-	}
-
-	return r.storeID == storeID && r.existingName == name, nil
-}
-
-func (r *repositoryStub) GetPermissionIDs(
-	_ context.Context,
-	permissions []permission.GetPermissionIDDetail,
-) ([]uuid.UUID, error) {
-	if r.getPermissionIDsErr != nil {
-		return []uuid.UUID{}, r.getPermissionIDsErr
-	}
-
-	ids := make([]uuid.UUID, 0, len(permissions))
-	for _, toFind := range permissions {
-		var found bool
-
-		for _, p := range r.permissions {
-			if p.groupName == toFind.GroupName && p.name == toFind.Name {
-				ids = append(ids, p.id)
-				found = true
-
-				break
-			}
-		}
-
-		if !found {
-			return []uuid.UUID{}, apperror.ErrPermissionNotFound
-		}
-	}
-
-	return ids, nil
-}
-
-func (r *repositoryStub) DoesRoleExist(_ context.Context, roleID uuid.UUID) (bool, error) {
-	if r.roleExistsErr != nil {
-		return false, r.roleExistsErr
-	}
-
-	return roleID == r.roleID, nil
-}
-
-func (r *repositoryStub) AssignPermissionsToRole(_ context.Context, roleID uuid.UUID, permissionIDs []uuid.UUID) error {
-	if r.assignPermissionsErr != nil {
-		return r.assignPermissionsErr
-	}
-
-	r.assignPermissionsCalledWith.roleID = roleID
-	r.assignPermissionsCalledWith.permissionIDs = permissionIDs
-
-	return nil
-}
-
 func TestCreateRole(t *testing.T) {
 	t.Parallel()
 
 	var (
 		theStoreID = uuid.New()
+		theRoleID  = uuid.New()
 	)
 
 	logger.Init(zerolog.ErrorLevel, appconstant.AppEnvDev)
@@ -140,16 +38,22 @@ func TestCreateRole(t *testing.T) {
 		testutil.RequestContextWithLogger(context.Background()),
 		testutil.ModifiedUserDetails(func(details *readmodel.UserDetails) {
 			details.Store.ID = theStoreID
+			details.Role.ID = theRoleID
 		}),
 	)
+
+	qualifyingPermissionProvider := testutil.NewPermissionProviderStub(theRoleID, []permission.Permission{
+		permission.CreateRole(),
+	}, nil)
 
 	t.Run("tries to create role when request is valid", func(t *testing.T) {
 		t.Parallel()
 
-		repo := &repositoryStub{storeID: theStoreID}
+		repo := &serviceRepoStub{storeID: theStoreID}
 		s := permission.NewService(
 			testutil.NewResourceLocationProviderStubForRole(url.URL{}),
 			repo,
+			qualifyingPermissionProvider,
 		)
 
 		req := &genapi.CreateRoleRequest{
@@ -181,9 +85,9 @@ func TestCreateRole(t *testing.T) {
 		)
 
 		resourceLocationProvider := testutil.NewResourceLocationProviderStubForRole(theLocation)
-		repo := &repositoryStub{storeID: theStoreID}
+		repo := &serviceRepoStub{storeID: theStoreID}
 
-		s := permission.NewService(resourceLocationProvider, repo)
+		s := permission.NewService(resourceLocationProvider, repo, qualifyingPermissionProvider)
 
 		got, err := s.CreateRole(requestCtx, &genapi.CreateRoleRequest{
 			Name:         "role 1",
@@ -206,7 +110,8 @@ func TestCreateRole(t *testing.T) {
 
 		s := permission.NewService(
 			testutil.NewResourceLocationProviderStubForRole(url.URL{}),
-			&repositoryStub{},
+			&serviceRepoStub{},
+			qualifyingPermissionProvider,
 		)
 
 		emptyCtx := testutil.RequestContextWithLogger(context.Background())
@@ -218,12 +123,30 @@ func TestCreateRole(t *testing.T) {
 		testutil.AssertAPIStatusCode(t, http.StatusUnauthorized, err)
 	})
 
+	t.Run("returns forbidden when user doesn't have permissions", func(t *testing.T) {
+		t.Parallel()
+
+		s := permission.NewService(
+			testutil.NewResourceLocationProviderStubForRole(url.URL{}),
+			&serviceRepoStub{},
+			testutil.NewPermissionProviderStub(theRoleID, []permission.Permission{}, nil),
+		)
+
+		_, err := s.CreateRole(requestCtx, &genapi.CreateRoleRequest{
+			Name:         "role 1",
+			IsStoreAdmin: true,
+		})
+
+		testutil.AssertAPIStatusCode(t, http.StatusForbidden, err)
+	})
+
 	t.Run("returns bad request when name is empty", func(t *testing.T) {
 		t.Parallel()
 
 		s := permission.NewService(
 			testutil.NewResourceLocationProviderStubForRole(url.URL{}),
-			&repositoryStub{storeID: theStoreID},
+			&serviceRepoStub{storeID: theStoreID},
+			qualifyingPermissionProvider,
 		)
 
 		_, err := s.CreateRole(requestCtx, &genapi.CreateRoleRequest{
@@ -241,10 +164,11 @@ func TestCreateRole(t *testing.T) {
 			theName = "role 1"
 		)
 
-		repo := &repositoryStub{existingName: theName, storeID: theStoreID}
+		repo := &serviceRepoStub{existingName: theName, storeID: theStoreID}
 		s := permission.NewService(
 			testutil.NewResourceLocationProviderStubForRole(url.URL{}),
 			repo,
+			qualifyingPermissionProvider,
 		)
 
 		req := &genapi.CreateRoleRequest{
@@ -261,7 +185,8 @@ func TestCreateRole(t *testing.T) {
 
 		s := permission.NewService(
 			testutil.NewResourceLocationProviderStubForRole(url.URL{}),
-			&repositoryStub{nameTakenErr: errors.New("oh no!"), storeID: theStoreID},
+			&serviceRepoStub{nameTakenErr: errors.New("oh no!"), storeID: theStoreID},
+			qualifyingPermissionProvider,
 		)
 
 		_, err := s.CreateRole(requestCtx, &genapi.CreateRoleRequest{
@@ -277,7 +202,25 @@ func TestCreateRole(t *testing.T) {
 
 		s := permission.NewService(
 			testutil.NewResourceLocationProviderStubForRole(url.URL{}),
-			&repositoryStub{createRoleErr: errors.New("oh no!"), storeID: theStoreID},
+			&serviceRepoStub{createRoleErr: errors.New("oh no!"), storeID: theStoreID},
+			qualifyingPermissionProvider,
+		)
+
+		_, err := s.CreateRole(requestCtx, &genapi.CreateRoleRequest{
+			Name:         "role 1",
+			IsStoreAdmin: false,
+		})
+
+		testutil.AssertAPIStatusCode(t, http.StatusInternalServerError, err)
+	})
+
+	t.Run("returns internal server error when permissionProvider.Can() errors", func(t *testing.T) {
+		t.Parallel()
+
+		s := permission.NewService(
+			testutil.NewResourceLocationProviderStubForRole(url.URL{}),
+			&serviceRepoStub{createRoleErr: errors.New("oh no!"), storeID: theStoreID},
+			testutil.NewPermissionProviderStub(theRoleID, nil, errors.New("oh no!")),
 		)
 
 		_, err := s.CreateRole(requestCtx, &genapi.CreateRoleRequest{
@@ -299,7 +242,7 @@ func TestAssignPermissionsToRole(t *testing.T) {
 			{GroupName: "permission", Name: "test"},
 			{GroupName: "permission_two", Name: "test_two"},
 		}
-		theRepoPermissions = []repositoryPermission{
+		theRepoPermissions = []serviceRepoPermission{
 			{id: uuid.New(), groupName: "permission", name: "test"},
 			{id: uuid.New(), groupName: "permission_two", name: "test_two"},
 		}
@@ -311,11 +254,16 @@ func TestAssignPermissionsToRole(t *testing.T) {
 		testutil.RequestContextWithLogger(context.Background()),
 		testutil.ModifiedUserDetails(func(details *readmodel.UserDetails) {
 			details.Store.ID = theStoreID
+			details.Role.ID = theRoleID
 		}),
 	)
 
-	baseRepo := func() *repositoryStub {
-		return &repositoryStub{storeID: theStoreID, roleID: theRoleID, permissions: theRepoPermissions}
+	qualifyingPermissionProvider := testutil.NewPermissionProviderStub(theRoleID, []permission.Permission{
+		permission.AssignPermissionsToRole(),
+	}, nil)
+
+	baseRepo := func() *serviceRepoStub {
+		return &serviceRepoStub{storeID: theStoreID, roleID: theRoleID, permissions: theRepoPermissions}
 	}
 
 	t.Run("tries to assign permissions when request is valid", func(t *testing.T) {
@@ -325,6 +273,7 @@ func TestAssignPermissionsToRole(t *testing.T) {
 		s := permission.NewService(
 			testutil.NewResourceLocationProviderStubForRole(url.URL{}),
 			repo,
+			qualifyingPermissionProvider,
 		)
 
 		req := &genapi.AssignPermissionsToRoleRequest{
@@ -352,6 +301,7 @@ func TestAssignPermissionsToRole(t *testing.T) {
 		s := permission.NewService(
 			testutil.NewResourceLocationProviderStubForRole(url.URL{}),
 			baseRepo(),
+			qualifyingPermissionProvider,
 		)
 
 		req := &genapi.AssignPermissionsToRoleRequest{
@@ -370,6 +320,7 @@ func TestAssignPermissionsToRole(t *testing.T) {
 		s := permission.NewService(
 			testutil.NewResourceLocationProviderStubForRole(url.URL{}),
 			baseRepo(),
+			qualifyingPermissionProvider,
 		)
 
 		req := &genapi.AssignPermissionsToRoleRequest{
@@ -383,12 +334,32 @@ func TestAssignPermissionsToRole(t *testing.T) {
 		testutil.AssertAPIStatusCode(t, http.StatusUnauthorized, err)
 	})
 
+	t.Run("returns forbidden when user doesn't have permissions", func(t *testing.T) {
+		t.Parallel()
+
+		s := permission.NewService(
+			testutil.NewResourceLocationProviderStubForRole(url.URL{}),
+			baseRepo(),
+			testutil.NewPermissionProviderStub(theRoleID, []permission.Permission{}, nil),
+		)
+
+		req := &genapi.AssignPermissionsToRoleRequest{
+			Permissions: thePermissions,
+		}
+
+		params := genapi.AssignPermissionsToRoleParams{RoleId: theRoleID}
+
+		err := s.AssignPermissionsToRole(requestCtx, req, params)
+		testutil.AssertAPIStatusCode(t, http.StatusForbidden, err)
+	})
+
 	t.Run("returns bad request when a permission doesn't exist", func(t *testing.T) {
 		t.Parallel()
 
 		s := permission.NewService(
 			testutil.NewResourceLocationProviderStubForRole(url.URL{}),
 			baseRepo(),
+			qualifyingPermissionProvider,
 		)
 
 		req := &genapi.AssignPermissionsToRoleRequest{
@@ -414,6 +385,7 @@ func TestAssignPermissionsToRole(t *testing.T) {
 		s := permission.NewService(
 			testutil.NewResourceLocationProviderStubForRole(url.URL{}),
 			baseRepo(),
+			qualifyingPermissionProvider,
 		)
 
 		req := &genapi.AssignPermissionsToRoleRequest{
@@ -435,6 +407,7 @@ func TestAssignPermissionsToRole(t *testing.T) {
 		s := permission.NewService(
 			testutil.NewResourceLocationProviderStubForRole(url.URL{}),
 			repo,
+			qualifyingPermissionProvider,
 		)
 
 		req := &genapi.AssignPermissionsToRoleRequest{
@@ -456,6 +429,7 @@ func TestAssignPermissionsToRole(t *testing.T) {
 		s := permission.NewService(
 			testutil.NewResourceLocationProviderStubForRole(url.URL{}),
 			repo,
+			qualifyingPermissionProvider,
 		)
 
 		req := &genapi.AssignPermissionsToRoleRequest{
@@ -477,6 +451,7 @@ func TestAssignPermissionsToRole(t *testing.T) {
 		s := permission.NewService(
 			testutil.NewResourceLocationProviderStubForRole(url.URL{}),
 			repo,
+			qualifyingPermissionProvider,
 		)
 
 		req := &genapi.AssignPermissionsToRoleRequest{
@@ -488,4 +463,126 @@ func TestAssignPermissionsToRole(t *testing.T) {
 		err := s.AssignPermissionsToRole(requestCtx, req, params)
 		testutil.AssertAPIStatusCode(t, http.StatusInternalServerError, err)
 	})
+
+	t.Run("returns internal server error when permissionProvider.Can() errors", func(t *testing.T) {
+		t.Parallel()
+
+		s := permission.NewService(
+			testutil.NewResourceLocationProviderStubForRole(url.URL{}),
+			baseRepo(),
+			testutil.NewPermissionProviderStub(theRoleID, nil, errors.New("oh no!")),
+		)
+
+		req := &genapi.AssignPermissionsToRoleRequest{
+			Permissions: thePermissions,
+		}
+
+		params := genapi.AssignPermissionsToRoleParams{RoleId: theRoleID}
+
+		err := s.AssignPermissionsToRole(requestCtx, req, params)
+		testutil.AssertAPIStatusCode(t, http.StatusInternalServerError, err)
+	})
+}
+
+type serviceRepoPermission struct {
+	id        uuid.UUID
+	groupName string
+	name      string
+}
+
+type serviceRepoStub struct {
+	createRoleCalledWith struct {
+		id           uuid.UUID
+		storeID      uuid.UUID
+		name         string
+		isStoreAdmin bool
+	}
+	assignPermissionsCalledWith struct {
+		roleID        uuid.UUID
+		permissionIDs []uuid.UUID
+	}
+	storeID              uuid.UUID
+	roleID               uuid.UUID
+	permissions          []serviceRepoPermission
+	existingName         string
+	createRoleErr        error
+	assignPermissionsErr error
+	nameTakenErr         error
+	roleExistsErr        error
+	getPermissionIDsErr  error
+}
+
+func (r *serviceRepoStub) CreateRole(
+	_ context.Context,
+	id uuid.UUID,
+	storeID uuid.UUID,
+	name string,
+	isStoreAdmin bool,
+) error {
+	if r.createRoleErr != nil {
+		return r.createRoleErr
+	}
+
+	r.createRoleCalledWith.id = id
+	r.createRoleCalledWith.storeID = storeID
+	r.createRoleCalledWith.name = name
+	r.createRoleCalledWith.isStoreAdmin = isStoreAdmin
+
+	return nil
+}
+
+func (r *serviceRepoStub) IsRoleNameTaken(_ context.Context, storeID uuid.UUID, name string) (bool, error) {
+	if r.nameTakenErr != nil {
+		return false, r.nameTakenErr
+	}
+
+	return r.storeID == storeID && r.existingName == name, nil
+}
+
+func (r *serviceRepoStub) GetPermissionIDs(
+	_ context.Context,
+	permissions []permission.GetPermissionIDDetail,
+) ([]uuid.UUID, error) {
+	if r.getPermissionIDsErr != nil {
+		return []uuid.UUID{}, r.getPermissionIDsErr
+	}
+
+	ids := make([]uuid.UUID, 0, len(permissions))
+	for _, toFind := range permissions {
+		var found bool
+
+		for _, p := range r.permissions {
+			if p.groupName == toFind.GroupName && p.name == toFind.Name {
+				ids = append(ids, p.id)
+				found = true
+
+				break
+			}
+		}
+
+		if !found {
+			return []uuid.UUID{}, apperror.ErrPermissionNotFound
+		}
+	}
+
+	return ids, nil
+}
+
+func (r *serviceRepoStub) DoesRoleExist(_ context.Context, roleID uuid.UUID) (bool, error) {
+	if r.roleExistsErr != nil {
+		return false, r.roleExistsErr
+	}
+
+	return roleID == r.roleID, nil
+}
+
+func (r *serviceRepoStub) AssignPermissionsToRole(_ context.Context, roleID uuid.UUID, permissionIDs []uuid.UUID) error {
+	if r.assignPermissionsErr != nil {
+		return r.assignPermissionsErr
+	}
+
+	r.assignPermissionsCalledWith.roleID = roleID
+	r.assignPermissionsCalledWith.permissionIDs = permissionIDs
+
+	return nil
 }

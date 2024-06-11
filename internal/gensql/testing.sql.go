@@ -487,6 +487,21 @@ func (q *Queries) SeedRole(ctx context.Context, arg SeedRoleParams) (pgtype.UUID
 	return role_id, err
 }
 
+const seedRolePermission = `-- name: SeedRolePermission :exec
+INSERT INTO role_permissions (role_id, permission_id)
+VALUES ($1, $2)
+`
+
+type SeedRolePermissionParams struct {
+	RoleID       pgtype.UUID
+	PermissionID pgtype.UUID
+}
+
+func (q *Queries) SeedRolePermission(ctx context.Context, arg SeedRolePermissionParams) error {
+	_, err := q.db.Exec(ctx, seedRolePermission, arg.RoleID, arg.PermissionID)
+	return err
+}
+
 const seedSalesPerson = `-- name: SeedSalesPerson :one
 INSERT INTO sales_persons (sales_person_id, sales_person_name, store_id)
 VALUES ($1, $2, $3)

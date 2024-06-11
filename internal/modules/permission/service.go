@@ -19,7 +19,7 @@ type GetPermissionIDDetail struct {
 	Name      string
 }
 
-type Repository interface {
+type ServiceRepository interface {
 	CreateRole(ctx context.Context, id uuid.UUID, storeID uuid.UUID, name string, isStoreAdmin bool) error
 	IsRoleNameTaken(ctx context.Context, storeID uuid.UUID, name string) (bool, error)
 	GetPermissionIDs(ctx context.Context, permissions []GetPermissionIDDetail) ([]uuid.UUID, error)
@@ -33,12 +33,18 @@ type ResourceLocationProvider interface {
 
 type Service struct {
 	resourceLocationProvider ResourceLocationProvider
-	repo                     Repository
+	permissionProvider       Provider
+	repo                     ServiceRepository
 }
 
-func NewService(resourceLocationProvider ResourceLocationProvider, repo Repository) *Service {
+func NewService(
+	resourceLocationProvider ResourceLocationProvider,
+	repo ServiceRepository,
+	permissionProvider Provider,
+) *Service {
 	return &Service{
 		resourceLocationProvider: resourceLocationProvider,
+		permissionProvider:       permissionProvider,
 		repo:                     repo,
 	}
 }
@@ -53,6 +59,13 @@ func (s *Service) CreateRole(
 	if !ok {
 		l.Error().Msg("user is missing from context")
 		return nil, apierror.ToAPIError(http.StatusUnauthorized, "unauthorized")
+	}
+
+	if can, err := s.permissionProvider.Can(ctx, user.Role.ID, CreateRole()); err != nil {
+		l.Error().Err(err).Msg("failed to check permission")
+		return nil, apierror.ToAPIError(http.StatusInternalServerError, "failed to check permission")
+	} else if !can {
+		return nil, apierror.ToAPIError(http.StatusForbidden, "insufficient permissions")
 	}
 
 	if req.Name == "" {
@@ -86,10 +99,17 @@ func (s *Service) AssignPermissionsToRole(
 ) error {
 	l := zerolog.Ctx(ctx)
 
-	_, ok := appcontext.GetUserFromContext(ctx)
+	user, ok := appcontext.GetUserFromContext(ctx)
 	if !ok {
 		l.Error().Msg("user is missing from context")
 		return apierror.ToAPIError(http.StatusUnauthorized, "unauthorized")
+	}
+
+	if can, err := s.permissionProvider.Can(ctx, user.Role.ID, AssignPermissionsToRole()); err != nil {
+		l.Error().Err(err).Msg("failed to check permission")
+		return apierror.ToAPIError(http.StatusInternalServerError, "failed to check permission")
+	} else if !can {
+		return apierror.ToAPIError(http.StatusForbidden, "insufficient permissions")
 	}
 
 	if exists, err := s.repo.DoesRoleExist(ctx, params.RoleId); err != nil {

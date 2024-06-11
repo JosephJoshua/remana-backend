@@ -15,6 +15,7 @@ import (
 	"github.com/JosephJoshua/remana-backend/internal/genapi"
 	"github.com/JosephJoshua/remana-backend/internal/logger"
 	"github.com/JosephJoshua/remana-backend/internal/modules/auth/readmodel"
+	"github.com/JosephJoshua/remana-backend/internal/modules/permission"
 	"github.com/JosephJoshua/remana-backend/internal/modules/salesperson"
 	"github.com/JosephJoshua/remana-backend/internal/testutil"
 	"github.com/google/uuid"
@@ -23,49 +24,26 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type repositoryStub struct {
-	createCalledWith struct {
-		id      uuid.UUID
-		storeID uuid.UUID
-		name    string
-	}
-	storeID      uuid.UUID
-	existingName string
-	createErr    error
-	nameTakenErr error
-}
-
-func (r *repositoryStub) CreateSalesPerson(_ context.Context, id uuid.UUID, storeID uuid.UUID, name string) error {
-	if r.createErr != nil {
-		return r.createErr
-	}
-
-	r.createCalledWith.id = id
-	r.createCalledWith.storeID = storeID
-	r.createCalledWith.name = name
-
-	return nil
-}
-
-func (r *repositoryStub) IsNameTaken(_ context.Context, storeID uuid.UUID, name string) (bool, error) {
-	if r.nameTakenErr != nil {
-		return false, r.nameTakenErr
-	}
-
-	return r.storeID == storeID && r.existingName == name, nil
-}
-
 func TestCreateSalesPerson(t *testing.T) {
 	t.Parallel()
 
 	var (
-		theStoreID = uuid.New()
+		theStoreID                   = uuid.New()
+		theRoleID                    = uuid.New()
+		qualifyingPermissionProvider = testutil.NewPermissionProviderStub(
+			theRoleID,
+			[]permission.Permission{
+				permission.CreateSalesPerson(),
+			},
+			nil,
+		)
 	)
 
 	logger.Init(zerolog.ErrorLevel, appconstant.AppEnvDev)
 	requestCtx := appcontext.NewContextWithUser(
 		testutil.RequestContextWithLogger(context.Background()),
 		testutil.ModifiedUserDetails(func(details *readmodel.UserDetails) {
+			details.Role.ID = theRoleID
 			details.Store.ID = theStoreID
 		}),
 	)
@@ -76,6 +54,7 @@ func TestCreateSalesPerson(t *testing.T) {
 		repo := &repositoryStub{storeID: theStoreID}
 		s := salesperson.NewService(
 			testutil.NewResourceLocationProviderStubForSalesPerson(url.URL{}),
+			qualifyingPermissionProvider,
 			repo,
 		)
 
@@ -108,7 +87,7 @@ func TestCreateSalesPerson(t *testing.T) {
 		resourceLocationProvider := testutil.NewResourceLocationProviderStubForSalesPerson(theLocation)
 		repo := &repositoryStub{storeID: theStoreID}
 
-		s := salesperson.NewService(resourceLocationProvider, repo)
+		s := salesperson.NewService(resourceLocationProvider, qualifyingPermissionProvider, repo)
 
 		got, err := s.CreateSalesPerson(requestCtx, &genapi.CreateSalesPersonRequest{
 			Name: "sales person 1",
@@ -130,6 +109,7 @@ func TestCreateSalesPerson(t *testing.T) {
 
 		s := salesperson.NewService(
 			testutil.NewResourceLocationProviderStubForSalesPerson(url.URL{}),
+			qualifyingPermissionProvider,
 			&repositoryStub{},
 		)
 
@@ -141,11 +121,28 @@ func TestCreateSalesPerson(t *testing.T) {
 		testutil.AssertAPIStatusCode(t, http.StatusUnauthorized, err)
 	})
 
+	t.Run("returns forbidden when role doesn't have permission", func(t *testing.T) {
+		t.Parallel()
+
+		s := salesperson.NewService(
+			testutil.NewResourceLocationProviderStubForSalesPerson(url.URL{}),
+			testutil.NewPermissionProviderStub(theRoleID, []permission.Permission{}, nil),
+			&repositoryStub{},
+		)
+
+		_, err := s.CreateSalesPerson(requestCtx, &genapi.CreateSalesPersonRequest{
+			Name: "sales person 1",
+		})
+
+		testutil.AssertAPIStatusCode(t, http.StatusForbidden, err)
+	})
+
 	t.Run("returns bad request when name is empty", func(t *testing.T) {
 		t.Parallel()
 
 		s := salesperson.NewService(
 			testutil.NewResourceLocationProviderStubForSalesPerson(url.URL{}),
+			qualifyingPermissionProvider,
 			&repositoryStub{storeID: theStoreID},
 		)
 
@@ -166,6 +163,7 @@ func TestCreateSalesPerson(t *testing.T) {
 		repo := &repositoryStub{existingName: theName, storeID: theStoreID}
 		s := salesperson.NewService(
 			testutil.NewResourceLocationProviderStubForSalesPerson(url.URL{}),
+			qualifyingPermissionProvider,
 			repo,
 		)
 
@@ -182,6 +180,7 @@ func TestCreateSalesPerson(t *testing.T) {
 
 		s := salesperson.NewService(
 			testutil.NewResourceLocationProviderStubForSalesPerson(url.URL{}),
+			qualifyingPermissionProvider,
 			&repositoryStub{nameTakenErr: errors.New("oh no!"), storeID: theStoreID},
 		)
 
@@ -197,6 +196,7 @@ func TestCreateSalesPerson(t *testing.T) {
 
 		s := salesperson.NewService(
 			testutil.NewResourceLocationProviderStubForSalesPerson(url.URL{}),
+			qualifyingPermissionProvider,
 			&repositoryStub{createErr: errors.New("oh no!"), storeID: theStoreID},
 		)
 
@@ -206,4 +206,52 @@ func TestCreateSalesPerson(t *testing.T) {
 
 		testutil.AssertAPIStatusCode(t, http.StatusInternalServerError, err)
 	})
+
+	t.Run("returns internal server error when permissionProvider.Can() errors", func(t *testing.T) {
+		t.Parallel()
+
+		s := salesperson.NewService(
+			testutil.NewResourceLocationProviderStubForSalesPerson(url.URL{}),
+			testutil.NewPermissionProviderStub(theRoleID, []permission.Permission{}, errors.New("oh no!")),
+			&repositoryStub{createErr: errors.New("oh no!"), storeID: theStoreID},
+		)
+
+		_, err := s.CreateSalesPerson(requestCtx, &genapi.CreateSalesPersonRequest{
+			Name: "sales person 1",
+		})
+
+		testutil.AssertAPIStatusCode(t, http.StatusInternalServerError, err)
+	})
+}
+
+type repositoryStub struct {
+	createCalledWith struct {
+		id      uuid.UUID
+		storeID uuid.UUID
+		name    string
+	}
+	storeID      uuid.UUID
+	existingName string
+	createErr    error
+	nameTakenErr error
+}
+
+func (r *repositoryStub) CreateSalesPerson(_ context.Context, id uuid.UUID, storeID uuid.UUID, name string) error {
+	if r.createErr != nil {
+		return r.createErr
+	}
+
+	r.createCalledWith.id = id
+	r.createCalledWith.storeID = storeID
+	r.createCalledWith.name = name
+
+	return nil
+}
+
+func (r *repositoryStub) IsNameTaken(_ context.Context, storeID uuid.UUID, name string) (bool, error) {
+	if r.nameTakenErr != nil {
+		return false, r.nameTakenErr
+	}
+
+	return r.storeID == storeID && r.existingName == name, nil
 }

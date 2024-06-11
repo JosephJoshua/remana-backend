@@ -74,6 +74,7 @@ func TestCreateRole(t *testing.T) {
 		s := permission.NewService(
 			locationProvider,
 			repo,
+			permissionProviderStub{},
 		)
 
 		req := &genapi.CreateRoleRequest{
@@ -125,6 +126,7 @@ func TestCreateRole(t *testing.T) {
 		s := permission.NewService(
 			locationProvider,
 			repo,
+			permissionProviderStub{},
 		)
 
 		req := &genapi.CreateRoleRequest{
@@ -156,6 +158,7 @@ func TestCreateRole(t *testing.T) {
 		s := permission.NewService(
 			locationProvider,
 			repo,
+			permissionProviderStub{},
 		)
 
 		req := &genapi.CreateRoleRequest{
@@ -229,6 +232,7 @@ func TestAssignPermissionsToRole(t *testing.T) {
 		s := permission.NewService(
 			&testutil.ResourceLocationProviderStub{},
 			repository.NewSQLPermissionRepository(db),
+			permissionProviderStub{},
 		)
 
 		req := &genapi.AssignPermissionsToRoleRequest{
@@ -247,6 +251,7 @@ func TestAssignPermissionsToRole(t *testing.T) {
 		s := permission.NewService(
 			&testutil.ResourceLocationProviderStub{},
 			repository.NewSQLPermissionRepository(db),
+			permissionProviderStub{},
 		)
 
 		req := &genapi.AssignPermissionsToRoleRequest{
@@ -268,6 +273,7 @@ func TestAssignPermissionsToRole(t *testing.T) {
 		s := permission.NewService(
 			&testutil.ResourceLocationProviderStub{},
 			repository.NewSQLPermissionRepository(db),
+			permissionProviderStub{},
 		)
 
 		req := &genapi.AssignPermissionsToRoleRequest{
@@ -300,6 +306,100 @@ func TestAssignPermissionsToRole(t *testing.T) {
 			int64(len(permissionIDs)), n,
 			"expected role to have %d permissions assigned, got %d", len(permissionIDs), n,
 		)
+	})
+}
+
+func TestCan(t *testing.T) {
+	logger.Init(zerolog.DebugLevel, appconstant.AppEnvDev)
+
+	pool, initErr := testutil.StartDockerPool()
+	require.NoError(t, initErr, "error starting docker pool")
+
+	postgresResource, db, initErr := testutil.StartPostgresContainer(pool)
+	require.NoError(t, initErr, "error starting postgres container")
+
+	t.Cleanup(func() {
+		if purgeErr := testutil.PurgeDockerResources(pool, []*dockertest.Resource{postgresResource}); purgeErr != nil {
+			t.Fatalf("failed to purge docker resources: %v", purgeErr)
+		}
+	})
+
+	initErr = testutil.MigratePostgres(context.Background(), db)
+	require.NoError(t, initErr, "error migrating database")
+
+	var (
+		theAdminRoleID    = uuid.New()
+		theEmployeeRoleID = uuid.New()
+		thePermissions    = []permission.Permission{
+			permission.CreateRole(),
+			permission.CreateDamageType(),
+		}
+	)
+
+	requestCtx := testutil.RequestContextWithLogger(context.Background())
+	queries := gensql.New(db)
+
+	seedCan(
+		context.Background(),
+		t,
+		queries,
+		theAdminRoleID,
+		theEmployeeRoleID,
+		thePermissions,
+	)
+
+	t.Run("returns true when role is store admin", func(t *testing.T) {
+		var (
+			someRandomPermission = permission.AssignPermissionsToRole()
+		)
+
+		p := permission.NewProvider(
+			repository.NewSQLPermissionRepository(db),
+		)
+
+		ok, err := p.Can(requestCtx, theAdminRoleID, someRandomPermission)
+
+		require.NoError(t, err)
+		require.True(t, ok)
+	})
+
+	t.Run("returns true when role has permission", func(t *testing.T) {
+		p := permission.NewProvider(
+			repository.NewSQLPermissionRepository(db),
+		)
+
+		ok, err := p.Can(requestCtx, theEmployeeRoleID, thePermissions[0])
+
+		require.NoError(t, err)
+		require.True(t, ok)
+	})
+
+	t.Run("returns false when role doesn't have permission", func(t *testing.T) {
+		var (
+			someOtherPermission = permission.AssignPermissionsToRole()
+		)
+
+		p := permission.NewProvider(
+			repository.NewSQLPermissionRepository(db),
+		)
+
+		ok, err := p.Can(requestCtx, theEmployeeRoleID, someOtherPermission)
+
+		require.NoError(t, err)
+		require.False(t, ok)
+	})
+
+	t.Run("returns error when role doesn't exist", func(t *testing.T) {
+		var (
+			someRandomID = uuid.New()
+		)
+
+		p := permission.NewProvider(
+			repository.NewSQLPermissionRepository(db),
+		)
+
+		_, err := p.Can(requestCtx, someRandomID, thePermissions[0])
+		require.Error(t, err)
 	})
 }
 
@@ -381,6 +481,80 @@ func seedAssignPermissionsToRole(
 			PermissionName:        permission.Name,
 			PermissionDisplayName: permission.Name,
 			PermissionGroupID:     typemapper.UUIDToPgtypeUUID(permissionGroups[permission.GroupName]),
+		})
+		require.NoError(t, err)
+	}
+}
+
+func seedCan(
+	ctx context.Context,
+	t *testing.T,
+	queries *gensql.Queries,
+	theAdminRoleID uuid.UUID,
+	theEmployeeRoleID uuid.UUID,
+	thePermissions []permission.Permission,
+) {
+	t.Helper()
+
+	const maxWait = 3 * time.Second
+
+	ctx, cancel := context.WithTimeout(ctx, maxWait)
+	defer cancel()
+
+	storeID, err := queries.SeedStore(ctx, gensql.SeedStoreParams{
+		StoreID:      typemapper.UUIDToPgtypeUUID(uuid.New()),
+		StoreName:    "Not important",
+		StoreCode:    "not-important",
+		StoreAddress: "Not important",
+		PhoneNumber:  "+6281234567890",
+	})
+	require.NoError(t, err)
+
+	_, err = queries.SeedRole(ctx, gensql.SeedRoleParams{
+		RoleID:       typemapper.UUIDToPgtypeUUID(theAdminRoleID),
+		RoleName:     "Not important",
+		IsStoreAdmin: true,
+		StoreID:      storeID,
+	})
+	require.NoError(t, err)
+
+	_, err = queries.SeedRole(ctx, gensql.SeedRoleParams{
+		RoleID:       typemapper.UUIDToPgtypeUUID(theEmployeeRoleID),
+		RoleName:     "Not important",
+		IsStoreAdmin: false,
+		StoreID:      storeID,
+	})
+	require.NoError(t, err)
+
+	permissionGroups := make(map[string]uuid.UUID)
+	for _, permission := range thePermissions {
+		groupName := permission.GroupName()
+
+		if _, ok := permissionGroups[groupName]; !ok {
+			id, err := queries.SeedPermissionGroup(ctx, gensql.SeedPermissionGroupParams{
+				PermissionGroupID:   typemapper.UUIDToPgtypeUUID(uuid.New()),
+				PermissionGroupName: groupName,
+			})
+			require.NoError(t, err)
+
+			permissionGroups[groupName] = typemapper.MustPgtypeUUIDToUUID(id)
+		}
+	}
+
+	for _, permission := range thePermissions {
+		permissionID := uuid.New()
+
+		_, err = queries.SeedPermission(ctx, gensql.SeedPermissionParams{
+			PermissionID:          typemapper.UUIDToPgtypeUUID(permissionID),
+			PermissionName:        permission.Name(),
+			PermissionDisplayName: permission.Name(),
+			PermissionGroupID:     typemapper.UUIDToPgtypeUUID(permissionGroups[permission.GroupName()]),
+		})
+		require.NoError(t, err)
+
+		err = queries.SeedRolePermission(ctx, gensql.SeedRolePermissionParams{
+			RoleID:       typemapper.UUIDToPgtypeUUID(theEmployeeRoleID),
+			PermissionID: typemapper.UUIDToPgtypeUUID(permissionID),
 		})
 		require.NoError(t, err)
 	}

@@ -177,7 +177,7 @@ func TestCreateRepairOrder(t *testing.T) {
 		slugProvider := testutil.NewRepairOrderSlugProviderStub("some-slug", nil)
 
 		repo := repository.NewSQLRepairOrderRepository(db)
-		s := repairorder.NewService(timeProvider, locationProvider, repo, slugProvider)
+		s := repairorder.NewService(timeProvider, locationProvider, repo, permissionProviderStub{}, slugProvider)
 
 		req := validRequest()
 
@@ -377,7 +377,7 @@ func TestCreateRepairOrder(t *testing.T) {
 				slugProvider := testutil.NewRepairOrderSlugProviderStub("some-slug", nil)
 				repo := repository.NewSQLRepairOrderRepository(db)
 
-				s := repairorder.NewService(timeProvider, locationProvider, repo, slugProvider)
+				s := repairorder.NewService(timeProvider, locationProvider, repo, permissionProviderStub{}, slugProvider)
 
 				req := validRequest()
 				tc.setup(&req)

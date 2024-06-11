@@ -15,6 +15,7 @@ import (
 	"github.com/JosephJoshua/remana-backend/internal/genapi"
 	"github.com/JosephJoshua/remana-backend/internal/logger"
 	"github.com/JosephJoshua/remana-backend/internal/modules/auth/readmodel"
+	"github.com/JosephJoshua/remana-backend/internal/modules/permission"
 	"github.com/JosephJoshua/remana-backend/internal/modules/phonecondition"
 	"github.com/JosephJoshua/remana-backend/internal/testutil"
 	"github.com/google/uuid"
@@ -23,43 +24,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type repositoryStub struct {
-	createCalledWith struct {
-		id      uuid.UUID
-		storeID uuid.UUID
-		name    string
-	}
-	storeID      uuid.UUID
-	existingName string
-	createErr    error
-	nameTakenErr error
-}
-
-func (r *repositoryStub) CreatePhoneCondition(_ context.Context, id uuid.UUID, storeID uuid.UUID, name string) error {
-	if r.createErr != nil {
-		return r.createErr
-	}
-
-	r.createCalledWith.id = id
-	r.createCalledWith.storeID = storeID
-	r.createCalledWith.name = name
-
-	return nil
-}
-
-func (r *repositoryStub) IsNameTaken(_ context.Context, storeID uuid.UUID, name string) (bool, error) {
-	if r.nameTakenErr != nil {
-		return false, r.nameTakenErr
-	}
-
-	return r.storeID == storeID && r.existingName == name, nil
-}
-
 func TestCreatePhoneCondition(t *testing.T) {
 	t.Parallel()
 
 	var (
-		theStoreID = uuid.New()
+		theStoreID                   = uuid.New()
+		theRoleID                    = uuid.New()
+		qualifyingPermissionProvider = testutil.NewPermissionProviderStub(
+			theRoleID,
+			[]permission.Permission{permission.CreatePhoneCondition()},
+			nil,
+		)
 	)
 
 	logger.Init(zerolog.ErrorLevel, appconstant.AppEnvDev)
@@ -67,6 +42,7 @@ func TestCreatePhoneCondition(t *testing.T) {
 		testutil.RequestContextWithLogger(context.Background()),
 		testutil.ModifiedUserDetails(func(details *readmodel.UserDetails) {
 			details.Store.ID = theStoreID
+			details.Role.ID = theRoleID
 		}),
 	)
 
@@ -76,6 +52,7 @@ func TestCreatePhoneCondition(t *testing.T) {
 		repo := &repositoryStub{storeID: theStoreID}
 		s := phonecondition.NewService(
 			testutil.NewResourceLocationProviderStubForPhoneCondition(url.URL{}),
+			qualifyingPermissionProvider,
 			repo,
 		)
 
@@ -108,7 +85,7 @@ func TestCreatePhoneCondition(t *testing.T) {
 		resourceLocationProvider := testutil.NewResourceLocationProviderStubForPhoneCondition(theLocation)
 		repo := &repositoryStub{storeID: theStoreID}
 
-		s := phonecondition.NewService(resourceLocationProvider, repo)
+		s := phonecondition.NewService(resourceLocationProvider, qualifyingPermissionProvider, repo)
 
 		got, err := s.CreatePhoneCondition(requestCtx, &genapi.CreatePhoneConditionRequest{
 			Name: "phone condition 1",
@@ -130,6 +107,7 @@ func TestCreatePhoneCondition(t *testing.T) {
 
 		s := phonecondition.NewService(
 			testutil.NewResourceLocationProviderStubForPhoneCondition(url.URL{}),
+			qualifyingPermissionProvider,
 			&repositoryStub{},
 		)
 
@@ -141,11 +119,28 @@ func TestCreatePhoneCondition(t *testing.T) {
 		testutil.AssertAPIStatusCode(t, http.StatusUnauthorized, err)
 	})
 
+	t.Run("returns forbidden when role doesn't have permission", func(t *testing.T) {
+		t.Parallel()
+
+		s := phonecondition.NewService(
+			testutil.NewResourceLocationProviderStubForPhoneEquipment(url.URL{}),
+			testutil.NewPermissionProviderStub(theRoleID, []permission.Permission{}, nil),
+			&repositoryStub{},
+		)
+
+		_, err := s.CreatePhoneCondition(requestCtx, &genapi.CreatePhoneConditionRequest{
+			Name: "phone condition 1",
+		})
+
+		testutil.AssertAPIStatusCode(t, http.StatusForbidden, err)
+	})
+
 	t.Run("returns bad request when name is empty", func(t *testing.T) {
 		t.Parallel()
 
 		s := phonecondition.NewService(
 			testutil.NewResourceLocationProviderStubForPhoneCondition(url.URL{}),
+			qualifyingPermissionProvider,
 			&repositoryStub{storeID: theStoreID},
 		)
 
@@ -166,6 +161,7 @@ func TestCreatePhoneCondition(t *testing.T) {
 		repo := &repositoryStub{existingName: theName, storeID: theStoreID}
 		s := phonecondition.NewService(
 			testutil.NewResourceLocationProviderStubForPhoneCondition(url.URL{}),
+			qualifyingPermissionProvider,
 			repo,
 		)
 
@@ -177,11 +173,28 @@ func TestCreatePhoneCondition(t *testing.T) {
 		testutil.AssertAPIStatusCode(t, http.StatusConflict, err)
 	})
 
+	t.Run("returns internal server error when permissionProvider.Can() errors", func(t *testing.T) {
+		t.Parallel()
+
+		s := phonecondition.NewService(
+			testutil.NewResourceLocationProviderStubForPhoneCondition(url.URL{}),
+			testutil.NewPermissionProviderStub(theRoleID, []permission.Permission{}, errors.New("oh no!")),
+			&repositoryStub{nameTakenErr: errors.New("oh no!"), storeID: theStoreID},
+		)
+
+		_, err := s.CreatePhoneCondition(requestCtx, &genapi.CreatePhoneConditionRequest{
+			Name: "phone condition 1",
+		})
+
+		testutil.AssertAPIStatusCode(t, http.StatusInternalServerError, err)
+	})
+
 	t.Run("returns internal server error when repository.IsNameTaken() errors", func(t *testing.T) {
 		t.Parallel()
 
 		s := phonecondition.NewService(
 			testutil.NewResourceLocationProviderStubForPhoneCondition(url.URL{}),
+			qualifyingPermissionProvider,
 			&repositoryStub{nameTakenErr: errors.New("oh no!"), storeID: theStoreID},
 		)
 
@@ -197,6 +210,7 @@ func TestCreatePhoneCondition(t *testing.T) {
 
 		s := phonecondition.NewService(
 			testutil.NewResourceLocationProviderStubForPhoneCondition(url.URL{}),
+			qualifyingPermissionProvider,
 			&repositoryStub{createErr: errors.New("oh no!"), storeID: theStoreID},
 		)
 
@@ -206,4 +220,36 @@ func TestCreatePhoneCondition(t *testing.T) {
 
 		testutil.AssertAPIStatusCode(t, http.StatusInternalServerError, err)
 	})
+}
+
+type repositoryStub struct {
+	createCalledWith struct {
+		id      uuid.UUID
+		storeID uuid.UUID
+		name    string
+	}
+	storeID      uuid.UUID
+	existingName string
+	createErr    error
+	nameTakenErr error
+}
+
+func (r *repositoryStub) CreatePhoneCondition(_ context.Context, id uuid.UUID, storeID uuid.UUID, name string) error {
+	if r.createErr != nil {
+		return r.createErr
+	}
+
+	r.createCalledWith.id = id
+	r.createCalledWith.storeID = storeID
+	r.createCalledWith.name = name
+
+	return nil
+}
+
+func (r *repositoryStub) IsNameTaken(_ context.Context, storeID uuid.UUID, name string) (bool, error) {
+	if r.nameTakenErr != nil {
+		return false, r.nameTakenErr
+	}
+
+	return r.storeID == storeID && r.existingName == name, nil
 }

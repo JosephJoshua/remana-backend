@@ -12,7 +12,7 @@ func ModifiedUserDetails(mod func(details *readmodel.UserDetails)) *readmodel.Us
 		Role: readmodel.UserDetailsRole{
 			ID:           uuid.New(),
 			Name:         "not important",
-			IsStoreAdmin: true,
+			IsStoreAdmin: false,
 		},
 		Store: readmodel.UserDetailsStore{
 			ID:   uuid.New(),

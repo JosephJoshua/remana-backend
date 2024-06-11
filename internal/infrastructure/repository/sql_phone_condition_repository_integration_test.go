@@ -72,6 +72,7 @@ func TestCreatePhoneCondition(t *testing.T) {
 
 		s := phonecondition.NewService(
 			locationProvider,
+			permissionProviderStub{},
 			repo,
 		)
 
@@ -118,6 +119,7 @@ func TestCreatePhoneCondition(t *testing.T) {
 
 		s := phonecondition.NewService(
 			locationProvider,
+			permissionProviderStub{},
 			repo,
 		)
 
@@ -147,6 +149,7 @@ func TestCreatePhoneCondition(t *testing.T) {
 
 		s := phonecondition.NewService(
 			locationProvider,
+			permissionProviderStub{},
 			repo,
 		)
 

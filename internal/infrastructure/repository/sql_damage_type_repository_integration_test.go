@@ -72,6 +72,7 @@ func TestCreateDamageType(t *testing.T) {
 
 		s := damagetype.NewService(
 			locationProvider,
+			&permissionProviderStub{},
 			repo,
 		)
 
@@ -118,6 +119,7 @@ func TestCreateDamageType(t *testing.T) {
 
 		s := damagetype.NewService(
 			locationProvider,
+			&permissionProviderStub{},
 			repo,
 		)
 
@@ -147,6 +149,7 @@ func TestCreateDamageType(t *testing.T) {
 
 		s := damagetype.NewService(
 			locationProvider,
+			&permissionProviderStub{},
 			repo,
 		)
 

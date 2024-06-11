@@ -61,6 +61,32 @@ func (q *Queries) DoesRoleExist(ctx context.Context, roleID pgtype.UUID) (int32,
 	return column_1, err
 }
 
+const hasPermission = `-- name: HasPermission :one
+SELECT COUNT(*)
+FROM role_permissions
+LEFT JOIN
+  permissions ON permissions.permission_id = role_permissions.permission_id
+LEFT JOIN
+  permission_groups ON permission_groups.permission_group_id = permissions.permission_group_id
+WHERE
+  role_permissions.role_id = $1 AND
+  permissions.permission_name = $2 AND
+  permission_groups.permission_group_name = $3
+`
+
+type HasPermissionParams struct {
+	RoleID              pgtype.UUID
+	PermissionName      string
+	PermissionGroupName string
+}
+
+func (q *Queries) HasPermission(ctx context.Context, arg HasPermissionParams) (int64, error) {
+	row := q.db.QueryRow(ctx, hasPermission, arg.RoleID, arg.PermissionName, arg.PermissionGroupName)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const isRoleNameTaken = `-- name: IsRoleNameTaken :one
 SELECT 1
 FROM roles
@@ -77,4 +103,17 @@ func (q *Queries) IsRoleNameTaken(ctx context.Context, arg IsRoleNameTakenParams
 	var column_1 int32
 	err := row.Scan(&column_1)
 	return column_1, err
+}
+
+const isStoreAdmin = `-- name: IsStoreAdmin :one
+SELECT roles.is_store_admin
+FROM roles
+WHERE roles.role_id = $1
+`
+
+func (q *Queries) IsStoreAdmin(ctx context.Context, roleID pgtype.UUID) (bool, error) {
+	row := q.db.QueryRow(ctx, isStoreAdmin, roleID)
+	var is_store_admin bool
+	err := row.Scan(&is_store_admin)
+	return is_store_admin, err
 }

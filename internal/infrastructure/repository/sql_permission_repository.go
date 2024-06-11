@@ -149,3 +149,30 @@ func (s *SQLPermissionRepository) AssignPermissionsToRole(
 
 	return nil
 }
+
+func (s *SQLPermissionRepository) HasPermission(
+	ctx context.Context,
+	roleID uuid.UUID,
+	permissionGroupName string,
+	permissionName string,
+) (bool, error) {
+	n, err := s.queries.HasPermission(ctx, gensql.HasPermissionParams{
+		RoleID:              typemapper.UUIDToPgtypeUUID(roleID),
+		PermissionName:      permissionName,
+		PermissionGroupName: permissionGroupName,
+	})
+	if err != nil {
+		return false, fmt.Errorf("failed to check if role has permission: %w", err)
+	}
+
+	return n > 0, nil
+}
+
+func (s *SQLPermissionRepository) IsStoreAdmin(ctx context.Context, roleID uuid.UUID) (bool, error) {
+	ok, err := s.queries.IsStoreAdmin(ctx, typemapper.UUIDToPgtypeUUID(roleID))
+	if err != nil {
+		return false, fmt.Errorf("failed to check if role is store admin: %w", err)
+	}
+
+	return ok, nil
+}

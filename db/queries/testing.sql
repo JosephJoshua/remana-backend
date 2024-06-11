@@ -18,6 +18,10 @@ INSERT INTO roles (role_id, role_name, store_id, is_store_admin)
 VALUES ($1, $2, $3, $4)
 RETURNING role_id;
 
+-- name: SeedRolePermission :exec
+INSERT INTO role_permissions (role_id, permission_id)
+VALUES ($1, $2);
+
 -- name: SeedUser :one
 INSERT INTO users (user_id, username, user_password, role_id, store_id)
 VALUES ($1, $2, $3, $4, $5)
